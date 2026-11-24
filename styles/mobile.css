@@ -1,0 +1,701 @@
+/* ============================================================
+   mobile.css — 触控表面的补丁层。
+   
+   和 motion.css 的关系：
+   motion.css 是「两端共用的词汇 + 同一套 token」；
+   这一层只做两件事，且两件事都不该反向污染 Web：
+   
+     1. 尺度分叉 —— 手机上位移更短、编排更紧、模糊更轻；
+     2. 补触控专属原语 —— 长按、底部弹层、左滑、下拉刷新。
+   
+   Web 端不引这个文件，或者引了也不会命中（全在粗指针/触控判定里）。
+   ============================================================ */
+
+/* ============================================================
+   1 · 表面尺度分叉
+   同一个 token 名，在触屏上换一组值。组件代码一个字都不用改。
+   ------------------------------------------------------------
+   为什么是这些方向：
+   · 位移更短 —— 手指距离近，32px 的位移在手机上像"跳"；
+   · 编排更紧 —— 一屏只有 3–4 个元素，70ms 显得拖沓；
+   · 模糊更轻 —— 小尺寸元素上 12px 模糊直接糊成一片。
+   ============================================================ */
+
+@media (pointer: coarse) {
+  :root {
+    --mk-dist-hover: 0px;
+    --mk-dist-lift: 0px;
+    --mk-dist-enter: 12px;
+    --mk-dist-section: 20px;
+
+    --mk-stagger-tight: 28ms;
+    --mk-stagger-base: 45ms;
+    --mk-stagger-loose: 70ms;
+
+    --mk-blur: 8px;
+
+    /* 触控没有 hover 的"预备态"，进入必须更快收尾 */
+    --mk-dur-4: 320ms;
+    --mk-dur-5: 420ms;
+  }
+}
+
+/* 触屏上"抬起"不该用位移 —— 用一段短暂的背景提亮代替 */
+@media (pointer: coarse) {
+  .mk-lift {
+    transition: background-color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  .mk-lift:active {
+    background-color: rgba(255, 255, 255, 0.055);
+  }
+}
+
+/* ============================================================
+   2 · 按压即反馈（tap）
+   :active 在 iOS 上要等约 100ms 才亮，这 100ms 就是"卡"的来源。
+   tap() 在 pointerdown 同帧加类，松手撤掉。
+   ============================================================ */
+
+.mk-tap {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* 去掉 300ms 双击缩放等待 */
+  transition:
+    transform var(--mk-dur-1) var(--mk-ease-out),
+    background-color var(--mk-dur-1) var(--mk-ease-out),
+    filter var(--mk-dur-1) var(--mk-ease-out);
+}
+
+.mk-tap.is-tap {
+  transform: scale(0.955);
+  filter: brightness(1.08);
+}
+
+/* 深按压：给主操作按钮用，压得更深、回得更快 */
+.mk-tap--deep.is-tap {
+  transform: scale(0.92);
+  filter: brightness(0.94);
+}
+
+/* 长按进行中：轻微下沉 + 一圈扩散的进度环 */
+.mk-tap.is-longpress {
+  transform: scale(0.97);
+}
+
+/* ============================================================
+   3 · 底部弹层（sheet）
+   从屏幕底部升起，抓手可拖，拖过阈值收起。
+   遮罩和弹层共用一条过渡曲线 —— 拖到一半松手时两者同时回位。
+   ============================================================ */
+
+.mk-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.52);
+  opacity: 1;
+  transition: opacity var(--mk-dur-3) var(--mk-ease-out);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.mk-sheet-backdrop.is-closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@starting-style {
+  .mk-sheet-backdrop { opacity: 0; }
+}
+
+.mk-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 91;
+  max-height: 86dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #111823;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -24px 60px -30px rgba(0, 0, 0, 0.9);
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+  transform: translate3d(0, 0, 0);
+  transition: transform var(--mk-dur-4) var(--mk-ease-out);
+  will-change: transform;
+}
+
+@starting-style {
+  .mk-sheet { transform: translate3d(0, 100%, 0); }
+}
+
+.mk-sheet.is-closing {
+  transform: translate3d(0, 100%, 0);
+}
+
+/* 拖动中：过渡交给 JS 的跟手位移，不能有 CSS 过渡掺和 */
+.mk-sheet.is-dragging {
+  transition: none;
+}
+
+.mk-sheet__grabber {
+  position: relative;
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 4px auto 14px;
+  /* 抓手是唯一的拖拽区：内容区仍然能正常滚动 */
+  touch-action: none;
+}
+
+/* 抓手周围放大热区，不用真把条画大 */
+.mk-sheet__grabber::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 96px;
+  height: 32px;
+  transform: translateX(-50%);
+}
+
+.mk-sheet__title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.mk-sheet__desc {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  color: #8b95a5;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-sheet,
+  .mk-sheet-backdrop { transition-duration: 120ms; }
+  @starting-style {
+    .mk-sheet { transform: none; opacity: 0; }
+  }
+}
+
+/* ============================================================
+   4 · 左滑操作（swipe）
+   竖滑留给原生滚动，横滑才归我们 —— touch-action 是唯一不打架的分法。
+   ============================================================ */
+
+.mk-swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #b3261e;
+}
+
+.mk-swipe__action {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 88px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.mk-swipe__body {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+  transition: transform var(--mk-dur-3) var(--mk-ease-out);
+  will-change: transform;
+}
+
+.mk-swipe.is-dragging .mk-swipe__body {
+  transition: none;
+}
+
+/* ============================================================
+   5 · 下拉刷新（pull to refresh）
+   用 --mk-ptr-y 一个变量驱动：指示器高度 + 文字位置都跟着走。
+   ------------------------------------------------------------
+   height 直接吃变量，拖拽时逐帧长高 —— 指示器是"被拉出来"的，
+   不是"滑出来"的，所以拖拽路径上不能有 transition（那是另一段手感）。
+   transition 只挂在 .is-refreshing：松手判定后的 0 → 44px 这一下才平滑。
+   ============================================================ */
+
+.mk-ptr {
+  height: var(--mk-ptr-y, 0px);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #8b95a5;
+  overflow: hidden;
+}
+
+.mk-ptr-list {
+  --mk-ptr-y: 0px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.mk-ptr-list.is-refreshing .mk-ptr {
+  height: 44px;
+  transition: height var(--mk-dur-3) var(--mk-ease-out);
+}
+
+.mk-ptr-list.is-refreshing .mk-ptr::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: #b8ff3d;
+  animation: mk-ptr-spin 640ms linear infinite;
+}
+
+.mk-ptr-list.is-refreshing .mk-ptr {
+  font-size: 0;
+  gap: 0;
+}
+
+@keyframes mk-ptr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   6 · 吸顶标题 + 滚动阴影
+   用 scroll() 时间轴：一滚到 0 以上，发丝线自动淡入。
+   不支持 animation-timeline 的浏览器就永远没有那条线，也不出错。
+   ============================================================ */
+
+.mk-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(7, 9, 13, 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+.mk-sticky::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  opacity: 0;
+}
+
+@supports (animation-timeline: scroll()) {
+  .mk-sticky::after {
+    animation: mk-sticky-line linear both;
+    /* nearest 而不是 root：吸顶条几乎总是挂在 overflow 容器里
+       （页面主体、弹层内部、设备框）。root 指的是文档滚动器，
+       容器内滚动时它纹丝不动，发丝线就永远不亮 ——
+       实测 root 在滚动容器内 opacity 恒为 0，nearest 为 1。
+       和 .mk-glass--sticky 是同一条规矩。 */
+    animation-timeline: scroll(nearest block);
+    animation-range: 0px 48px;
+  }
+}
+
+@keyframes mk-sticky-line {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 吸顶时标题缩小：滚动驱动的第二段，纯 CSS */
+.mk-sticky__title {
+  transition: font-size var(--mk-dur-2) var(--mk-ease-out);
+}
+
+@supports (animation-timeline: scroll()) {
+  .mk-sticky__title {
+    animation: mk-sticky-title linear both;
+    /* 和上面的发丝线同一个理由：吸顶条挂在 overflow 容器里，
+       root 指的是文档滚动器，容器内滚动时它纹丝不动。 */
+    animation-timeline: scroll(nearest block);
+    animation-range: 0px 120px;
+  }
+}
+
+@keyframes mk-sticky-title {
+  from { font-size: 22px; letter-spacing: -0.02em; }
+  to   { font-size: 17px; letter-spacing: -0.01em; }
+}
+
+/* ============================================================
+   7 · 省电与低端机
+   两条独立的闸：页面不可见时全停，设备吃力时只留必要的。
+   ============================================================ */
+
+/* 后台标签页：无限循环动画全部暂停，回来再看 */
+.mk-page-hidden .mk-marquee__track,
+.mk-page-hidden .mk-shimmer::after,
+.mk-page-hidden .mk-gradient-text,
+.mk-page-hidden .mk-aurora::before,
+.mk-page-hidden .mk-aurora::after,
+.mk-page-hidden .mk-typing::after {
+  animation-play-state: paused !important;
+}
+
+/* 低端机 / 减弱动效：装饰层直接不渲染，功能层照常 */
+.mk-lite .mk-aurora::before,
+.mk-lite .mk-aurora::after,
+.mk-lite .mk-shimmer::after,
+.mk-lite .mk-gradient-text {
+  animation: none;
+}
+
+.mk-lite .mk-gradient-text {
+  background-position: 50% 50%;
+}
+
+/* 滚动进场的位移在 lite 下归零，只留透明度 —— 保住信息层级，去掉运动成本 */
+.mk-lite {
+  --mk-dist-enter: 0px;
+  --mk-dist-section: 0px;
+  --mk-blur: 0px;
+}
+
+/* ============================================================
+   8 · 安全区
+   全面屏底部横条会盖住最后一行内容，所有 fixed 底栏都要留出这段。
+   ============================================================ */
+
+.mk-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mk-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ============================================================
+   9 · 触控命中区
+   Apple HIG 44px / Material 48px。视觉可以小，热区不能。
+   ============================================================ */
+
+.mk-hit {
+  position: relative;
+}
+
+.mk-hit::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+}
+
+/* ============================================================
+   10 · 标签栏弹跳（tab bounce）
+   点中的那一下：图标先压扁、再弹起、最后落回原位。
+   ------------------------------------------------------------
+   为什么不是"整个 tab 缩放"：文字跟着一起放大，字会糊。
+   只动图标，文字只变颜色 —— 拇指区里那点尺寸变化，
+   视觉上的"弹"必须由图形承担，不能让字来回换字号。
+   ============================================================ */
+
+.mk-tabbtn__icon {
+  display: grid;
+  place-items: center;
+  transform-origin: 50% 70%;
+}
+
+.mk-tabbtn.is-pop .mk-tabbtn__icon {
+  animation: mk-tab-pop 420ms var(--mk-ease-overshoot);
+}
+
+@keyframes mk-tab-pop {
+  0%   { transform: scale(1, 1) translateY(0); }
+  22%  { transform: scale(1.16, 0.82) translateY(2px); }  /* 压扁蓄力 */
+  52%  { transform: scale(0.94, 1.14) translateY(-5px); } /* 弹起拉长 */
+  78%  { transform: scale(1.04, 0.97) translateY(0); }
+  100% { transform: scale(1, 1) translateY(0); }
+}
+
+/* 选中态的小圆点：从 0 长出来，不是淡入 —— 长出来才有"到位"的感觉 */
+.mk-tabbtn__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: scale(0);
+  transition: transform var(--mk-dur-3) var(--mk-ease-overshoot);
+}
+
+.mk-tabbtn.is-on .mk-tabbtn__dot { transform: scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-tabbtn.is-pop .mk-tabbtn__icon { animation: none; }
+  .mk-tabbtn__dot { transition: none; }
+}
+
+/* ============================================================
+   11 · 横向吸附卡组（scroll-snap rail）
+   一排卡，滑到哪张停哪张，左右留一点"露出半张"的边。
+   ------------------------------------------------------------
+   用手势滑，不用按钮。scroll-snap-type: x mandatory 让浏览器
+   自己完成"甩一下精准停住"，不需要 JS 算惯性。
+   两侧 padding 是让第一张和最后一张也能居中 ——
+   不加就会永远贴边，看着像卡在墙里。
+   ============================================================ */
+
+.mk-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  /* 手指横滑归滚动，竖滑仍然交给页面 */
+  touch-action: pan-x pan-y;
+  padding: 4px 20px 14px;
+  /* 滚动条在触屏上本来就不可见，但桌面上预览时要藏掉 */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mk-rail::-webkit-scrollbar { display: none; }
+
+.mk-rail__item {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* 没有 scroll-snap 的旧 webview：退化成普通横向滚动，不会卡住 */
+@supports not (scroll-snap-type: x mandatory) {
+  .mk-rail { scroll-behavior: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-rail { scroll-behavior: auto; }
+}
+
+/* ============================================================
+   12 · 拖动分段的触感（detent haptics）
+   拖滑块时每经过一个刻度震一下 —— iOS 选择器就是这么"咔"的。
+   ------------------------------------------------------------
+   CSS 只负责把刻度画出来，震不震由 JS 决定：
+   没有 navigator.vibrate 的设备（iPhone Safari）一格都不响，
+   但刻度线还在，视觉上的"分段"依然成立。
+   ============================================================ */
+
+.mk-detent {
+  --mk-detent-n: 5;
+  --mk-detent-p: 0;   /* 0~1，JS 写入 */
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  touch-action: none;
+}
+
+.mk-detent__track {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 已选部分：宽度直接跟 --mk-detent-p，不加过渡 —— 拖的时候必须零延迟 */
+.mk-detent__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--mk-detent-p) * 100%);
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* 刻度：用 repeating-linear-gradient 一次画完 N-1 条，不用 N 个节点 */
+.mk-detent__track::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.22) 0 1px,
+    transparent 1px calc(100% / (var(--mk-detent-n) - 1))
+  );
+  /* 最后一条会贴在右边缘外，裁掉 */
+  mask-image: linear-gradient(to right, #000 calc(100% - 2px), transparent);
+  pointer-events: none;
+}
+
+.mk-detent__knob {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--mk-detent-p) * 100%);
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: var(--fg, #eef2f7);
+  box-shadow: 0 4px 12px -4px #000;
+  /* 只在松手回吸到刻度时才过渡；拖动中 JS 会临时关掉 */
+  transition: left var(--mk-dur-2) var(--mk-ease-snap);
+}
+
+.mk-detent.is-dragging .mk-detent__knob { transition: none; }
+
+/* 按住时旋钮变大一点，给自己一个"我抓住了"的确认 */
+.mk-detent.is-dragging .mk-detent__knob { transform: scale(1.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-detent__knob { transition: none; }
+}
+
+/* ============================================================
+   13 · 上下文菜单（长按呼出）
+   ------------------------------------------------------------
+   长按不是"弹一个框"：三件事同时发生才算 iOS 的那个手势 ——
+     1. 整页缩一点（stage 上加 .is-ctx-open）
+     2. 背景糊掉（遮罩 blur）
+     3. 菜单从指尖那个点撑开（--mk-ctx-ox / oy 是 origin）
+   JS 只给位置和开关，形变与时长全在这里。
+   ============================================================ */
+
+/* 被"按下去"的那一层。缩放幅度 0.96 是 iOS 的量级：
+   再大就变成"换了一页"，再小看不出来。 */
+.mk-ctx-stage {
+  transition:
+    transform var(--mk-dur-2) var(--mk-ease-out),
+    filter var(--mk-dur-2) var(--mk-ease-out);
+  transform-origin: 50% 42%;   /* 略高于几何中心：菜单通常在手指上方长出来 */
+}
+
+.mk-ctx-stage.is-ctx-open {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+
+.mk-ctx {
+  position: fixed;
+  z-index: 120;
+  display: grid;
+  place-items: start;
+  /* 遮罩只盖住 bounds 那块，不是整个视口 */
+  background: rgba(0, 0, 0, 0.22);
+  opacity: 0;
+  transition: opacity var(--mk-dur-2) var(--mk-ease-out);
+}
+
+.mk-ctx.is-closing {
+  opacity: 0;
+}
+
+@starting-style {
+  .mk-ctx { opacity: 0; }
+}
+
+/* 入场靠"从 origin 撑开"，不靠位移 —— 位移会让菜单读起来像
+   "从别处飞过来的"，而 iOS 的就是"从手指底下长出来"。 */
+.mk-ctx-menu {
+  position: absolute;
+  min-width: 196px;
+  max-width: min(260px, calc(100vw - 32px));
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(30, 36, 48, 0.92);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow:
+    0 18px 44px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 0.5px rgba(255, 255, 255, 0.14) inset;
+  transform-origin:
+    calc(var(--mk-ctx-ox, 0) * 100%)
+    calc(var(--mk-ctx-oy, 0) * 100%);
+  transform: scale(1);
+  opacity: 1;
+  transition:
+    transform var(--mk-dur-2) var(--mk-ease-snap),
+    opacity var(--mk-dur-1) linear;
+}
+
+@starting-style {
+  .mk-ctx-menu { transform: scale(0.86); opacity: 0; }
+}
+
+.mk-ctx.is-closing .mk-ctx-menu {
+  transform: scale(0.94);
+  opacity: 0;
+}
+
+.mk-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--fg, #eef2f7);
+  font: inherit;
+  font-size: 14.5px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mk-ctx-item i {
+  width: 18px;
+  flex: 0 0 18px;
+  font-style: normal;
+  font-size: 14px;
+  opacity: 0.75;
+  text-align: center;
+}
+
+.mk-ctx-item:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.7);
+  outline-offset: -2px;
+}
+
+.mk-ctx-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mk-ctx-item.is-danger { color: #ff8a8a; }
+
+/* 菜单项之间的分隔线：3 项以上才画，2 项的时候会显得被切开 */
+.mk-ctx-item + .mk-ctx-item.is-danger,
+.mk-ctx-item.is-danger + .mk-ctx-item {
+  position: relative;
+  margin-top: 5px;
+  padding-top: 15px;
+}
+
+.mk-ctx-item.is-danger::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: -3px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 减弱动效：缩放的"按下感"和菜单的撑开都换成纯淡入。
+   注意 stage 的 filter 也要一起压 —— 亮度变化本身也是动效。 */
+@media (prefers-reduced-motion: reduce) {
+  .mk-ctx-stage,
+  .mk-ctx-stage.is-ctx-open { transition-duration: 120ms; transform: none; filter: none; }
+  .mk-ctx-menu { transition-duration: 120ms; }
+  @starting-style { .mk-ctx-menu { transform: none; opacity: 0; } }
+  .mk-ctx.is-closing .mk-ctx-menu { transform: none; }
+}

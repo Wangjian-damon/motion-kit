@@ -1,0 +1,510 @@
+/* ============================================================
+   3d.css — 第三层：真的三维。
+
+   fun.css 是在平面上"模仿"动；这一层是把元素真的推到 Z 轴上。
+   区别在于：这里的视差是几何算出来的 —— 指针一倾斜，层与层之间
+   自动错开，不需要谁去手算偏移量。
+
+   契约和 fun.css 一样：装饰层，prefers-reduced-motion / .mk-lite 下整层关掉。
+   但关的方式不同 —— 这里不是 animation: none 就完事，因为 3D 元素
+   一旦停在半路（比如 rotateX(72deg) 的地板）就是一堆歪掉的方块。
+   所以降级一律是"归零"：transform: none，塌回平面，而不是冻在半空。
+   ============================================================ */
+
+:root {
+  /* 指针跟手的倾角上限。写在这里是为了让每个场景都能单独覆盖 */
+  --mk-3d-max: 14deg;
+  --mk-3d-rx: 0deg;
+  --mk-3d-ry: 0deg;
+  --mk-3d-persp: 900px;
+}
+
+/* ============================================================
+   01 · 景深卡片（mk-3d-depth）
+   舞台给透视，容器按指针转，里面每一层用 translateZ 站在不同深度。
+   转起来时，越靠前的层位移越大 —— 这就是"卡片有厚度"的来源。
+   ============================================================ */
+
+.mk-3d-scene {
+  perspective: var(--mk-3d-persp);
+  perspective-origin: 50% 50%;
+  display: grid;
+  place-items: center;
+}
+
+.mk-3d-depth {
+  position: relative;
+  transform-style: preserve-3d;
+  transform:
+    rotateX(var(--mk-3d-rx))
+    rotateY(var(--mk-3d-ry));
+  /* 跟手时不要过渡，松手回中才需要。JS 会切 .is-tracking 把过渡关掉 */
+  transition: transform var(--mk-dur-5) var(--mk-ease-out);
+}
+
+.mk-3d-depth.is-tracking { transition-duration: 60ms; }
+
+.mk-3d-layer {
+  transform: translateZ(var(--mk-z, 0px));
+  transform-style: preserve-3d;
+}
+
+/* ============================================================
+   02 · 环形轮播（mk-ring）
+   N 张卡绕 Y 轴排成一圈：第 i 张转 i*step 度再往外推 radius。
+   整体只转一个角度（--mk-ring-a），所以拖拽和自动旋转是同一个变量，
+   不会打架。
+   ============================================================ */
+
+.mk-ring-stage {
+  perspective: 1000px;
+  perspective-origin: 50% 46%;
+  display: grid;
+  place-items: center;
+}
+
+.mk-ring {
+  --mk-ring-step: 60deg;
+  --mk-ring-r: 150px;
+  --mk-ring-a: 0deg;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--mk-ring-a));
+  width: var(--mk-ring-w, 130px);
+  height: var(--mk-ring-h, 108px);
+}
+
+.mk-ring__item {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 255, 61, 0.26);
+  background: linear-gradient(160deg, rgba(184, 255, 61, 0.13), rgba(90, 160, 255, 0.09));
+  color: rgba(238, 242, 247, 0.9);
+  font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* 背面必须藏掉：不藏的话会看到镜像的字 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* 序号吃 var(--mk-i, ...)：ring() 写过就听它的，手写 DOM 就由 CSS 自己数。
+     sibling-index() 是 1 起，减 1 对齐 —— 和 motion.css 的 split 同一套约定。 */
+  transform:
+    rotateY(calc(var(--mk-i, calc(sibling-index() - 1)) * var(--mk-ring-step)))
+    translateZ(var(--mk-ring-r));
+}
+
+/* ============================================================
+   03 · 等距挤出文字（mk-3d-text）
+   十一层 text-shadow 沿同一个向量叠起来，就是一块"有厚度"的立体字。
+   阴影必须逐层手写 —— CSS 没有循环，这是它的代价，也是它便宜的地方：
+   零 DOM、零 JS、一张字就是一个块。
+   ============================================================ */
+
+.mk-3d-text {
+  --mk-3d-text-face: #eef2f7;
+  --mk-3d-text-side: #4f7a12;
+  color: var(--mk-3d-text-face);
+  letter-spacing: -0.03em;
+  text-shadow:
+    1px 1px 0 var(--mk-3d-text-side),
+    2px 2px 0 var(--mk-3d-text-side),
+    3px 3px 0 var(--mk-3d-text-side),
+    4px 4px 0 var(--mk-3d-text-side),
+    5px 5px 0 var(--mk-3d-text-side),
+    6px 6px 0 var(--mk-3d-text-side),
+    7px 7px 0 var(--mk-3d-text-side),
+    8px 8px 0 var(--mk-3d-text-side),
+    9px 9px 0 var(--mk-3d-text-side),
+    10px 10px 0 var(--mk-3d-text-side),
+    11px 11px 0 var(--mk-3d-text-side);
+  /* 挤出方向往右下，所以整体往左上让一点，视觉重心才在正中 */
+  transform: translate3d(-5px, -5px, 0);
+}
+
+/* 悬停时转向另一侧：阴影的向量翻个号就等于换了光源方向 */
+@media (hover: hover) {
+  .mk-3d-text {
+    transition: text-shadow var(--mk-dur-4) var(--mk-ease-out),
+                transform var(--mk-dur-4) var(--mk-ease-out);
+  }
+  .mk-3d-text:hover {
+    transform: translate3d(5px, 5px, 0);
+    text-shadow:
+      -1px -1px 0 var(--mk-3d-text-side),
+      -2px -2px 0 var(--mk-3d-text-side),
+      -3px -3px 0 var(--mk-3d-text-side),
+      -4px -4px 0 var(--mk-3d-text-side),
+      -5px -5px 0 var(--mk-3d-text-side),
+      -6px -6px 0 var(--mk-3d-text-side),
+      -7px -7px 0 var(--mk-3d-text-side),
+      -8px -8px 0 var(--mk-3d-text-side),
+      -9px -9px 0 var(--mk-3d-text-side),
+      -10px -10px 0 var(--mk-3d-text-side),
+      -11px -11px 0 var(--mk-3d-text-side);
+  }
+}
+
+/* ============================================================
+   04 · 无限隧道（mk-tunnel）
+   一圈圈同心的框，各自沿 Z 轴从远处飞向观众。错开靠负的 animation-delay，
+   不靠每个元素不同的 transform —— 后者一旦改周期就得全部重算。
+   ============================================================ */
+
+.mk-tunnel-stage {
+  position: relative;
+  perspective: 420px;
+  perspective-origin: 50% 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  /* 隧道没有边界，用径向渐隐收边，否则矩形裁切会露出方的边缘 */
+  mask-image: radial-gradient(circle at 50% 50%, #000 42%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 42%, transparent 78%);
+}
+
+.mk-tunnel {
+  position: relative;
+  transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
+}
+
+.mk-tunnel__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 210px;
+  height: 210px;
+  margin: -105px 0 0 -105px;
+  border-radius: 50%;
+  border: 1px solid rgba(184, 255, 61, 0.5);
+  box-shadow: 0 0 12px rgba(184, 255, 61, 0.22) inset;
+  animation: mk-tunnel-fly var(--mk-tunnel-dur, 3.6s) linear infinite;
+  /* 负延迟错相：第 k 个环比第 0 个"早出发" k 份。
+     tunnel() 写过 --mk-i 就用它；手写 DOM 由 sibling-index() 兜底。 */
+  animation-delay: calc(var(--mk-i, calc(sibling-index() - 1)) * var(--mk-tunnel-dur, 3.6s) / -10);
+}
+
+@keyframes mk-tunnel-fly {
+  0%   { transform: translateZ(-1000px); opacity: 0; }
+  18%  { opacity: 1; }
+  88%  { opacity: 0.9; }
+  100% { transform: translateZ(140px); opacity: 0; }
+}
+
+/* ============================================================
+   05 · 点阵球体（mk-sphere）
+   JS 按斐波那契格点算出均匀分布的经纬度，写成 --mk-lat / --mk-lon，
+   这里只负责摆位。整球匀速转 Y 轴 —— 球面本身不动，所以点不会散。
+   ============================================================ */
+
+.mk-sphere-stage {
+  perspective: 760px;
+  display: grid;
+  place-items: center;
+}
+
+.mk-sphere {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: mk-sphere-spin var(--mk-sphere-dur, 18s) linear infinite;
+}
+
+.mk-sphere__dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--mk-sphere-dot, 5px);
+  height: var(--mk-sphere-dot, 5px);
+  margin: calc(var(--mk-sphere-dot, 5px) / -2) 0 0 calc(var(--mk-sphere-dot, 5px) / -2);
+  border-radius: 50%;
+  background: rgba(184, 255, 61, 0.72);
+  /* 转的顺序不能换：先转经度、再转纬度、最后推出去，落点才在球面上 */
+  transform:
+    rotateY(calc(var(--mk-lon) * 1deg))
+    rotateX(calc(var(--mk-lat) * 1deg))
+    translateZ(var(--mk-sphere-r, 90px));
+}
+
+@keyframes mk-sphere-spin {
+  to { transform: rotateY(360deg); }
+}
+
+/* ============================================================
+   06 · 扇形卡组（mk-fan）
+   每张卡绕底边中点转，角度按"离中心多远"算，所以中间那张永远是正的。
+   悬停时把所有角度乘以一个系数，扇面自己张开 —— 不用逐张写 transform。
+   ============================================================ */
+
+.mk-fan {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 130px;
+  --mk-fan-spread: 1;
+}
+
+.mk-fan__card {
+  position: absolute;
+  width: 88px;
+  height: 116px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #12161d;
+  display: grid;
+  place-items: center;
+  font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted);
+  transform-origin: 50% 118%;
+  /* 相对中心的序号。两处都要用（一次是角度、一次要平方），所以表达式写两遍 ——
+     别想着存进自定义属性：未登记的 --x 会把 sibling-index() 原样存成字符串，
+     下游 var() 拿到文本而不是数，整条 transform 直接作废。要存就得 @property
+     登记成 <number>，那又多一条与主流程不同的兼容假设。 */
+  transform:
+    rotate(calc(var(--mk-i, calc(sibling-index() - (sibling-count() + 1) / 2)) * 1deg * var(--mk-fan-spread)))
+    translateY(calc(
+      (var(--mk-i, calc(sibling-index() - (sibling-count() + 1) / 2)) *
+       var(--mk-i, calc(sibling-index() - (sibling-count() + 1) / 2))) * 1.1px
+    ));
+  transition: transform var(--mk-dur-5) var(--mk-ease-snap);
+}
+
+@media (hover: hover) {
+  .mk-fan:hover { --mk-fan-spread: 2.1; }
+}
+
+/* ============================================================
+   07 · 轨道卫星（mk-orbit）
+   卫星绕中心转。反向再转一次是为了让卫星自己保持正对观众 ——
+   少了这一步，卫星会跟着公转一起倒转。
+   ============================================================ */
+
+.mk-orbit-stage {
+  perspective: 700px;
+  display: grid;
+  place-items: center;
+}
+
+.mk-orbit {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: mk-orbit-spin var(--mk-orbit-dur, 14s) linear infinite;
+}
+
+.mk-orbit__sat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2.4em;
+  height: 2.4em;
+  margin: -1.2em 0 0 -1.2em;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  border: 1px solid rgba(90, 160, 255, 0.5);
+  background: rgba(90, 160, 255, 0.12);
+  color: #a9c9ff;
+  /* 均分 360°。兜底值减 2 而不是减 1 —— 实测：.mk-orbit__core 也是兄弟节点，
+     占掉第一个槽位，所以卫星的 sibling-index() 从 2 起。
+     外层转 + 内层反转是同一件事，两处必须取同一个序号，都写同一段兜底值。
+     如果调用方要自己控角度，写 --mk-i 仍然赢。 */
+  transform:
+    rotateY(calc(var(--mk-i, calc(sibling-index() - 2)) * 120deg))
+    translateZ(var(--mk-orbit-r, 86px))
+    rotateY(calc(var(--mk-i, calc(sibling-index() - 2)) * -120deg));
+}
+
+/* 中心那颗不动。用反方向同周期的动画把它"顶"在原地 */
+.mk-orbit__core {
+  position: absolute;
+  left: 0; top: 0;
+  width: 3.2em; height: 3.2em;
+  margin: -1.6em 0 0 -1.6em;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 12px;
+  border: 1px solid rgba(184, 255, 61, 0.4);
+  background: rgba(184, 255, 61, 0.1);
+  color: var(--accent);
+}
+
+@keyframes mk-orbit-spin {
+  to { transform: rotateY(360deg); }
+}
+
+/* ============================================================
+   08 · 跟手立方体（mk-cube--manual）
+   复用 fun.css 里的六面立方体，只把自动旋转换成"跟着指针"。
+   基础俯角 -18deg 保留，指针只在这个基准上加减 ——
+   从正上方俯视立方体是什么都看不见的，必须有基准角。
+   ============================================================ */
+
+.mk-cube--manual {
+  animation: none;
+  transform:
+    rotateX(calc(-18deg + var(--mk-3d-rx)))
+    rotateY(var(--mk-3d-ry));
+  transition: transform var(--mk-dur-3) var(--mk-ease-out);
+}
+
+.mk-cube--manual.is-tracking { transition-duration: 60ms; }
+
+/* ============================================================
+   09 · 折纸面板（mk-fold）
+   面板的 transform-origin 在顶边，收起时绕 X 轴往里折 92 度 ——
+   比 max-height 那种"抽拉"更像一张纸被折起来。
+   ============================================================ */
+
+.mk-fold {
+  transform-style: preserve-3d;
+  perspective: 900px;
+}
+
+.mk-fold__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mk-fold__chev {
+  transition: transform var(--mk-dur-3) var(--mk-ease-out);
+  color: var(--muted);
+}
+
+.mk-fold.is-open .mk-fold__chev { transform: rotate(180deg); }
+
+.mk-fold__panel {
+  transform-origin: 50% 0%;
+  transform: rotateX(-92deg);
+  opacity: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition:
+    transform var(--mk-dur-5) var(--mk-ease-out),
+    opacity var(--mk-dur-3) var(--mk-ease-out);
+}
+
+.mk-fold.is-open .mk-fold__panel {
+  transform: rotateX(0deg);
+  opacity: 1;
+}
+
+/* ============================================================
+   10 · 透视网格地面（mk-grid-floor）
+   一块被 rotateX 压到地上的方格纸，格子自己往观众这边走。
+   动的是内部伪元素的 translateY（合成层），不是 background-position ——
+   后者每帧都要重绘这块被旋转过的区域，在低端机上立刻掉帧。
+   ============================================================ */
+
+.mk-grid-floor-stage {
+  position: relative;
+  perspective: 380px;
+  perspective-origin: 50% 24%;
+  overflow: hidden;
+  --mk-grid-line: rgba(184, 255, 61, 0.26);
+  --mk-grid-size: 42px;
+}
+
+.mk-grid-floor {
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  bottom: -18%;
+  height: 190%;
+  transform: rotateX(74deg);
+  transform-origin: 50% 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(to top, #000 6%, rgba(0, 0, 0, 0.45) 42%, transparent 74%);
+  -webkit-mask-image: linear-gradient(to top, #000 6%, rgba(0, 0, 0, 0.45) 42%, transparent 74%);
+}
+
+.mk-grid-floor::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--mk-grid-size) * -1) 0 0 0;
+  background-image:
+    linear-gradient(var(--mk-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mk-grid-line) 1px, transparent 1px);
+  background-size: var(--mk-grid-size) var(--mk-grid-size);
+  animation: mk-grid-run var(--mk-grid-dur, 1.5s) linear infinite;
+  will-change: transform;
+}
+
+@keyframes mk-grid-run {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, var(--mk-grid-size), 0); }
+}
+
+/* ============================================================
+   降级：装饰层，两种情况下整层归零。
+   注意这里是"归零"而不是"停住" —— 让一块 74 度的地面停在半空，
+   比不动更难看。
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-3d-depth,
+  .mk-cube--manual {
+    transform: none;
+    transition: none;
+  }
+  .mk-ring,
+  .mk-sphere,
+  .mk-orbit {
+    animation: none;
+    transform: none;
+  }
+  .mk-ring__item {
+    /* 圈散了就排列，否则所有卡叠在同一个位置 */
+    transform: none;
+    backface-visibility: visible;
+  }
+  .mk-ring {
+    display: flex;
+    gap: 8px;
+    width: auto;
+    height: auto;
+  }
+  .mk-ring__item { position: static; }
+  .mk-tunnel__ring,
+  .mk-grid-floor::before {
+    animation: none;
+  }
+  .mk-tunnel__ring { opacity: 0.35; }
+  .mk-sphere__dot,
+  .mk-orbit__sat { transform: none; }
+  .mk-sphere,
+  .mk-orbit { display: flex; flex-wrap: wrap; gap: 6px; width: auto; }
+  .mk-sphere__dot,
+  .mk-orbit__sat,
+  .mk-orbit__core { position: static; margin: 0; }
+  .mk-fan,
+  .mk-fan:hover { --mk-fan-spread: 1; }
+  .mk-fan__card { transform: none; }
+  .mk-fan { display: flex; gap: 8px; height: auto; }
+  .mk-fan__card { position: static; }
+}
+
+/* 低端机：只留结构，不留运动。层还在（不会塌），只是不动 */
+.mk-lite .mk-ring,
+.mk-lite .mk-sphere,
+.mk-lite .mk-orbit,
+.mk-lite .mk-tunnel__ring,
+.mk-lite .mk-grid-floor::before {
+  animation: none;
+}
+
+.mk-lite .mk-3d-depth,
+.mk-lite .mk-cube--manual {
+  transform: none;
+  transition: none;
+}

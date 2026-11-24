@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Motion Kit · 选择展示面</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237dd3fc'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../styles/motion.css" />
+<link rel="stylesheet" href="./demo.css" />
+<style>
+  body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 40px 24px;
+    background:
+      radial-gradient(900px 500px at 78% -8%, rgba(184, 255, 61, 0.10), transparent 60%),
+      radial-gradient(700px 420px at 8% 12%, rgba(80, 140, 255, 0.10), transparent 62%),
+      var(--bg);
+  }
+
+  .gate { width: min(920px, 100%); }
+
+  .gate h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    font-weight: 650;
+    margin: 0 0 14px;
+  }
+  .gate h1 em { font-style: normal; color: var(--accent); }
+
+  .gate > p { color: var(--muted); max-width: 52ch; margin: 0 0 40px; }
+
+  .faces { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 700px) { .faces { grid-template-columns: 1fr; } }
+
+  .face {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--card);
+    padding: 26px;
+    transition: border-color var(--mk-dur-2) var(--mk-ease-out),
+                transform var(--mk-dur-2) var(--mk-ease-out);
+  }
+  @media (hover: hover) { .face:hover { border-color: rgba(255,255,255,0.22); } }
+
+  .face-kicker {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px; display: block;
+  }
+  .face h2 { font-size: 21px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .face p { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+  .face-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .face-tags span {
+    font-size: 11.5px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted);
+  }
+
+  /* 第三、四张不是第三种"面"，是两层：不分指针，只负责好玩和立体。
+     横跨两栏、各用一种强调色，就是为了让人一眼看出它们不是二选一里的一个。 */
+  .face--stack {
+    grid-column: 1 / -1;
+    --tone: 255, 120, 220;
+    border-color: rgba(var(--tone), 0.22);
+    background:
+      radial-gradient(560px 180px at 10% 0%, rgba(var(--tone), 0.10), transparent 70%),
+      var(--card);
+  }
+  @media (hover: hover) { .face--stack:hover { border-color: rgba(var(--tone), 0.46); } }
+  .face--stack .face-kicker { color: rgb(var(--tone)); }
+  .face--stack .face-tags span { border-color: rgba(var(--tone), 0.24); }
+  .face--fun { --tone: 255, 120, 220; }
+  .face--3d { --tone: 110, 168, 255; }
+
+  .foot { margin-top: 34px; font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="gate">
+  <h1>两种展示形式，<br />两套动效词汇，<em>外加两层好玩。</em></h1>
+  <p>
+    指针和手指不是一回事。Web 端有悬停、有光斑、有磁吸；移动端只有按下去的那一下、
+    拖拽的跟手、和一块必须省电的电池。共用 token，但词汇分开。
+    再往上还有两层：一层在平面上表演，一层真的把元素推到 Z 轴上。
+  </p>
+
+  <div class="faces">
+    <a class="face" href="./web.html">
+      <span class="face-kicker">Desktop · pointer: fine</span>
+      <h2>Web 端</h2>
+      <p>
+        宽幅栅格、多处并置。悬停是主交互，所以倾斜、光斑、磁吸、组内变暗都在这里。
+        编排间隔 70ms，位移 16/32px，让信息在宽屏上"一片片"到位。
+      </p>
+      <div class="face-tags">
+        <span>倾斜与光斑</span><span>磁吸</span><span>视差</span><span>跑马灯</span><span>极光</span>
+      </div>
+    </a>
+
+    <a class="face" href="./mobile.html">
+      <span class="face-kicker">Mobile · pointer: coarse</span>
+      <h2>移动端</h2>
+      <p>
+        单列、全宽、拇指区优先。没有悬停，所以一切反馈都发生在按下那一刻：
+        深按压、长按、底部弹层拖拽、左滑、下拉刷新。位移收到 12px，编排收到 45ms。
+      </p>
+      <div class="face-tags">
+        <span>按下即反馈</span><span>底部弹层</span><span>左滑</span><span>下拉刷新</span><span>省电降级</span>
+      </div>
+    </a>
+
+    <a class="face face--stack face--fun" href="./fun.html">
+      <span class="face-kicker">Playground · 不承载信息</span>
+      <h2>好玩的</h2>
+      <p>
+        十六个纯装饰效果：故障字、霓虹、描边填充、逐字弹跳、摇摆、抖动、脉冲、变形、
+        扫描线、跑动边框、3D 立方、堆叠卡、漂浮、撒花、磁性点阵、光标跟随。
+        可以慢放到 0.1 倍速，看清每一帧；也可以整页暂停、单卡重播。
+      </p>
+      <div class="face-tags">
+        <span>16 个可交互卡片</span><span>1× / 0.5× / 0.25× / 0.1× 慢放</span>
+        <span>全局暂停</span><span>单卡重播</span><span>无依赖 · 纯 CSS + WAAPI</span>
+      </div>
+    </a>
+
+    <a class="face face--stack face--3d" href="./3d.html">
+      <span class="face-kicker">Depth · 真的有 Z 轴</span>
+      <h2>3D</h2>
+      <p>
+        十个真三维场景：景深卡片按指针倾斜，层与层自己错开；环形轮播可拖拽甩动；
+        无限隧道、点阵球体、扇形卡组、轨道卫星、跟手立方体、折纸面板、透视网格地面。
+        这一层降级的方式不是"停住"，而是"归零"——塌回平面，不留一堆歪掉的方块。
+      </p>
+      <div class="face-tags">
+        <span>10 个三维场景</span><span>透视算视差</span><span>斐波那契球面</span>
+        <span>拖拽惯性</span><span>归零降级</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="foot">
+    原地跳转：<a href="./web.html" style="color:var(--accent)">web.html</a> ·
+    <a href="./mobile.html" style="color:var(--accent)">mobile.html</a> ·
+    <a href="./fun.html" style="color:#ff78dc">fun.html</a> ·
+    <a href="./3d.html" style="color:#6ea8ff">3d.html</a>
+    &nbsp;·&nbsp; 移动端页在桌面上会给一个 390×844 的设备框，真机上就是全屏。
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Motion Kit · Web 端</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237dd3fc'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../styles/motion.css" />
+<style>
+  /* ---------------- 页面基础 ---------------- */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg: #07090d;
+    --bg-2: #0c1017;
+    --line: rgba(255, 255, 255, 0.08);
+    --fg: #eef2f7;
+    --muted: #8b95a5;
+    --accent: #b8ff3d;
+    --accent-dim: rgba(184, 255, 61, 0.12);
+    --card: rgba(255, 255, 255, 0.028);
+    --radius: 18px;
+  }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(900px 500px at 78% -8%, rgba(184, 255, 61, 0.10), transparent 60%),
+      radial-gradient(700px 420px at 8% 12%, rgba(80, 140, 255, 0.10), transparent 62%),
+      var(--bg);
+    color: var(--fg);
+    font: 400 16px/1.62 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .wrap { width: min(1080px, calc(100% - 48px)); margin: 0 auto; }
+  @media (max-width: 600px) { .wrap { width: calc(100% - 36px); } }
+
+  section { padding: 104px 0; }
+  @media (max-width: 700px) { section { padding: 68px 0; } }
+
+  h2 {
+    font-size: clamp(24px, 3.4vw, 34px);
+    letter-spacing: -0.02em;
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: ''; width: 22px; height: 1px; background: currentColor; opacity: 0.6;
+  }
+
+  .lede { color: var(--muted); max-width: 58ch; margin: 0 0 44px; }
+
+  /* ---------------- 顶栏 ---------------- */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    background: rgba(7, 9, 13, 0.66);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+  .top nav { display: flex; gap: 26px; font-size: 14px; }
+  .top nav a { color: var(--muted); text-decoration: none; transition: color var(--mk-dur-2) var(--mk-ease-out); }
+  .top nav a:hover { color: var(--fg); }
+  .top nav a.nav-fun { color: #ff78dc; }
+  .top nav a.nav-fun:hover { color: #ffb0ea; }
+  .top nav a.nav-3d { color: #6ea8ff; }
+  .top nav a.nav-3d:hover { color: #a7caff; }
+  @media (max-width: 640px) { .top nav { display: none; } }
+
+  /* ---------------- Hero ---------------- */
+  .hero { padding: clamp(72px, 12vw, 148px) 0 96px; }
+  .hero-title {
+    font-size: clamp(40px, 8.2vw, 86px);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    font-weight: 600;
+    margin: 0 0 26px;
+  }
+  .hero-title em { font-style: normal; color: var(--accent); }
+  .hero-sub { color: var(--muted); font-size: clamp(15px, 1.9vw, 18px); max-width: 46ch; margin: 0 0 38px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+  .btn {
+    appearance: none; border: 0; cursor: pointer;
+    font: inherit; font-weight: 550;
+    padding: 13px 24px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--fg); color: #07090d;
+    text-decoration: none;
+  }
+  .btn--ghost {
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--line);
+  }
+  .btn--ghost:hover { border-color: rgba(255,255,255,0.22); }
+  .btn .arrow { transition: transform var(--mk-dur-2) var(--mk-ease-out); }
+  @media (hover: hover) { .btn:hover .arrow { transform: translateX(3px); } }
+
+  /* ---------------- 能力卡（stagger） ---------------- */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card-icon {
+    width: 34px; height: 34px; border-radius: 10px; margin-bottom: 16px;
+    display: grid; place-items: center;
+    background: var(--accent-dim); color: var(--accent);
+    font-size: 15px; font-weight: 700;
+  }
+
+  /* ---------------- 全息卡 ---------------- */
+  .holo-wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+  @media (max-width: 860px) { .holo-wrap { grid-template-columns: 1fr; gap: 36px; } }
+
+  .holo {
+    aspect-ratio: 1.6 / 1;
+    width: min(100%, 460px);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background:
+      radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(150deg, #12203a 0%, #0b1220 46%, #101a12 100%);
+    box-shadow: 0 30px 70px -30px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.14);
+    padding: 26px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+  }
+  /* 边缘彩虹：全息感的来源，不用贴图 */
+  .holo::before {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 210deg,
+      rgba(184,255,61,0.0), rgba(184,255,61,0.55), rgba(90,160,255,0.55),
+      rgba(255,120,220,0.45), rgba(184,255,61,0.0));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .holo-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
+  .holo-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+  .holo-name { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px; }
+  .holo-mid {
+    position: relative; z-index: 1;
+    font-size: 13px; color: rgba(255,255,255,0.62); letter-spacing: 0.06em;
+  }
+  .holo-bottom { display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
+  .holo-chip {
+    font-size: 11px; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.75);
+  }
+  .holo-mark { font-size: 34px; font-weight: 700; color: var(--accent); letter-spacing: -0.04em; }
+
+  .holo-notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+  .holo-notes li {
+    display: grid; grid-template-columns: 22px 1fr; gap: 12px;
+    color: var(--muted); font-size: 14.5px;
+  }
+  .holo-notes b { color: var(--fg); font-weight: 550; display: block; margin-bottom: 2px; }
+  .holo-notes .n {
+    width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+    font-size: 11px; color: var(--accent); background: var(--accent-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- 数字 ---------------- */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border-radius: 16px; overflow: hidden; }
+  @media (max-width: 720px) { .stats { grid-template-columns: 1fr 1fr; } }
+  .stat { background: var(--bg-2); padding: 28px 22px; }
+  .stat-v { font-size: clamp(28px, 4vw, 40px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+  .stat-v span.u { font-size: 0.5em; color: var(--muted); margin-left: 3px; }
+  .stat-k { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+  /* ---------------- 表单 ---------------- */
+  .form-demo {
+    background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 30px;
+    max-width: 520px;
+  }
+  @media (max-width: 560px) { .form-demo { padding: 22px; border-radius: 18px; } }
+
+  .field { position: relative; margin-bottom: 20px; }
+  .field label {
+    display: block; font-size: 12.5px; color: var(--muted);
+    margin-bottom: 8px; letter-spacing: 0.02em;
+    transition: color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  .field:focus-within label { color: var(--accent); }
+  .field input, .field textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 14px;
+    color: var(--fg);
+    font: inherit; font-size: 15px;
+    outline: none;
+    transition:
+      border-color var(--mk-dur-2) var(--mk-ease-out),
+      background-color var(--mk-dur-2) var(--mk-ease-out),
+      transform var(--mk-dur-2) var(--mk-ease-out);
+  }
+  .field input::placeholder, .field textarea::placeholder { color: #5c6675; }
+  .field input:focus, .field textarea:focus {
+    border-color: rgba(184,255,61,0.45);
+    background: rgba(184,255,61,0.04);
+  }
+  /* 焦点下划线：只用 transform 动，不触发重排 */
+  .field::after {
+    content: '';
+    position: absolute; left: 1px; right: 1px; bottom: 1px; height: 1px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: 0 50%;
+    transition: transform var(--mk-dur-3) var(--mk-ease-out);
+    border-radius: 1px;
+  }
+  .field:focus-within::after { transform: scaleX(1); }
+
+  .form-row { display: flex; gap: 12px; align-items: center; }
+  .form-hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .form-hint.ok { color: var(--accent); }
+
+  /* 开关：滑块用 transform 移动 */
+  .switch {
+    width: 46px; height: 27px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(255,255,255,0.06); position: relative; cursor: pointer;
+    transition: background-color var(--mk-dur-2) var(--mk-ease-out);
+    flex: none;
+  }
+  .switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 19px; height: 19px; border-radius: 50%; background: #cfd6e0;
+    transition: transform var(--mk-dur-3) var(--mk-ease-snap), background-color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  .switch.on { background: rgba(184,255,61,0.22); border-color: rgba(184,255,61,0.4); }
+  .switch.on::after { transform: translateX(19px); background: var(--accent); }
+
+  /* 校验错误：抖动不用 keyframes，用两次位移更省事 */
+  .field.error input { border-color: rgba(255,90,90,0.6); }
+  .field.error .err { opacity: 1; transform: translateY(0); }
+  .err {
+    color: #ff7a7a; font-size: 12.5px; margin-top: 7px;
+    opacity: 0; transform: translateY(-3px);
+    transition: opacity var(--mk-dur-2) var(--mk-ease-out), transform var(--mk-dur-2) var(--mk-ease-out);
+  }
+
+  /* ---------------- 弹层 ---------------- */
+  .pop-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .popover {
+    margin-top: 18px;
+    background: #111823;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    max-width: 380px;
+    box-shadow: 0 24px 50px -24px rgba(0,0,0,0.9);
+  }
+  .popover h4 { margin: 0 0 6px; font-size: 14px; }
+  .popover p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  /* ---------------- 页脚 ---------------- */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 40px 0 60px;
+    color: var(--muted); font-size: 13px;
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--fg); }
+
+  /* 代码标注 */
+  .tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 7px; border-radius: 5px;
+  }
+  .note {
+    font-size: 13px; color: var(--muted); margin-top: 16px;
+    padding-left: 14px; border-left: 2px solid var(--line);
+  }
+
+  /* ============ 新增：铺开类 ============ */
+  .marquee-row { display: grid; gap: 12px; margin-bottom: 34px; }
+  .mq-pill {
+    display: inline-flex; align-items: center; gap: 8px; flex: none;
+    padding: 9px 16px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card);
+    font-size: 13.5px; color: var(--fg); white-space: nowrap;
+  }
+  .mq-pill span { color: var(--accent); font-size: 11px; letter-spacing: .08em; }
+
+  .split-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .split-2 { grid-template-columns: 1fr; } }
+
+  .showcase {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--card); padding: 22px; min-height: 168px;
+    display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  }
+  .showcase h4 { margin: 0; font-size: 15px; font-weight: 600; }
+  .showcase p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  .grad-demo {
+    font-size: clamp(26px, 4.4vw, 42px);
+    font-weight: 650; letter-spacing: -0.03em; line-height: 1.15;
+    margin: 0;
+  }
+
+  .aurora-demo {
+    border-radius: var(--radius); border: 1px solid var(--line);
+    padding: 46px 26px; text-align: center;
+  }
+  .aurora-demo h3 { margin: 0 0 8px; font-size: 22px; }
+  .aurora-demo p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .skeleton { display: grid; gap: 9px; }
+  .sk-line { height: 11px; border-radius: 6px; }
+  .sk-line.w60 { width: 60%; }
+
+  /* ============ 新增：平面补遗 ============ */
+  .dock-demo {
+    /* 容器必须和图标一样宽：宽出来那一圈空白也算「在 dock 里」，
+       指针停在那儿所有图标都归零，看起来像坏了。 */
+    width: fit-content;
+    margin: 0 auto;
+    padding: 18px 14px 10px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+  }
+  .dock-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; gap: 1px;
+    background: linear-gradient(160deg, #18202e, #0d131c);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 10px 24px -14px #000;
+    cursor: default;
+  }
+  .dock-icon span { font-size: 19px; line-height: 1; }
+  .dock-icon small { font-size: 9px; color: var(--muted); letter-spacing: .02em; }
+
+  .scramble-stage {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(17px, 2.2vw, 21px);
+    font-weight: 600; letter-spacing: -0.01em;
+    color: var(--accent);
+    min-height: 1.4em;
+  }
+
+  .stack-demo { max-height: 330px; overflow-y: auto; padding: 8px 4px 60px; }
+  .stack-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 22px; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: linear-gradient(160deg, #131a26, #0b1017);
+  }
+  .stack-card b { display: block; font-size: 15px; font-weight: 600; }
+  .stack-card small { color: var(--muted); font-size: 12.5px; }
+  .stack-n {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px; color: var(--accent); opacity: .8;
+  }
+
+  /* ============ 新增：揭示类 ============ */
+  .parallax-stage {
+    position: relative; height: 320px; border-radius: var(--radius);
+    border: 1px solid var(--line); overflow: hidden;
+    display: grid; place-items: center;
+    background: radial-gradient(600px 260px at 50% 0%, rgba(90,160,255,0.10), transparent 70%);
+  }
+  .pl-layer {
+    position: absolute; inset: 0; display: grid; place-items: center;
+  }
+  .pl-card {
+    width: 190px; padding: 18px; border-radius: 14px; text-align: center;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: linear-gradient(160deg, #14213a, #0b1220);
+    box-shadow: 0 30px 60px -30px #000;
+  }
+  .pl-card b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .pl-card i { font-style: normal; font-size: 11.5px; color: var(--muted); letter-spacing: .06em; }
+  .pl-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 20px 4px rgba(184,255,61,0.4);
+  }
+
+  .wipe-img {
+    height: 140px; border-radius: 14px; display: grid; place-items: center;
+    font-size: 13px; letter-spacing: .1em; color: #07090d; font-weight: 650;
+    background: linear-gradient(120deg, var(--accent), #7ce0a0 55%, #5aa0ff);
+  }
+
+  .draw-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .draw-wrap svg { overflow: visible; }
+  .draw-wrap svg path, .draw-wrap svg circle {
+    fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round;
+  }
+
+  .split-demo {
+    font-size: clamp(22px, 3.2vw, 30px); font-weight: 600;
+    letter-spacing: -0.02em; margin: 0; line-height: 1.3;
+  }
+
+  .blur-demo {
+    height: 130px; border-radius: 14px; display: grid; place-items: center;
+    font-size: 15px; font-weight: 600;
+    background: linear-gradient(140deg, rgba(184,255,61,0.16), rgba(90,160,255,0.14));
+    border: 1px solid rgba(184,255,61,0.28);
+  }
+  .blur-demo span { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+
+  /* ============ 新增：反馈类 ============ */
+  .btn--accent { background: var(--accent); color: #07090d; }
+
+  .flip-card { height: 150px; border-radius: 14px; }
+  .flip-card .mk-flip__face {
+    height: 150px; border-radius: 14px; padding: 20px;
+    display: flex; flex-direction: column; justify-content: center; gap: 6px;
+    border: 1px solid var(--line);
+  }
+  .flip-card .mk-flip__face--front { background: var(--card); }
+  .flip-card .mk-flip__face--back {
+    background: linear-gradient(150deg, rgba(184,255,61,0.16), rgba(90,160,255,0.12));
+    border-color: rgba(184,255,61,0.3);
+  }
+  .flip-card b { font-size: 15px; }
+  .flip-card small { font-size: 12.5px; color: var(--muted); }
+
+  .group-demo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 560px) { .group-demo { grid-template-columns: 1fr; } }
+  .group-demo .card { padding: 18px; }
+  .group-demo .card h3 { font-size: 14px; }
+
+  .spot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 700px) { .spot-grid { grid-template-columns: 1fr; } }
+  .spot-card {
+    padding: 22px 18px; border-radius: 14px; border: 1px solid var(--line);
+    background: var(--bg-2); min-height: 132px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .spot-card b { font-size: 14.5px; }
+  .spot-card small { color: var(--muted); font-size: 12.5px; }
+
+  .toast-demo {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-radius: 999px;
+    background: #111823; border: 1px solid rgba(255,255,255,0.14);
+    font-size: 13.5px; box-shadow: 0 20px 40px -20px #000;
+  }
+  .toast-demo i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); font-style: normal; }
+
+</style>
+</head>
+<body>
+
+<!-- 顶部进度条 -->
+<div id="progress-bar" v-mk-progress style="color:var(--accent)"></div>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand"><span class="brand-dot"></span> Motion Kit</div>
+    <nav>
+      <a href="#capability">能力</a>
+      <a href="#holo">全息卡</a>
+      <a href="#number">数字</a>
+      <a href="#form">表单</a>
+      <a href="./fun.html" class="nav-fun">好玩的</a>
+      <a href="./3d.html" class="nav-3d">3D</a>
+      <a href="./mobile.html">移动端</a>
+    </nav>
+    <a class="btn btn--ghost mk-press" href="./mobile.html" style="padding:9px 18px;font-size:14px">移动端 →</a>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ Hero ============ -->
+  <div class="wrap hero">
+    <div class="eyebrow">motion kit · 跨三端</div>
+    <h1 class="hero-title">
+      <span class="mk-reveal-line"><span>让界面</span></span>
+      <span class="mk-reveal-line"><span>动得<em>有分寸</em>。</span></span>
+    </h1>
+    <p class="hero-sub" v-mk-enter="{ delay: 220 }">
+      一套 token + 原语，Web、营销页、Taro 小程序共用。没有重依赖，没有逐帧 setData，
+      所有动画都跑在合成器上。
+    </p>
+    <div class="hero-cta" v-mk-enter="{ delay: 340 }">
+      <a class="btn mk-press" href="#capability" v-mk-magnetic>看看效果 <span class="arrow">→</span></a>
+      <a class="btn btn--ghost mk-press" href="#form">表单演示</a>
+    </div>
+  </div>
+
+  <!-- ============ 能力（stagger） ============ -->
+  <section id="capability">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>01 / 原语</div>
+      <h2 v-mk-enter>六种状态，覆盖 90% 的场景</h2>
+      <p class="lede" v-mk-enter>
+        入场、悬停、按压、聚焦、滚动、转场。每一种都只用一个 CSS 变量驱动，
+        这意味着改一处数字，全站手感同步变化。
+      </p>
+      <div class="grid-3">
+        <article class="card mk-lift" v-for="(c, i) in caps" :key="c.t" v-mk-enter="{ delay: i * 70 }">
+          <div class="card-icon">{{ c.n }}</div>
+          <h3>{{ c.t }}</h3>
+          <p>{{ c.d }}</p>
+        </article>
+      </div>
+      <p class="note">
+        卡片入场用 <span class="tag">v-mk-enter="{ delay: i * 70 }"</span>，
+        延迟按索引递增但封顶 600ms —— 长列表尾部不会等太久。
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 全息卡 ============ -->
+  <section id="holo">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>02 / 指针驱动</div>
+      <h2 v-mk-enter>3D 倾斜与光斑跟随</h2>
+      <p class="lede" v-mk-enter>
+        指针位置写进 CSS 变量，transform 由样式表组装。触屏设备自动关闭，
+        不会留下「点完还在倾斜」的脏状态。
+      </p>
+
+      <div class="holo-wrap">
+        <div class="holo mk-tilt" v-mk-tilt="{ max: 9 }">
+          <div class="holo-top">
+            <div>
+              <div class="holo-label">Identity</div>
+              <div class="holo-name">你的名字</div>
+            </div>
+            <div class="holo-mark">MK</div>
+          </div>
+          <div class="holo-mid">FRONT-END · MOTION · 2026</div>
+          <div class="holo-bottom">
+            <div class="holo-chip">No.0042</div>
+            <div class="holo-chip">EST. 2019</div>
+          </div>
+        </div>
+
+        <ul class="holo-notes">
+          <li v-mk-enter="{ delay: 60 }">
+            <span class="n">1</span>
+            <span><b>CSS 变量解耦</b>组件自己的 transform 不会被 JS 覆盖，两者可以叠加。</span>
+          </li>
+          <li v-mk-enter="{ delay: 130 }">
+            <span class="n">2</span>
+            <span><b>每帧插值 22%</b>比直接赋值顺滑，比引入弹簧库便宜，回中路径也自然。</span>
+          </li>
+          <li v-mk-enter="{ delay: 200 }">
+            <span class="n">3</span>
+            <span><b>光泽层是伪元素</b>径向渐变跟随指针，不额外加 DOM 节点。</span>
+          </li>
+          <li v-mk-enter="{ delay: 270 }">
+            <span class="n">4</span>
+            <span><b>粗指针直接跳过</b>用 <span class="tag">(hover: none)</span> 判断，省掉移动端无效计算。</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数字 ============ -->
+  <section id="number">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>03 / 数字</div>
+      <h2 v-mk-enter>滚动到位才开始计数</h2>
+      <p class="lede" v-mk-enter>等宽数字 + ease-out，避免视觉跳动，也让「停下来」这件事显得自然。</p>
+      <div class="stats" v-mk-enter>
+        <div class="stat">
+          <div class="stat-v"><span v-mk-count="{ to: 128, duration: 1100 }"></span><span class="u">个</span></div>
+          <div class="stat-k">组件覆盖</div>
+        </div>
+        <div class="stat">
+          <div class="stat-v"><span v-mk-count="{ to: 99.2, decimals: 1, duration: 1400 }"></span><span class="u">%</span></div>
+          <div class="stat-k">首屏无阻塞</div>
+        </div>
+        <div class="stat">
+          <div class="stat-v"><span v-mk-count="{ to: 60, duration: 900 }"></span><span class="u">fps</span></div>
+          <div class="stat-k">中端安卓实测</div>
+        </div>
+        <div class="stat">
+          <div class="stat-v"><span v-mk-count="{ to: 3, duration: 700 }"></span><span class="u">端</span></div>
+          <div class="stat-k">Web / Taro / 小程序</div>
+        </div>
+      </div>
+      <p class="note">
+        小程序上不能每帧 setData。适配层用 60ms 节流，肉眼无差别，调用次数降一个数量级。
+      </p>
+
+      <div class="showcase" style="margin-top:16px">
+        <h4>里程表（odometer）</h4>
+        <p>不逐帧重绘文本，只给每位数设一次 <span class="tag">translateY</span>，滑动交给 CSS。</p>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px">
+          <div class="stat-v" style="display:flex;align-items:baseline">
+            <span v-mk-count="{ to: odoValue, odometer: true }"></span>
+            <span class="u">次</span>
+          </div>
+          <button class="btn btn--ghost mk-press" @click="rollOdometer">换一个数字</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 表单 ============ -->
+  <section id="form">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>04 / 表单</div>
+      <h2 v-mk-enter>表单的手感，全在这些 200ms 里</h2>
+      <p class="lede" v-mk-enter>
+        焦点、错误、开关、提交。每一条都控制在 200ms 内，只在输入真正出错时才放大反馈。
+      </p>
+
+      <div class="form-demo" v-mk-enter="{ variant: 'scale' }">
+        <div class="field" :class="{ error: errors.name }">
+          <label>姓名</label>
+          <input v-model="form.name" placeholder="请输入" @blur="validateName" />
+          <div class="err">{{ errors.name }}</div>
+        </div>
+
+        <div class="field">
+          <label>邮箱</label>
+          <input v-model="form.email" placeholder="you@example.com" inputmode="email" />
+        </div>
+
+        <div class="field">
+          <label>留言</label>
+          <textarea v-model="form.msg" rows="3" placeholder="随便写点什么…"></textarea>
+        </div>
+
+        <div class="form-row" style="margin-bottom:22px">
+          <div class="switch" :class="{ on: form.subscribe }" @click="form.subscribe = !form.subscribe"></div>
+          <p class="form-hint">接收更新（点击开关）</p>
+        </div>
+
+        <div class="form-row">
+          <button class="btn mk-press" @click="submit" :disabled="sending" style="min-width:126px;justify-content:center">
+            {{ sending ? '提交中…' : '提交' }}
+          </button>
+          <p class="form-hint" :class="{ ok: sent }">{{ sent ? '✓ 已提交' : '按 Enter 也可提交' }}</p>
+        </div>
+
+        <p class="note" style="margin-top:26px">
+          开关滑块用 <span class="tag">--mk-ease-snap</span> 轻微回弹；
+          错误提示只在 <span class="tag">.error</span> 时把 opacity 与 translateY 一起过渡，
+          布局不跳。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 弹层 ============ -->
+  <section>
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>05 / 进出场</div>
+      <h2 v-mk-enter>纯 CSS 的弹层，不需要动画库</h2>
+      <p class="lede" v-mk-enter>
+        <span class="tag">@starting-style</span> + <span class="tag">transition-behavior: allow-discrete</span>
+        让 <span class="tag">display</span> 也能参与过渡 —— Baseline 2024 起已经可用。
+      </p>
+      <div class="pop-row" v-mk-enter>
+        <button class="btn mk-press" @click="popOpen = !popOpen">{{ popOpen ? '收起' : '展开说明' }}</button>
+        <button class="btn btn--ghost mk-press" @click="reset">重置全部</button>
+      </div>
+      <div v-show="popOpen" class="popover mk-pop">
+        <h4>为什么不用 JS 动画库</h4>
+        <p>进出场只需要「从初始态过渡到终态」。浏览器原生支持后，少一个依赖、少一次布局查询，还能自动跟随系统主题变化。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 指针与反馈 ============ -->
+  <section id="pointer">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>06 / 指针与反馈</div>
+      <h2 v-mk-enter>社区最常用的五种「摸得到」的效果</h2>
+      <p class="lede" v-mk-enter>
+        光斑、磁吸、涟漪、3D 翻转、组内变暗。全部只写 CSS 变量，
+        和组件自己的 transform / 背景互不冲突。
+      </p>
+
+      <div class="spot-grid" v-mk-enter>
+        <div class="spot-card mk-lift" v-mk-spotlight="{ intensity: 0.9 }">
+          <div class="mk-spotlight-copy">
+            <b>指针光斑</b><br />
+            <small>Aceternity / Vercel 卡片光晕</small>
+          </div>
+          <small class="tag">v-mk-spotlight</small>
+        </div>
+        <div class="spot-card mk-lift" v-mk-spotlight="{ intensity: 1 }" style="--mk-spot-color:rgba(184,255,61,0.16)">
+          <div>
+            <b>可换色光斑</b><br />
+            <small>写 <code>--mk-spot-color</code> 即可</small>
+          </div>
+          <small class="tag">--mk-spot-color</small>
+        </div>
+        <div class="spot-card mk-lift mk-spotlight--border" v-mk-spotlight>
+          <div>
+            <b>描边光斑</b><br />
+            <small>只亮边缘，比整块亮更克制</small>
+          </div>
+          <small class="tag">.mk-spotlight--border</small>
+        </div>
+      </div>
+
+      <div class="split-2" style="margin-top:16px">
+        <div class="showcase">
+          <h4>点击涟漪</h4>
+          <p>在点击点插一个圆，动画结束自动移除节点。</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn--accent" v-mk-ripple>点我试试</button>
+            <button class="btn btn--ghost" v-mk-ripple="{ color: 'rgba(184,255,61,0.5)' }">换个颜色</button>
+          </div>
+        </div>
+
+        <div class="showcase">
+          <h4>弹性按压</h4>
+          <p><span class="tag">--mk-ease-overshoot</span> 的回弹更明显，适合营销页主 CTA。</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn mk-squish">按住看看</button>
+            <button class="btn btn--ghost mk-press">对比：克制版</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-2" style="margin-top:16px">
+        <div class="showcase">
+          <h4>3D 翻转卡</h4>
+          <p>悬停整张卡绕 Y 轴翻面，两面都用 <span class="tag">backface-visibility</span> 裁掉背面。</p>
+          <div class="mk-flip flip-card">
+            <div class="mk-flip__inner">
+              <div class="mk-flip__face mk-flip__face--front">
+                <b>正面</b><small>悬停翻过去 →</small>
+              </div>
+              <div class="mk-flip__face mk-flip__face--back">
+                <b>反面</b><small>纯 CSS，无 JS</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase mk-group">
+          <h4>组内变暗</h4>
+          <p>悬停某一项时其余降到 55% 不透明度，注意力被强制收敛。</p>
+          <div class="group-demo">
+            <div class="card mk-group__item"><h3>入场</h3></div>
+            <div class="card mk-group__item"><h3>视差</h3></div>
+            <div class="card mk-group__item"><h3>光斑</h3></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 氛围 ============ -->
+  <section id="ambient">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>07 / 氛围</div>
+      <h2 v-mk-enter>不用一张贴图，也能有质感</h2>
+      <p class="lede" v-mk-enter>
+        跑马灯、极光、流光文字、骨架屏。都是无限循环的 CSS 动画，
+        全部在 <span class="tag">prefers-reduced-motion</span> 下自动停。
+      </p>
+
+      <div class="marquee-row" v-mk-enter>
+        <div class="mk-marquee" style="--mk-marquee-dur:26s">
+          <div class="mk-marquee__track">
+            <span class="mq-pill" v-for="n in 7" :key="'a'+n"><span>◆</span> 入场 · 视差 · 光斑 · 翻转 · 涟漪</span>
+          </div>
+          <div class="mk-marquee__track" aria-hidden="true">
+            <span class="mq-pill" v-for="n in 7" :key="'b'+n"><span>◆</span> 入场 · 视差 · 光斑 · 翻转 · 涟漪</span>
+          </div>
+        </div>
+        <div class="mk-marquee mk-marquee--reverse" style="--mk-marquee-dur:34s" v-mk-enter>
+          <div class="mk-marquee__track">
+            <span class="mq-pill" v-for="n in 6" :key="'c'+n"><span>→</span> Web · Taro · 小程序 · 一套 token</span>
+          </div>
+          <div class="mk-marquee__track" aria-hidden="true">
+            <span class="mq-pill" v-for="n in 6" :key="'d'+n"><span>→</span> Web · Taro · 小程序 · 一套 token</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-2">
+        <div class="showcase mk-aurora" style="min-height:210px;padding:0;overflow:hidden">
+          <div class="aurora-demo" style="border:0;background:transparent">
+            <h3>极光背景</h3>
+            <p>两层 blur 色块反向漂移，<br />比 canvas 便宜得多。</p>
+          </div>
+        </div>
+
+        <div class="showcase" style="min-height:210px">
+          <h4>流光渐变文字</h4>
+          <p class="grad-demo mk-gradient-text">有分寸的动</p>
+          <p style="margin-top:10px"><span class="tag">background-clip: text</span> + 位移渐变</p>
+        </div>
+      </div>
+
+      <div class="showcase" style="margin-top:16px">
+        <h4>骨架屏微光</h4>
+        <p>加载态不要用 spinner，用形状先占位，内容到位后位移不跳。</p>
+        <div class="skeleton">
+          <div class="sk-line mk-shimmer" style="width:78%"></div>
+          <div class="sk-line mk-shimmer w60" style="animation-delay:0ms"></div>
+          <div class="sk-line mk-shimmer" style="width:88%"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 揭示 ============ -->
+  <section id="reveal">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>08 / 揭示</div>
+      <h2 v-mk-enter>入场不止是「往上滑 16px」</h2>
+      <p class="lede" v-mk-enter>
+        视差、遮罩擦除、线条描绘、逐词拆分、模糊入场。
+        每种都能被 IntersectionObserver 触发，也都能在减弱动效下退化。
+      </p>
+
+      <div class="split-2">
+        <div>
+          <div class="parallax-stage">
+            <div class="pl-layer" v-mk-parallax="{ strength: 0.35, max: 34 }">
+              <div class="pl-dot"></div>
+            </div>
+            <div class="pl-layer" v-mk-parallax="{ strength: 0.75, max: 44 }">
+              <div class="pl-card">
+                <b>视差卡</b>
+                <i>SCROLL ME</i>
+              </div>
+            </div>
+          </div>
+          <p class="note">
+            两层不同 <span class="tag">strength</span>，滚动时产生纵深。
+            rAF 合批，一帧只算一次。
+          </p>
+        </div>
+
+        <div>
+          <div class="wipe-img mk-wipe" v-mk-enter="{ mask: true, from: 'left' }">
+            遮罩擦除 · clip-path
+          </div>
+          <p class="note">
+            <span class="tag">clip-path: inset()</span> 过渡，不动 transform，
+            对图片和视频都安全。<span class="tag">data-from</span> 换方向。
+          </p>
+        </div>
+      </div>
+
+      <div class="split-2" style="margin-top:16px">
+        <div class="showcase">
+          <h4>SVG 线条描绘</h4>
+          <div class="draw-wrap">
+            <svg width="150" height="100" viewBox="0 0 150 100" v-mk-draw="{ len: 420 }">
+              <path d="M8 84 L52 40 L86 68 L142 12" />
+              <circle cx="8" cy="84" r="3.5" />
+              <circle cx="142" cy="12" r="3.5" />
+            </svg>
+            <small class="tag">stroke-dashoffset</small>
+          </div>
+          <p>图表、logo、流程线都能用。给 path 一个足够大的 dasharray 即可。</p>
+        </div>
+
+        <div class="showcase">
+          <h4>模糊入场</h4>
+          <div class="mk-enter mk-enter--blur" v-mk-enter="{ variant: 'blur' }">
+            <div class="blur-demo">blur 12px → 0 <span>比纯位移更「贵气」</span></div>
+          </div>
+          <p style="margin-top:10px"><span class="tag">--mk-blur</span> 控制起始模糊量。</p>
+        </div>
+      </div>
+
+      <div class="showcase" style="margin-top:16px">
+        <h4>逐词拆分入场</h4>
+        <p class="split-demo" v-mk-split="'word'">好的动效不是让元素飞起来，而是让人知道东西从哪来。</p>
+        <p style="margin-top:12px">
+          <span class="tag">v-mk-split="'word'"</span>
+          也可传 <span class="tag">'char'</span> / <span class="tag">'line'</span>。
+          拆分只做一次，之后零计算 —— 不需要 GSAP SplitText。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 平面补遗 ============ -->
+  <section id="planar">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>10 / 平面补遗</div>
+      <h2 v-mk-enter>四个仍然只在 2D 里的老招式</h2>
+      <p class="lede" v-mk-enter>
+        不动 Z 轴，也能有"手上感"。这一组全部是纯变量驱动：
+        JS 每帧只写一个数字，剩下的衰减曲线、滑动、吸附都交给 CSS。
+      </p>
+
+      <!-- Dock -->
+      <div class="showcase" style="margin-bottom:16px">
+        <h4>停靠栏放大</h4>
+        <p>
+          指针横向移动时，最近的图标最大，左右按<span class="tag">平方衰减</span>小下去。
+          JS 只写 <span class="tag">--mk-dock-s</span>，一个公式管一整排。
+        </p>
+        <div class="mk-dock dock-demo" v-mk-dock="{ radius: 120, amp: 0.5, lift: 12 }">
+          <div class="mk-dock__item dock-icon" v-for="(g, i) in dockIcons" :key="g.k">
+            <span>{{ g.icon }}</span><small>{{ g.k }}</small>
+          </div>
+        </div>
+        <p style="margin-top:14px">
+          <span class="tag">v-mk-dock</span>
+          <span style="margin-left:8px;color:var(--muted)">触屏上自动不挂 —— 没有"靠近"这回事</span>
+        </p>
+      </div>
+
+      <div class="split-2">
+        <!-- Segmented -->
+        <div class="showcase">
+          <h4>分段控件</h4>
+          <p>胶囊滑过去，而不是各选项自己亮一下 —— 滑动本身说明"从哪来到哪去"。</p>
+          <div class="mk-seg" v-mk-seg="{ onChange: (i) => (segOn = i) }">
+            <span class="mk-seg__pill"></span>
+            <button class="mk-seg__opt">日</button>
+            <button class="mk-seg__opt">周</button>
+            <button class="mk-seg__opt">月</button>
+          </div>
+          <p style="margin-top:12px">
+            当前：<b style="color:var(--accent)">{{ ['日', '周', '月'][segOn] }}</b>
+            <span class="tag" style="margin-left:8px">v-mk-seg</span>
+          </p>
+        </div>
+
+        <!-- Scramble -->
+        <div class="showcase">
+          <h4>乱序解码</h4>
+          <p>从一堆乱码里"解"成正文，左边先定，右边还在抖。</p>
+          <div class="scramble-stage mk-scramble" v-mk-scramble="scrambleWord"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn btn--ghost mk-press" @click="rollScramble">换一句</button>
+            <small style="color:var(--muted);align-self:center">点「换一句」会重播</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll stack -->
+      <div class="showcase" style="margin-top:16px">
+        <h4>滚动堆叠</h4>
+        <p>
+          每张 <span class="tag">position: sticky</span>，<span class="tag">top</span> 逐张错开，
+          滚到底时压成一叠牌。只粘住、不缩放 —— 一缩放高度也在变，后面的卡会跟着跳。
+        </p>
+        <div class="mk-stick-stack stack-demo">
+          <article class="mk-stick-stack__card stack-card" v-for="(s, i) in stackCards" :key="s.t" :style="{ '--mk-i': i }">
+            <span class="stack-n">{{ String(i + 1).padStart(2, '0') }}</span>
+            <div>
+              <b>{{ s.t }}</b>
+              <small>{{ s.d }}</small>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 滚动与提示 ============ -->
+  <section id="scroll">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>09 / 滚动与提示</div>
+      <h2 v-mk-enter>滚动驱动，与轻提示</h2>
+      <p class="lede" v-mk-enter>
+        <span class="tag">animation-timeline: view()</span> 在 Chromium 里是滚动驱动的原生方案，
+        不支持的浏览器自动退回静态。轻提示用 <span class="tag">@starting-style</span> 滑入。
+      </p>
+
+      <div class="split-2">
+        <div class="showcase">
+          <h4>滚动长大（CSS 原生）</h4>
+          <div class="mk-scroll-grow" style="height:110px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,rgba(90,160,255,0.18),rgba(184,255,61,0.14));border:1px solid var(--line)">
+            <small style="color:var(--muted)">滚过我</small>
+          </div>
+          <p><span class="tag">animation-range: entry 10% cover 40%</span></p>
+        </div>
+
+        <div class="showcase">
+          <h4>轻提示</h4>
+          <p>从下方 16px 弹入，收起时反向。不打断操作。</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn mk-press" @click="toast">显示提示</button>
+            <small style="color:var(--muted)">出现在视口底部中央，2 秒后收起</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;width:min(1080px,calc(100% - 48px))">
+      <span>Motion Kit · 自用组件库</span>
+      <span>时长 80 / 160 / 240 / 380 / 560 ms · 全部可覆盖</span>
+    </div>
+  </footer>
+
+  <!-- 轻提示：fixed 定位在视口底部，@starting-style 负责入场 -->
+  <div class="mk-toast toast-demo" v-if="toastOn" :class="{ 'is-closing': toastClosing }" role="status">
+    <i></i> 已保存
+  </div>
+</main>
+
+<script src="../vendor/vue.global.prod.js"></script>
+<script src="./motion-kit.global.js"></script>
+<script>
+  const { createApp, ref, reactive, onMounted, nextTick } = Vue;
+
+  const app = createApp({
+    setup() {
+      const caps = [
+        { n: '01', t: '入场', d: '视口触发，位移 + 透明度，一次性播放，结束后释放合成层。' },
+        { n: '02', t: '悬停', d: '只在 hover 可用的设备上生效，触屏不会残留悬停态。' },
+        { n: '03', t: '按压', d: '80ms 缩到 0.97，给指尖一个即时确认，不做多余回弹。' },
+        { n: '04', t: '聚焦', d: '下划线用 scaleX 展开，走合成器，绝不触发重排。' },
+        { n: '05', t: '滚动', d: 'IntersectionObserver 驱动，不监听 scroll 事件。' },
+        { n: '06', t: '转场', d: '原生 View Transitions 兜底，不支持的浏览器直接切换。' },
+      ];
+
+      const form = reactive({ name: '', email: '', msg: '', subscribe: true });
+      const errors = reactive({ name: '' });
+      const sending = ref(false);
+      const sent = ref(false);
+      const popOpen = ref(true);
+      const toastOn = ref(false);
+      const toastClosing = ref(false);
+      let toastTimer = 0;
+
+      /* ---------- 平面补遗 ---------- */
+      const dockIcons = [
+        { icon: '◆', k: 'Surf' },
+        { icon: '◐', k: 'Ring' },
+        { icon: '▤', k: 'List' },
+        { icon: '✦', k: 'Glow' },
+        { icon: '▲', k: 'Peak' },
+        { icon: '●', k: 'Dot' },
+        { icon: '▦', k: 'Grid' },
+      ];
+      const segOn = ref(0);
+      const scrambleWords = [
+        'MOTION KIT · 42',
+        '有分寸地动',
+        'SQUARE 2024',
+      ];
+      const scrambleWord = ref(scrambleWords[0]);
+      let sw = 0;
+      const rollScramble = () => {
+        sw = (sw + 1) % scrambleWords.length;
+        // 换的是字符串，指令的 updated 会认出来并重播
+        scrambleWord.value = scrambleWords[sw];
+      };
+      const stackCards = [
+        { t: '入场', d: '视口触发，一次性播放，结束后释放合成层' },
+        { t: '悬停', d: '只在 hover 可用的设备上生效' },
+        { t: '按压', d: '80ms 缩到 0.97，只给一个即时确认' },
+        { t: '滚动', d: 'IntersectionObserver 驱动，不监听 scroll' },
+      ];
+
+      // 里程表演示：每次换一个四位数，位数不变才能看到「滑动」而不是「重建」
+      const odoValue = ref(4207);
+      const rollOdometer = () => {
+        odoValue.value = 1000 + Math.floor(Math.random() * 8999);
+      };
+
+      const toast = () => {
+        clearTimeout(toastTimer);
+        toastClosing.value = false;
+        toastOn.value = true;
+        // 先加 is-closing 走退出过渡，等过渡结束后再卸载
+        toastTimer = setTimeout(() => {
+          toastClosing.value = true;
+          toastTimer = setTimeout(() => (toastOn.value = false), 380);
+        }, 2000);
+      };
+
+      const validateName = () => {
+        errors.name = form.name.trim() ? '' : '姓名不能为空';
+      };
+
+      const submit = () => {
+        validateName();
+        if (errors.name || sending.value) return;
+        sending.value = true;
+        setTimeout(() => {
+          sending.value = false;
+          sent.value = true;
+          setTimeout(() => (sent.value = false), 2400);
+        }, 700);
+      };
+
+      const reset = () => {
+        form.name = ''; form.email = ''; form.msg = ''; form.subscribe = true;
+        errors.name = ''; sent.value = false; popOpen.value = true;
+      };
+
+      // 逐行揭示：等 layout 完成后加 is-in，避免首帧闪烁
+      onMounted(() => {
+        nextTick(() => {
+          const lines = document.querySelectorAll('.mk-reveal-line');
+          lines.forEach((el, i) => {
+            setTimeout(() => el.classList.add('is-in'), 120 + i * 110);
+          });
+        });
+      });
+
+      return { caps, form, errors, sending, sent, popOpen, toastOn, toastClosing, toast, validateName, submit, reset, odoValue, rollOdometer,
+        dockIcons, segOn, scrambleWord, rollScramble, stackCards };
+    },
+  });
+
+  app.use(MotionKit);
+  app.mount('#app');
+</script>
+</body>
+</html>

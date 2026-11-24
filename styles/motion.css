@@ -1,0 +1,1027 @@
+/* ============================================================
+   tokens.css — 动效设计变量（唯一真源）
+   改这里 = 改全站手感。Web / Taro / 小程序三端共用。
+   ============================================================ */
+
+:root {
+  /* 时长：1=按压 2=高频上限 3=默认进场 4=区块 5=整页 6=环境类 */
+  --mk-dur-1: 80ms;
+  --mk-dur-2: 160ms;
+  --mk-dur-3: 240ms;
+  --mk-dur-4: 380ms;
+  --mk-dur-5: 560ms;
+  --mk-dur-6: 900ms;
+
+  /* 缓动：out 用于进入，in 用于退出，inOut 用于位移 */
+  --mk-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --mk-ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --mk-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --mk-ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --mk-ease-overshoot: cubic-bezier(0.34, 1.8, 0.64, 1);
+
+  /* 位移距离 */
+  --mk-dist-hover: 2px;
+  --mk-dist-lift: 4px;
+  --mk-dist-enter: 16px;
+  --mk-dist-section: 32px;
+
+  /* 编排间隔 */
+  --mk-stagger-tight: 40ms;
+  --mk-stagger-base: 70ms;
+  --mk-stagger-loose: 120ms;
+
+  /* 3D 倾斜，由 tilt.js 写入 */
+  --mk-tilt-x: 0deg;
+  --mk-tilt-y: 0deg;
+  --mk-tilt-scale: 1;
+  --mk-glare-x: 50%;
+  --mk-glare-y: 50%;
+  --mk-glare-o: 0;
+
+  /* 磁吸位移，由 magnetic() 写入 */
+  --mk-mag-x: 0px;
+  --mk-mag-y: 0px;
+
+  /* 指针光斑，由 spotlight() 写入 */
+  --mk-spot-x: 50%;
+  --mk-spot-y: 50%;
+  --mk-spot-o: 0;
+  --mk-spot-size: 320px;
+  --mk-spot-color: rgba(255, 255, 255, 0.10);
+
+  /* 揭示类效果的模糊与遮罩起点 */
+  --mk-blur: 12px;
+  --mk-draw-len: 1200;
+  --mk-parallax-y: 60px;
+
+  /* 无限循环类效果的周期 */
+  --mk-marquee-dur: 28s;
+  --mk-shimmer-dur: 1.6s;
+  --mk-aurora-dur: 24s;
+}
+
+/* 用户要求减少动效：全局把时长压到近乎瞬时，位移归零。
+   注意不是 display:none / 不播，而是"保留淡入、去掉移动"。 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --mk-dur-1: 1ms;
+    --mk-dur-2: 1ms;
+    --mk-dur-3: 120ms;
+    --mk-dur-4: 120ms;
+    --mk-dur-5: 120ms;
+    --mk-dist-enter: 0px;
+    --mk-dist-section: 0px;
+    --mk-tilt-x: 0deg;
+    --mk-tilt-y: 0deg;
+    --mk-tilt-scale: 1;
+    /* 新增原语同步收敛 */
+    --mk-spot-o: 0;
+    --mk-blur: 0px;
+    --mk-parallax-y: 0px;
+    --mk-marquee-dur: 0s;
+    --mk-shimmer-dur: 0s;
+    --mk-aurora-dur: 0s;
+  }
+}
+
+/* ============================================================
+   进场基类：配合 in-view.js / staggerIn()
+   元素先在"未进入"状态，视口内加 .is-in 后过渡到位。
+   ============================================================ */
+
+.mk-enter {
+  opacity: 0;
+  transform: translate3d(0, var(--mk-dist-enter), 0);
+  transition:
+    opacity var(--mk-dur-4) var(--mk-ease-out),
+    transform var(--mk-dur-4) var(--mk-ease-out);
+  will-change: opacity, transform;
+}
+
+.mk-enter.is-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* 变体：从下方 32px（区块级） */
+.mk-enter--section {
+  transform: translate3d(0, var(--mk-dist-section), 0);
+}
+.mk-enter--section.is-in {
+  transform: translate3d(0, 0, 0);
+}
+
+/* 变体：纯缩放，用于卡片/弹层 */
+.mk-enter--scale {
+  transform: scale(0.96);
+}
+.mk-enter--scale.is-in {
+  transform: scale(1);
+}
+
+/* 变体：只淡入，用于图片、背景，避免移动引起重排错觉 */
+.mk-enter--fade {
+  transform: none;
+}
+
+/* 完成后清掉 will-change，别让合成层常驻吃内存 */
+.mk-enter.is-done {
+  will-change: auto;
+}
+
+/* ============================================================
+   基础微交互：按压 / 抬起 / 焦点
+   ============================================================ */
+
+.mk-press {
+  transition:
+    transform var(--mk-dur-1) var(--mk-ease-out),
+    box-shadow var(--mk-dur-2) var(--mk-ease-out),
+    background-color var(--mk-dur-2) var(--mk-ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mk-press:active {
+  transform: scale(0.97);
+}
+
+.mk-lift {
+  transition:
+    transform var(--mk-dur-2) var(--mk-ease-out),
+    box-shadow var(--mk-dur-2) var(--mk-ease-out);
+}
+
+@media (hover: hover) {
+  .mk-lift:hover {
+    transform: translate3d(0, calc(-1 * var(--mk-dist-lift)), 0);
+  }
+}
+
+/* ============================================================
+   3D 倾斜卡片：配合 tilt()
+   transform 在这里组装，JS 只写变量 —— 不会被覆盖。
+   ============================================================ */
+
+.mk-tilt {
+  position: relative;
+  transform-style: preserve-3d;
+  transform:
+    perspective(900px)
+    rotateX(var(--mk-tilt-x))
+    rotateY(var(--mk-tilt-y))
+    scale(var(--mk-tilt-scale));
+  transition: transform var(--mk-dur-3) var(--mk-ease-out);
+}
+
+/* 光泽层：叠在卡片上，跟随指针 */
+.mk-tilt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--mk-glare-o);
+  transition: opacity var(--mk-dur-3) var(--mk-ease-out);
+  background: radial-gradient(
+    240px circle at var(--mk-glare-x) var(--mk-glare-y),
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.06) 40%,
+    transparent 62%
+  );
+}
+
+.mk-magnetic {
+  transform: translate3d(var(--mk-mag-x), var(--mk-mag-y), 0);
+  transition: transform var(--mk-dur-2) var(--mk-ease-out);
+}
+
+/* ============================================================
+   弹层：@starting-style + allow-discrete（纯 CSS 进出场）
+   Baseline 2024-08，已可放心使用；不支持的浏览器退化为直接出现。
+   ============================================================ */
+
+.mk-pop {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity var(--mk-dur-2) var(--mk-ease-out),
+    transform var(--mk-dur-3) var(--mk-ease-out),
+    display var(--mk-dur-3) allow-discrete;
+  display: block;
+}
+
+/* 进入瞬间的起始态 */
+@starting-style {
+  .mk-pop {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.97);
+  }
+}
+
+/* 退出：靠 [hidden] 或类名切换 */
+.mk-pop[hidden],
+.mk-pop.is-closing {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0) scale(0.97);
+  display: none;
+}
+
+/* ============================================================
+   数字滚动：等宽数字，避免跳动
+   ============================================================ */
+
+.mk-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ============================================================
+   滚动进度条（配合 IntersectionObserver 或 scroll 驱动）
+   ============================================================ */
+
+.mk-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--mk-progress, 0));
+  background: currentColor;
+  z-index: 60;
+  transition: transform 60ms linear;
+}
+
+/* ============================================================
+   文字逐字/逐行揭示（不依赖 GSAP SplitText）
+   ============================================================ */
+
+.mk-reveal-line {
+  display: block;
+  overflow: hidden;
+}
+
+.mk-reveal-line > span {
+  display: block;
+  transform: translate3d(0, 105%, 0);
+  transition: transform var(--mk-dur-5) var(--mk-ease-out);
+}
+
+.mk-reveal-line.is-in > span {
+  transform: translate3d(0, 0, 0);
+}
+
+/* ============================================================
+   兜底：完全不支持 transition 的环境（极老 webview）
+   ============================================================ */
+
+@supports not (transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)) {
+  .mk-enter {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   追加原语 01 · 指针光斑（Aceternity / Vercel 卡片光晕）
+   只改径向渐变的位置与透明度，不动 transform —— 可与 tilt/lift 叠加。
+   ============================================================ */
+
+.mk-spotlight {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.mk-spotlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mk-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--mk-spot-o, 0);
+  background: radial-gradient(
+    var(--mk-spot-size, 320px) circle at var(--mk-spot-x, 50%) var(--mk-spot-y, 50%),
+    var(--mk-spot-color, rgba(255, 255, 255, 0.10)),
+    transparent 70%
+  );
+  transition: opacity var(--mk-dur-3) var(--mk-ease-out);
+}
+
+/* 边框也跟着亮：描边式光斑，比整块亮更克制 */
+.mk-spotlight--border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: var(--mk-spot-o, 0);
+  background: radial-gradient(
+    calc(var(--mk-spot-size, 320px) * 0.8) circle at var(--mk-spot-x, 50%) var(--mk-spot-y, 50%),
+    rgba(255, 255, 255, 0.55),
+    transparent 65%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity var(--mk-dur-3) var(--mk-ease-out);
+}
+
+/* ============================================================
+   追加原语 02 · 无限跑马灯（Magic UI Marquee）
+   纯 CSS。复制一份内容做无缝接续，靠 keyframes 平移 -50%。
+   ============================================================ */
+
+.mk-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--mk-marquee-gap, 32px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.mk-marquee__track {
+  flex: none;
+  display: flex;
+  gap: var(--mk-marquee-gap, 32px);
+  min-width: 100%;
+  animation: mk-marquee var(--mk-marquee-dur, 28s) linear infinite;
+}
+
+/* 悬停暂停是桌面词汇。触屏上没有"指针停在上面"这个状态，
+   写在裸 :hover 里在 iOS 上会变成"点一下之后一直停着"；
+   focus-within 不能一起关 —— 那是键盘用户的暂停手段。 */
+@media (hover: hover) {
+  .mk-marquee:hover .mk-marquee__track {
+    animation-play-state: paused;
+  }
+}
+
+.mk-marquee:focus-within .mk-marquee__track {
+  animation-play-state: paused;
+}
+
+.mk-marquee--reverse .mk-marquee__track {
+  animation-direction: reverse;
+}
+
+@keyframes mk-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-100% - var(--mk-marquee-gap, 32px)), 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-marquee__track { animation: none; }
+  .mk-marquee { overflow-x: auto; }
+}
+
+/* ============================================================
+   追加原语 03 · 骨架屏微光（shimmer）
+   ============================================================ */
+
+.mk-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mk-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translate3d(-100%, 0, 0);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12) 45%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.12) 55%,
+    transparent
+  );
+  animation: mk-shimmer var(--mk-shimmer-dur, 1.6s) var(--mk-ease-in-out) infinite;
+}
+
+@keyframes mk-shimmer {
+  to { transform: translate3d(100%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-shimmer::after { animation: none; opacity: 0; }
+}
+
+/* ============================================================
+   追加原语 04 · 流光渐变文字
+   ============================================================ */
+
+.mk-gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--mk-grad-a, #b8ff3d) 0%,
+    var(--mk-grad-b, #5aa0ff) 32%,
+    var(--mk-grad-c, #ff78dc) 58%,
+    var(--mk-grad-a, #b8ff3d) 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: mk-grad-flow 8s linear infinite;
+}
+
+@keyframes mk-grad-flow {
+  from { background-position: 0% 50%; }
+  to   { background-position: 240% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-gradient-text { animation: none; background-position: 0% 50%; }
+}
+
+/* ============================================================
+   追加原语 05 · 极光背景（Magic UI Aurora）
+   三层模糊色块缓慢漂移。用 blur 滤镜 + 位移，GPU 友好。
+   ============================================================ */
+
+.mk-aurora {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mk-aurora::before,
+.mk-aurora::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: var(--mk-aurora-o, 0.45);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.mk-aurora::before {
+  top: -30%;
+  left: -10%;
+  background: radial-gradient(circle, var(--mk-aurora-a, rgba(184,255,61,0.55)), transparent 65%);
+  animation: mk-aurora-drift-a var(--mk-aurora-dur, 24s) ease-in-out infinite alternate;
+}
+
+.mk-aurora::after {
+  bottom: -35%;
+  right: -12%;
+  background: radial-gradient(circle, var(--mk-aurora-b, rgba(90,160,255,0.55)), transparent 65%);
+  animation: mk-aurora-drift-b calc(var(--mk-aurora-dur, 24s) * 1.35) ease-in-out infinite alternate;
+}
+
+.mk-aurora > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes mk-aurora-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(18%, 12%, 0) scale(1.18); }
+}
+
+@keyframes mk-aurora-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-16%, -14%, 0) scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-aurora::before, .mk-aurora::after { animation: none; }
+}
+
+/* ============================================================
+   追加原语 06 · 逐字打字机 + 光标闪烁
+   字宽变化会引起重排，所以用 ch 单位的 clip 而不是改文字。
+   ============================================================ */
+
+.mk-typing {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid currentColor;
+  width: 0;
+  animation:
+    mk-typing calc(var(--mk-typing-dur, 1.6s) + 0.2s) steps(var(--mk-typing-steps, 12), end) forwards,
+    mk-caret 1s step-end infinite;
+}
+
+.mk-typing.is-done {
+  border-right-color: transparent;
+  animation: mk-typing calc(var(--mk-typing-dur, 1.6s) + 0.2s) steps(var(--mk-typing-steps, 12), end) forwards;
+}
+
+@keyframes mk-typing {
+  from { width: 0; }
+  to   { width: var(--mk-typing-w, 12ch); }
+}
+
+@keyframes mk-caret {
+  0%, 100% { border-right-color: currentColor; }
+  50%      { border-right-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-typing {
+    animation: none;
+    width: auto;
+    border-right-color: transparent;
+  }
+}
+
+/* ============================================================
+   追加原语 07 · 下划线扫过（hover）
+   从左展开再向右收起，比单纯 scaleX 更有"书写"感。
+   ============================================================ */
+
+.mk-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.mk-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right 50%;
+  transition: transform var(--mk-dur-3) var(--mk-ease-out);
+}
+
+@media (hover: hover) {
+  .mk-underline:hover::after {
+    transform: scaleX(1);
+    transform-origin: left 50%;
+  }
+}
+
+/* ============================================================
+   追加原语 08 · 模糊入场（blur-in）
+   比单纯位移更"高级"，常用于标题与图片。
+   ============================================================ */
+
+.mk-enter--blur {
+  opacity: 0;
+  filter: blur(var(--mk-blur, 12px));
+  transform: scale(1.02);
+}
+
+.mk-enter--blur.is-in {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/* ============================================================
+   追加原语 09 · 遮罩擦除（wipe / clip-path 揭示）
+   方向通过 --mk-wipe-from 切换：left | right | top | bottom
+   ============================================================ */
+
+.mk-wipe {
+  --mk-wipe-from: left;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--mk-dur-5) var(--mk-ease-out);
+}
+
+.mk-wipe[data-from='right']  { clip-path: inset(0 0 0 100%); }
+.mk-wipe[data-from='top']    { clip-path: inset(0 0 100% 0); }
+.mk-wipe[data-from='bottom'] { clip-path: inset(100% 0 0 0); }
+
+.mk-wipe.is-in { clip-path: inset(0 0 0 0); }
+
+/* ============================================================
+   追加原语 10 · SVG 线条描绘（stroke-dashoffset）
+   ============================================================ */
+
+.mk-draw {
+  stroke-dasharray: var(--mk-draw-len, 1200);
+  stroke-dashoffset: var(--mk-draw-len, 1200);
+  transition: stroke-dashoffset var(--mk-dur-6, 900ms) var(--mk-ease-out);
+}
+
+.mk-draw.is-in { stroke-dashoffset: 0; }
+
+/* ============================================================
+   追加原语 11 · 视差（由 parallax() 写 --mk-parallax-p）
+   ============================================================ */
+
+.mk-parallax {
+  transform: translate3d(0, calc(var(--mk-parallax-p, 0) * var(--mk-parallax-y, 60px)), 0);
+  will-change: transform;
+}
+
+/* ============================================================
+   追加原语 12 · 3D 翻转卡（hover）
+   ============================================================ */
+
+.mk-flip {
+  perspective: 1000px;
+}
+
+.mk-flip__inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform var(--mk-dur-5) var(--mk-ease-out);
+}
+
+@media (hover: hover) {
+  .mk-flip:hover .mk-flip__inner,
+  .mk-flip:focus-within .mk-flip__inner {
+    transform: rotateY(180deg);
+  }
+}
+
+.mk-flip__face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.mk-flip__face--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* ============================================================
+   追加原语 13 · 点击涟漪（由 ripple() 注入 span）
+   ============================================================ */
+
+.mk-ripple-host {
+  position: relative;
+  overflow: hidden;
+}
+
+.mk-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: scale(0);
+  background: currentColor;
+  opacity: 0.28;
+  animation: mk-ripple 620ms var(--mk-ease-out) forwards;
+}
+
+@keyframes mk-ripple {
+  to { transform: scale(1); opacity: 0; }
+}
+
+/* ============================================================
+   追加原语 14 · 组内变暗（hover 卡片时其余淡出）
+   ============================================================ */
+
+.mk-group {
+  transition: opacity var(--mk-dur-3) var(--mk-ease-out);
+}
+
+@media (hover: hover) {
+  .mk-group:hover .mk-group__item {
+    opacity: 0.55;
+  }
+  .mk-group .mk-group__item:hover {
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   追加原语 15 · 弹性按压（更明显的回弹，适合营销页 CTA）
+   ============================================================ */
+
+.mk-squish {
+  transition: transform var(--mk-dur-2) var(--mk-ease-snap);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mk-squish:active { transform: scale(0.92); }
+
+@media (hover: hover) {
+  .mk-squish:hover { transform: scale(1.04); }
+}
+
+/* ============================================================
+   追加原语 16 · 轻提示滑入（toast）
+   ============================================================ */
+
+.mk-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 80;
+  transform: translate3d(-50%, 0, 0);
+  opacity: 1;
+  transition:
+    opacity var(--mk-dur-3) var(--mk-ease-out),
+    transform var(--mk-dur-4) var(--mk-ease-snap);
+}
+
+.mk-toast[hidden],
+.mk-toast.is-closing {
+  opacity: 0;
+  transform: translate3d(-50%, 16px, 0);
+  pointer-events: none;
+}
+
+@starting-style {
+  .mk-toast { opacity: 0; transform: translate3d(-50%, 16px, 0); }
+}
+
+/* ============================================================
+   追加原语 17 · 滚动驱动（CSS animation-timeline: view()）
+   Chromium 115+ 原生支持，Safari / Firefox 走 IO 兜底。
+   ============================================================ */
+
+.mk-scroll-grow {
+  animation: mk-scroll-grow linear both;
+  animation-timeline: view();
+  animation-range: entry 10% cover 40%;
+}
+
+@keyframes mk-scroll-grow {
+  from { transform: scale(0.94); opacity: 0.4; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* 不支持时退回普通状态，不会消失 */
+@supports not (animation-timeline: view()) {
+  .mk-scroll-grow {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   追加原语 18 · 数字翻牌（odometer 风格）
+   每位数一列 0–9+0，JS 只写 translateY，滑动交给 CSS 过渡。
+   比逐帧重绘文本省得多，一屏几十个数字也扛得住。
+   ============================================================ */
+
+.mk-odometer {
+  display: inline-flex;
+  overflow: hidden;
+  height: 1em;
+  line-height: 1;
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.mk-odometer__col {
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--mk-dur-5) var(--mk-ease-out);
+  will-change: transform;
+}
+
+/* 重建列期间停过渡，避免新节点从 0 滑到目标位（看起来像倒转） */
+.mk-odometer.is-static .mk-odometer__col { transition: none; }
+
+.mk-odometer__col > span { height: 1em; flex: 0 0 1em; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-odometer__col { transition: none; }
+}
+
+/* ============================================================
+   追加原语 19 · 文本拆分入场（替代 GSAP SplitText）
+   split() 写入 --mk-i，这里只负责延迟与过渡。
+
+   延迟写成 var(--mk-i, calc(sibling-index() - 1))：JS 写过就用 JS 的
+   （老写法、跨行连续计数都靠它），没写过就由 CSS 自己数。
+   sibling-index() 是 1 起，减 1 对齐 JS 的 0 起 —— 两条路必须同值，
+   否则同一组元素里"手写过索引的"和"没写的"会错开一格。
+
+   为什么不加 @supports：不认 sibling-index() 的引擎会让整个 calc()
+   变成无效值，该条声明作废、退回 --mk-i 或 0，也就是改动前的行为。
+   ============================================================ */
+
+.mk-split__unit {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.6em, 0) rotate(2deg);
+  transition:
+    opacity var(--mk-dur-4) var(--mk-ease-out),
+    transform var(--mk-dur-4) var(--mk-ease-out);
+  transition-delay: calc(var(--mk-i, calc(sibling-index() - 1)) * 28ms);
+  will-change: opacity, transform;
+}
+
+.mk-split__unit.is-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotate(0);
+}
+
+.mk-split__line {
+  display: block;
+  overflow: hidden;
+}
+
+/* 逐行模式：单位不需要透明度，靠行内上移。
+   这一档**故意不接 sibling-index()**：每个 unit 是行里唯一的孩子，
+   sibling-index() 恒为 1，三行会全是 0s —— 实测过，级联直接消失。
+   序号只能由 split() 写全局递增值。 */
+.mk-split__line .mk-split__unit {
+  opacity: 1;
+  transform: translate3d(0, 105%, 0);
+  transition-delay: calc(var(--mk-i, 0) * 90ms);
+}
+
+.mk-split__line .mk-split__unit.is-in {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-split__unit,
+  .mk-split__line .mk-split__unit {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+
+
+/* ============================================================
+   追加原语 20 · 停靠栏放大（Dock）
+   指针横向移动时，最近的图标最大，左右按平方衰减 —— 两边的
+   图标自然小下去，不用一个个写 :hover。JS 只写两个变量。
+   ------------------------------------------------------------
+   为什么用 offsetLeft 而不是 getBoundingClientRect：
+   后者把 transform 算进去，元素一边放大一边漂，中心点自己跑，
+   放大到一半就开始抖。offsetLeft 只反映布局，永远稳定。
+   ============================================================ */
+
+.mk-dock {
+  --mk-dock-amp: 0.55;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  /* 必须是定位祖先。offsetLeft 是相对 offsetParent 的 —— 这里不定位，
+     item 的 offsetParent 会一路找到 body，算出来的中心点整排偏掉，
+     表现就是"指针在中间，右边的图标反而变大"。 */
+  position: relative;
+}
+
+.mk-dock__item {
+  /* 底部对齐：放大时往上长，不是从中心鼓包 */
+  transform-origin: bottom center;
+  transform: translate3d(0, calc(var(--mk-dock-y, 0) * 1px), 0)
+             scale(calc(1 + var(--mk-dock-s, 0)));
+  /* 60ms 是"跟手"与"平滑"的分界：再长就落后于指针 */
+  transition: transform 60ms linear;
+  will-change: transform;
+}
+
+/* 指针离开时不再是 60ms 跟手，而是回到中心的缓动。
+   这条必须包在 (hover: hover) 里：`:not(:hover)` 在触屏上永远成立，
+   于是手机上每个图标都挂着一条 380ms 的过渡 —— 而它下面那行已经
+   把 transform 归零了，等于给一个不会动的东西配了一条回到原位的曲线。 */
+@media (hover: hover) {
+  .mk-dock:not(:hover) .mk-dock__item {
+    transition: transform var(--mk-dur-4) var(--mk-ease-out);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .mk-dock__item { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-dock__item { transform: none; transition: none; }
+}
+
+/* ============================================================
+   追加原语 21 · 分段控件滑动指示器
+   一个胶囊在选项之间滑过去，而不是各选项自己亮一下 ——
+   滑动本身传达了"从哪来到哪去"。
+   ------------------------------------------------------------
+   JS 只写 --mk-seg-i（第几个）。胶囊宽度 = 轨道宽度 / 选项数，
+   translateX 用自身百分比，所以换字号、换语言都不用手算像素。
+   ============================================================ */
+
+.mk-seg {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  isolation: isolate;
+}
+
+.mk-seg__pill {
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--mk-seg-n, 2));
+  border-radius: 999px;
+  background: var(--accent, #b8ff3d);
+  transform: translate3d(calc(var(--mk-seg-i, 0) * 100%), 0, 0);
+  /* 指示器用 overshoot：滑过去有一下轻微回弹，像被吸住 */
+  transition: transform var(--mk-dur-4) var(--mk-ease-overshoot);
+}
+
+.mk-seg__opt {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted, #8b95a5);
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--mk-dur-3) var(--mk-ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mk-seg__opt.is-on { color: #07090d; font-weight: 600; }
+
+/* 分段控件在触屏上也一样好用，所以这里只做减弱动效的处理 */
+@media (prefers-reduced-motion: reduce) {
+  .mk-seg__pill { transition: none; }
+}
+
+/* ============================================================
+   追加原语 22 · 滚动堆叠（一张压一张）
+   每张卡 position: sticky，top 逐张错开，滚到底时像一叠牌。
+   ------------------------------------------------------------
+   关键不是 sticky 本身，是"只粘住，不缩放"：
+   一旦给被压住的卡加 scale，它的高度也在变，后面的卡会跟着跳。
+   要收缩感就改用 --mk-stick-shrink 的那条可选项（Chromium 才有）。
+   ============================================================ */
+
+.mk-stick-stack {
+  --mk-stick-top: 90px;
+  --mk-stick-step: 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.mk-stick-stack__card {
+  position: sticky;
+  top: calc(var(--mk-stick-top) + var(--mk-i, 0) * var(--mk-stick-step));
+  /* 叠起来时下一张要盖住上一张，加一点底色和投影才看得出层次 */
+  box-shadow: 0 -18px 40px -28px #000;
+}
+
+/* 可选：被压住的卡轻微缩小（仅在支持滚动驱动时间轴时生效）。
+   view() 的进度按"卡片在滚动容器里的位置"算，sticky 期间它确实在移动，
+   所以这条在 Chromium 上成立；不支持的浏览器直接没有缩放。 */
+@supports (animation-timeline: view()) {
+  .mk-stick-stack__card--shrink {
+    animation: mk-stick-shrink linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+  }
+}
+
+@keyframes mk-stick-shrink {
+  from { transform: scale(1); }
+  to   { transform: scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-stick-stack__card--shrink {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ============================================================
+   追加原语 23 · 乱序解码（JS 逐帧改 textContent）
+   CSS 只负责"别让宽度抖"：等宽 + 固定最小宽度。
+   抖动过程中字符数不变，所以真正需要防的是字形宽度差。
+   ============================================================ */
+
+.mk-scramble {
+  font-variant-numeric: tabular-nums;
+  /* 乱码里有 / 和 |，给一点横向余量，避免最后一帧被裁 */
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* JS 那边已经直接出正文，这里只是双保险 */
+  .mk-scramble { font-variant-numeric: normal; }
+}

@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Motion Kit · 好玩的</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237dd3fc'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../styles/motion.css" />
+<link rel="stylesheet" href="../styles/fun.css" />
+<link rel="stylesheet" href="./demo.css" />
+<style>
+  body {
+    background:
+      radial-gradient(900px 500px at 82% -6%, rgba(184, 255, 61, 0.09), transparent 60%),
+      radial-gradient(700px 420px at 6% 8%, rgba(90, 160, 255, 0.10), transparent 62%),
+      var(--bg);
+  }
+
+  .wrap { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    background: rgba(7, 9, 13, 0.66);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+  .top nav { display: flex; gap: 22px; font-size: 13.5px; }
+  .top nav a { color: var(--muted); text-decoration: none; transition: color var(--mk-dur-2) var(--mk-ease-out); }
+  .top nav a:hover { color: var(--fg); }
+  .top nav a.is-here { color: var(--accent); }
+  @media (max-width: 620px) { .top nav { display: none; } }
+
+  /* ---------------- Hero ---------------- */
+  .hero { padding: clamp(56px, 9vw, 104px) 0 34px; }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 62px);
+    line-height: 1.04; letter-spacing: -0.045em;
+    font-weight: 600; margin: 0 0 18px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p { color: var(--muted); max-width: 54ch; margin: 0 0 28px; }
+
+  /* ---------------- 控制条 ---------------- */
+  .console {
+    position: sticky; top: 62px; z-index: 40;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 0 14px;
+    background: linear-gradient(to bottom, var(--bg) 62%, transparent);
+  }
+  .seg {
+    display: inline-flex; padding: 3px; gap: 2px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+  }
+  .seg button {
+    appearance: none; border: 0; cursor: pointer;
+    font: inherit; font-size: 12.5px; font-weight: 550;
+    padding: 7px 14px; border-radius: 999px;
+    background: transparent; color: var(--muted);
+    transition: background-color var(--mk-dur-2) var(--mk-ease-out), color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  .seg button[aria-pressed='true'] { background: var(--fg); color: #07090d; }
+  .seg button:not([aria-pressed='true']):hover { color: var(--fg); }
+
+  .hint { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  @media (max-width: 700px) { .hint { display: none; } }
+
+  /* ---------------- 画廊 ---------------- */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+  @media (max-width: 1000px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 660px)  { .gallery { grid-template-columns: 1fr; } }
+
+  .fx {
+    position: relative;
+    display: flex; flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--card);
+    overflow: hidden;
+    transition: border-color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  @media (hover: hover) { .fx:hover { border-color: rgba(255,255,255,0.18); } }
+
+  .fx__stage {
+    position: relative;
+    min-height: 178px;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background:
+      radial-gradient(420px 200px at 50% 0%, rgba(255,255,255,0.035), transparent 70%),
+      rgba(0, 0, 0, 0.22);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .fx__meta { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .fx__row { display: flex; align-items: baseline; gap: 8px; }
+  .fx__n {
+    font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--accent); opacity: 0.8; letter-spacing: 0.06em;
+  }
+  .fx__t { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .fx__d { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .fx__tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; color: rgba(184,255,61,0.85);
+    background: var(--accent-dim); padding: 2px 6px; border-radius: 4px;
+    align-self: flex-start; margin-top: 2px;
+    word-break: break-all;
+  }
+
+  .fx__replay {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    appearance: none; cursor: pointer;
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(7,9,13,0.72); color: var(--muted);
+    font-size: 13px; line-height: 1;
+    display: grid; place-items: center;
+    opacity: 0; transition: opacity var(--mk-dur-2) var(--mk-ease-out), color var(--mk-dur-2) var(--mk-ease-out);
+  }
+  @media (hover: hover) { .fx:hover .fx__replay { opacity: 1; } }
+  .fx__replay:hover { color: var(--accent); }
+  @media (hover: none) { .fx__replay { opacity: 1; } }
+
+  /* ---------------- 各效果自己的舞台样式 ---------------- */
+  .demo-title { font-size: 25px; font-weight: 650; letter-spacing: -0.03em; }
+
+  .neon-num { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; }
+
+  .outline-word {
+    font-size: 32px; font-weight: 650; letter-spacing: -0.03em;
+    cursor: default;
+  }
+
+  .bounce-word { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; cursor: default; }
+
+  .wobble-box {
+    width: 92px; height: 92px; border-radius: 22px;
+    background: linear-gradient(150deg, rgba(184,255,61,0.22), rgba(90,160,255,0.16));
+    border: 1px solid rgba(184,255,61,0.28);
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+
+  .shake-field {
+    width: 190px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(255, 110, 140, 0.5);
+    background: rgba(255, 110, 140, 0.07);
+    color: #ff9db0; font-size: 12.5px;
+  }
+
+  .pulse-ring {
+    width: 58px; height: 58px; border-radius: 50%;
+    background: rgba(184,255,61,0.14);
+    color: rgba(184,255,61,0.85);
+    display: grid; place-items: center;
+    font-size: 18px;
+  }
+
+  .blob-shape {
+    width: 108px; height: 108px;
+    background: linear-gradient(140deg, #b8ff3d, #5aa0ff 55%, #ff78dc);
+    filter: blur(0.2px);
+  }
+
+  .scan-panel {
+    width: 100%; height: 128px; border-radius: 12px;
+    border: 1px solid rgba(184,255,61,0.2);
+    background: linear-gradient(180deg, rgba(184,255,61,0.05), rgba(0,0,0,0.5));
+    display: grid; place-items: center;
+    font: 500 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: rgba(184,255,61,0.8);
+    text-align: center;
+  }
+
+  .brun-card {
+    width: 190px; padding: 14px 16px; border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid transparent;
+  }
+  .brun-card strong { font-size: 13px; font-weight: 600; display: block; }
+  .brun-card span { font-size: 11.5px; color: var(--muted); }
+
+  .stack-stage {
+    width: 100%; height: 150px; overflow-y: auto; border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    padding: 8px;
+    scrollbar-width: thin;
+  }
+  .stack-card {
+    padding: 12px 14px; border-radius: 10px;
+    background: #12161d;
+    border: 1px solid var(--line);
+    font-size: 12px; color: var(--muted);
+    box-shadow: 0 -6px 18px rgba(0,0,0,0.45);
+  }
+  .stack-card b { color: var(--fg); font-weight: 600; }
+
+  .float-pill {
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(90,160,255,0.14);
+    border: 1px solid rgba(90,160,255,0.32);
+    color: #a9c9ff; font-size: 12.5px;
+  }
+
+  .mgrid-box { width: 100%; }
+
+  .cursor-lab { font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* Web 面已有手法的一行速览 */
+  .strip {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    padding: 26px 0 4px;
+  }
+  .strip .lab { font-size: 12px; color: var(--muted); }
+
+  footer.demo-foot { margin-top: 60px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <span class="brand"><i class="brand-dot"></i>Motion Kit</span>
+    <nav>
+      <a href="./index.html">入口</a>
+      <a href="./web.html">Web 面</a>
+      <a href="./mobile.html">移动面</a>
+      <a href="./fun.html" class="is-here">好玩的</a>
+      <a href="./3d.html">3D</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>这些不承载信息，<br /><em>只负责好玩。</em></h1>
+    <p>
+      上一层的效果解决"看得懂"，这一层解决"想再看一次"。全部是纯 CSS 或 Web Animations，
+      没有额外依赖。可以慢放四分之一倍速，看清每一帧到底在做什么。
+    </p>
+  </section>
+
+  <div class="console">
+    <div class="seg" id="speed">
+      <button data-rate="1" aria-pressed="true">1×</button>
+      <button data-rate="0.5">0.5×</button>
+      <button data-rate="0.25">0.25×</button>
+      <button data-rate="0.1">0.1×</button>
+    </div>
+    <div class="seg" id="pauser">
+      <button id="btn-pause" aria-pressed="false">暂停</button>
+      <button id="btn-replay-all">全部重播</button>
+    </div>
+    <span class="hint">悬停卡片看效果 · 角上的 ⟳ 单独重播</span>
+  </div>
+
+  <section class="gallery" id="gallery">
+
+    <!-- 01 glitch -->
+    <article class="fx">
+      <div class="fx__stage">
+        <span class="mk-glitch demo-title" data-text="SYSTEM OK">SYSTEM OK</span>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">01</span><h3 class="fx__t">故障文字</h3></div>
+        <p class="fx__d">两份副本错位切片，只在 2.6 秒里的最后 12% 爆发一次。常亮就不叫故障了。</p>
+        <code class="fx__tag">.mk-glitch</code>
+      </div>
+    </article>
+
+    <!-- 02 neon -->
+    <article class="fx">
+      <div class="fx__stage">
+        <span class="mk-neon neon-num">88.8</span>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">02</span><h3 class="fx__t">霓虹呼吸</h3></div>
+        <p class="fx__d">三层 text-shadow 叠出灯管光晕，只让最外层呼吸 —— 全都在动会像频闪。</p>
+        <code class="fx__tag">.mk-neon</code>
+      </div>
+    </article>
+
+    <!-- 03 outline-fill -->
+    <article class="fx">
+      <div class="fx__stage">
+        <span class="mk-outline-fill outline-word">HOVER</span>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">03</span><h3 class="fx__t">描边填充</h3></div>
+        <p class="fx__d">描边是"待激活"，悬停时把描边交还给填充 —— 像字被墨水灌满。</p>
+        <code class="fx__tag">.mk-outline-fill</code>
+      </div>
+    </article>
+
+    <!-- 04 bounce-text -->
+    <article class="fx">
+      <div class="fx__stage">
+        <span class="bounce-word" id="bounce-demo">逐字弹起</span>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">04</span><h3 class="fx__t">逐字弹跳</h3></div>
+        <p class="fx__d">悬停时从第一个字开始依次弹起、依次落回。CJK 按字切，拉丁按词切。</p>
+        <code class="fx__tag">bounceText() · .mk-bounce-text</code>
+      </div>
+    </article>
+
+    <!-- 05 wobble -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mk-wobble wobble-box">〰</div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">05</span><h3 class="fx__t">果冻摆动</h3></div>
+        <p class="fx__d">和按压的区别：按压是"按一下"，这个是"被拨了一下"——阻尼振荡，越摆越小。</p>
+        <code class="fx__tag">.mk-wobble</code>
+      </div>
+    </article>
+
+    <!-- 06 shake -->
+    <article class="fx">
+      <button class="fx__replay" data-replay aria-label="重播">⟳</button>
+      <div class="fx__stage">
+        <div class="mk-shake shake-field" id="shake-demo">邮箱格式不正确</div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">06</span><h3 class="fx__t">校验失败抖动</h3></div>
+        <p class="fx__d">先移除类、强读一次 reflow、再加类 —— 否则同一帧连调两次不会重播。</p>
+        <code class="fx__tag">shake(el)</code>
+      </div>
+    </article>
+
+    <!-- 07 pulse -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mk-pulse pulse-ring">●</div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">07</span><h3 class="fx__t">心跳光环</h3></div>
+        <p class="fx__d">两圈错开半个周期扩散，读起来才是心跳；同相扩散只是呼吸。</p>
+        <code class="fx__tag">.mk-pulse</code>
+      </div>
+    </article>
+
+    <!-- 08 blob -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mk-blob blob-shape"></div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">08</span><h3 class="fx__t">液态形变</h3></div>
+        <p class="fx__d">四段 border-radius 分别动，比单纯缩放更"有机"。背景色由调用方给。</p>
+        <code class="fx__tag">.mk-blob</code>
+      </div>
+    </article>
+
+    <!-- 09 scan -->
+    <article class="fx">
+      <div class="fx__stage" style="padding:18px">
+        <div class="mk-scan scan-panel">
+          扫描中 · 正在核对<br />第 3 / 7 项
+        </div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">09</span><h3 class="fx__t">扫描线</h3></div>
+        <p class="fx__d">横纹必须静态，跟着动会变摩尔纹；动的只有那条亮带。</p>
+        <code class="fx__tag">.mk-scan</code>
+      </div>
+    </article>
+
+    <!-- 10 border-run -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mk-border-run brun-card">
+          <strong>正在生成</strong>
+          <span>边框跑一圈就是进度</span>
+        </div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">10</span><h3 class="fx__t">边框跑光</h3></div>
+        <p class="fx__d">1px 环上转 conic 渐变，不旋转元素本身 —— 圆角矩形不会被转歪。</p>
+        <code class="fx__tag">.mk-border-run</code>
+      </div>
+    </article>
+
+    <!-- 11 cube -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mk-cube-stage">
+          <div class="mk-cube" style="--mk-cube-size:86px">
+            <span class="mk-cube__face mk-cube__face--front">FRONT</span>
+            <span class="mk-cube__face mk-cube__face--back">BACK</span>
+            <span class="mk-cube__face mk-cube__face--right">R</span>
+            <span class="mk-cube__face mk-cube__face--left">L</span>
+            <span class="mk-cube__face mk-cube__face--top">T</span>
+            <span class="mk-cube__face mk-cube__face--bottom">B</span>
+          </div>
+        </div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">11</span><h3 class="fx__t">3D 立方体</h3></div>
+        <p class="fx__d">stage 给透视，cube 自己转，六个面推到半边长处。尺寸只改一个变量。</p>
+        <code class="fx__tag">.mk-cube-stage · .mk-cube</code>
+      </div>
+    </article>
+
+    <!-- 12 stack -->
+    <article class="fx">
+      <div class="fx__stage" style="padding:16px">
+        <div class="mk-stack stack-stage">
+          <div class="mk-stack__item stack-card"><b>第一张</b> · 往下滚</div>
+          <div class="mk-stack__item stack-card"><b>第二张</b> · 叠上去</div>
+          <div class="mk-stack__item stack-card"><b>第三张</b> · 再叠</div>
+          <div class="mk-stack__item stack-card"><b>第四张</b> · 还叠</div>
+          <div class="mk-stack__item stack-card"><b>第五张</b> · 到底了</div>
+        </div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">12</span><h3 class="fx__t">堆叠卡片</h3></div>
+        <p class="fx__d">纯 sticky，每项 top 往下错一格。零 JS、零滚动监听。</p>
+        <code class="fx__tag">.mk-stack</code>
+      </div>
+    </article>
+
+    <!-- 13 float -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="floats" style="display:flex;gap:14px;align-items:center">
+          <div class="mk-float float-pill">慢</div>
+          <div class="mk-float mk-float--fast float-pill">快</div>
+        </div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">13</span><h3 class="fx__t">漂浮</h3></div>
+        <p class="fx__d">三档周期错开，避免几个元素整齐划一地上下 —— 同步的漂浮像故障。</p>
+        <code class="fx__tag">.mk-float · --slow · --fast</code>
+      </div>
+    </article>
+
+    <!-- 14 confetti -->
+    <article class="fx">
+      <div class="fx__stage">
+        <button class="btn btn--accent" id="confetti-demo">点我撒花</button>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">14</span><h3 class="fx__t">撒花</h3></div>
+        <p class="fx__d">90 片全走 WAAPI，播完自动摘节点。手机上自动减到 60 片。</p>
+        <code class="fx__tag">confetti({ count, origin })</code>
+      </div>
+    </article>
+
+    <!-- 15 magnetic grid -->
+    <article class="fx">
+      <div class="fx__stage">
+        <div class="mgrid-box" id="mgrid-demo"></div>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">15</span><h3 class="fx__t">磁性点阵</h3></div>
+        <p class="fx__d">指针靠近时点被推开，越近推得越远。几何只在 enter/resize 读一次。</p>
+        <code class="fx__tag">magneticGrid(el · repelOffset())</code>
+      </div>
+    </article>
+
+    <!-- 16 cursor -->
+    <article class="fx">
+      <div class="fx__stage">
+        <p class="cursor-lab">在页面里移动鼠标<br />外圈越跟越近</p>
+      </div>
+      <div class="fx__meta">
+        <div class="fx__row"><span class="fx__n">16</span><h3 class="fx__t">光标跟随</h3></div>
+        <p class="fx__d">外圈指数插值追、内点直接跟，两者的滞后差就是"有重量"的错觉。</p>
+        <code class="fx__tag">cursorFollower()</code>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="strip">
+    <span class="lab">Web 面已有的手法也在这一页之外：</span>
+    <a class="btn btn--ghost" href="./web.html">倾斜 · 光斑 · 磁吸 · 视差 →</a>
+    <a class="btn btn--ghost" href="./mobile.html">按压 · 弹层 · 左滑 · 下拉 →</a>
+  </div>
+
+  <footer class="demo-foot">
+    <span>这 16 个都在 <code>styles/fun.css</code> + <code>src/core/fun.js</code></span>
+    <span>prefers-reduced-motion 下整层关闭 · .mk-lite 下同样关闭</span>
+  </footer>
+
+</div>
+
+<script src="./motion-kit.global.js"></script>
+<script>
+  const { confetti, shake, bounceText, cursorFollower, magneticGrid } = window.MK;
+
+  /* ---------- 全局：倍速 / 暂停 / 重播 ---------- */
+  let rate = 1;
+
+  const applyRate = () => {
+    document.getAnimations().forEach((a) => { a.playbackRate = rate; });
+  };
+
+  // 10.1× 太快看不出来，所以最低给到 0.1×
+  document.querySelectorAll('#speed button').forEach((b) => {
+    b.addEventListener('click', () => {
+      rate = Number(b.dataset.rate);
+      document.querySelectorAll('#speed button').forEach((x) =>
+        x.setAttribute('aria-pressed', String(x === b)));
+      applyRate();
+    });
+  });
+
+  const pauseBtn = document.getElementById('btn-pause');
+  pauseBtn.addEventListener('click', () => {
+    const paused = pauseBtn.getAttribute('aria-pressed') !== 'true';
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    pauseBtn.textContent = paused ? '继续' : '暂停';
+    document.getAnimations().forEach((a) => (paused ? a.pause() : a.play()));
+  });
+
+  const replayIn = (root) => {
+    root.getAnimations({ subtree: true }).forEach((a) => {
+      a.currentTime = 0;
+      a.playbackRate = rate;
+      a.play();
+    });
+  };
+
+  document.getElementById('btn-replay-all').addEventListener('click', () => {
+    replayIn(document);
+    fireShake();
+    spawnConfetti();
+  });
+
+  // 单个卡片的重播按钮
+  document.querySelectorAll('[data-replay]').forEach((btn) => {
+    btn.addEventListener('click', () => replayIn(btn.closest('.fx')));
+  });
+
+  /* ---------- 06 抖动 ---------- */
+  const shakeEl = document.getElementById('shake-demo');
+  const fireShake = () => shake(shakeEl);
+
+  // 卡片里点一下也抖，方便反复看
+  shakeEl.addEventListener('pointerdown', fireShake);
+
+  /* ---------- 14 撒花 ---------- */
+  const spawnConfetti = () =>
+    confetti({
+      count: 90,
+      origin: document.getElementById('confetti-demo'),
+      spread: 1.15,
+    });
+
+  document.getElementById('confetti-demo').addEventListener('click', spawnConfetti);
+
+  /* ---------- 04 逐字弹跳 ---------- */
+  bounceText(document.getElementById('bounce-demo'));
+
+  /* ---------- 15 磁性点阵 ---------- */
+  magneticGrid(document.getElementById('mgrid-demo'), { cols: 8, radius: 96, max: 18 });
+
+  /* ---------- 16 光标跟随 ---------- */
+  cursorFollower({ size: 30 });
+
+  /* ---------- 首屏动画启动后校准倍速 ---------- */
+  // 进场过渡也是动画，切换倍速时一并生效
+  setTimeout(applyRate, 600);
+</script>
+</body>
+</html>

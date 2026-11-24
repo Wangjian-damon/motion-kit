@@ -1,0 +1,561 @@
+/* ============================================================
+   fun.css — 趣味效果层。
+   
+   前两层解决"对不对"：motion.css 给共用词汇，mobile.css 给触控表面；
+   这一层只解决"好不好玩"。
+   
+   全部按需引：不引这个文件，前面两层照常工作。
+   这一层的东西共同点是——**它们不承载信息，只制造情绪**。
+   所以它们统一在 prefers-reduced-motion 和 .mk-lite 下整层关掉，
+   而不是像 motion.css 那样"减弱但保留"。
+   ============================================================ */
+
+/* @property 让 conic-gradient 的角度可动画。
+   不支持时边框照样渲染（只是不转），不会整块消失。 */
+@property --mk-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ============================================================
+   01 · 故障文字（glitch）
+   ::before / ::after 各拿一份文字，错位 + clip-path 切片，
+   只在 2.6s 里的最后 12% 爆发一次 —— 常亮就不叫故障了。
+   ============================================================ */
+
+.mk-glitch {
+  position: relative;
+  display: inline-block;
+  --mk-glitch-a: #00e5ff;
+  --mk-glitch-b: #ff2e72;
+}
+
+.mk-glitch::before,
+.mk-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation-duration: 2.6s;
+  animation-iteration-count: infinite;
+  /* steps(1) 让每个关键帧硬切，不然会看到平滑的位移过渡 */
+  animation-timing-function: steps(1, end);
+}
+
+.mk-glitch::before {
+  color: var(--mk-glitch-a);
+  animation-name: mk-glitch-a;
+}
+
+.mk-glitch::after {
+  color: var(--mk-glitch-b);
+  animation-name: mk-glitch-b;
+  animation-delay: 40ms;
+}
+
+@keyframes mk-glitch-a {
+  0%, 87%   { opacity: 0; transform: none; }
+  88%       { opacity: 0.92; transform: translate3d(-2px, -1px, 0); clip-path: inset(8% 0 60% 0); }
+  90%       { opacity: 0.92; transform: translate3d(3px, 1px, 0);  clip-path: inset(46% 0 24% 0); }
+  92%       { opacity: 0.92; transform: translate3d(-1px, 2px, 0); clip-path: inset(70% 0 6% 0); }
+  94%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 0 0); }
+}
+
+@keyframes mk-glitch-b {
+  0%, 88%   { opacity: 0; transform: none; }
+  89%       { opacity: 0.8; transform: translate3d(2px, 1px, 0);  clip-path: inset(24% 0 48% 0); }
+  91%       { opacity: 0.8; transform: translate3d(-3px, -1px, 0); clip-path: inset(58% 0 14% 0); }
+  93%       { opacity: 0.8; transform: translate3d(1px, -2px, 0); clip-path: inset(36% 0 40% 0); }
+  95%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 0 0); }
+}
+
+/* ============================================================
+   02 · 霓虹呼吸（neon）
+   三层 text-shadow 叠出灯管的光晕，只让最外层呼吸 ——
+   全都在动会像频闪。
+   ============================================================ */
+
+.mk-neon {
+  --mk-neon: 184, 255, 61;
+  color: rgb(var(--mk-neon));
+  text-shadow:
+    0 0 4px rgba(var(--mk-neon), 0.9),
+    0 0 16px rgba(var(--mk-neon), 0.55);
+  animation: mk-neon 3.2s ease-in-out infinite;
+}
+
+@keyframes mk-neon {
+  0%, 100% {
+    text-shadow:
+      0 0 4px rgba(var(--mk-neon), 0.9),
+      0 0 16px rgba(var(--mk-neon), 0.55),
+      0 0 44px rgba(var(--mk-neon), 0.3);
+    opacity: 1;
+  }
+  50% {
+    text-shadow:
+      0 0 3px rgba(var(--mk-neon), 0.6),
+      0 0 10px rgba(var(--mk-neon), 0.3),
+      0 0 26px rgba(var(--mk-neon), 0.14);
+    opacity: 0.88;
+  }
+}
+
+/* ============================================================
+   03 · 描边填充（outline-fill）
+   描边字是"待激活"的状态，悬停时把描边交还给填充 ——
+   比直接加颜色更像"字被墨水灌满"。
+   ============================================================ */
+
+.mk-outline-fill {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--mk-outline, #eef2f7);
+  transition:
+    color var(--mk-dur-4) var(--mk-ease-out),
+    -webkit-text-stroke-color var(--mk-dur-4) var(--mk-ease-out);
+}
+
+@media (hover: hover) {
+  .mk-outline-fill:hover {
+    color: var(--mk-outline-fill, #b8ff3d);
+    -webkit-text-stroke-color: transparent;
+  }
+}
+
+/* ============================================================
+   04 · 逐字弹跳（bounce-text）
+   bounceText() 把文字拆成 span 并写 --mk-i，这里只管延迟。
+   悬停时从第一个字开始依次弹起、依次落回。
+
+   延迟吃 var(--mk-i, calc(sibling-index() - 1))：bounceText() 写过就听它的，
+   没写过（比如直接手写几个 .mk-bounce-text__u）就由 CSS 自己数。
+   ============================================================ */
+
+.mk-bounce-text {
+  display: inline-block;
+}
+
+.mk-bounce-text__u {
+  display: inline-block;
+  will-change: transform;
+  transition: transform var(--mk-dur-2) var(--mk-ease-snap);
+}
+
+@media (hover: hover) {
+  .mk-bounce-text:hover .mk-bounce-text__u {
+    transform: translate3d(0, -0.34em, 0);
+    transition-delay: calc(var(--mk-i, calc(sibling-index() - 1)) * 32ms);
+  }
+}
+
+/* ============================================================
+   05 · 果冻摆动（wobble）
+   和 squish 的区别：squish 是"按一下"，wobble 是"被拨了一下"——
+   阻尼振荡，越摆越小。origin 放底部，像立着的东西在晃。
+   ============================================================ */
+
+.mk-wobble {
+  transform-origin: 50% 100%;
+  animation: mk-wobble 2.2s var(--mk-ease-in-out) infinite;
+}
+
+@keyframes mk-wobble {
+  0%, 100% { transform: rotate(0deg) scale(1, 1); }
+  12%      { transform: rotate(-4deg) scale(1.03, 0.97); }
+  26%      { transform: rotate(3.4deg) scale(0.97, 1.03); }
+  40%      { transform: rotate(-2.4deg) scale(1.02, 0.98); }
+  54%      { transform: rotate(1.5deg) scale(0.99, 1.01); }
+  68%      { transform: rotate(-0.8deg) scale(1.01, 0.99); }
+  82%      { transform: rotate(0.3deg) scale(1, 1); }
+}
+
+/* ============================================================
+   06 · 抖动（shake）
+   表单校验失败的那个抖动。shake() 加类、到点删类，
+   所以同一秒内连点也能重播（先移除再 reflow 再加）。
+   ============================================================ */
+
+.mk-shake.is-shaking {
+  animation: mk-shake 520ms var(--mk-ease-in-out);
+}
+
+@keyframes mk-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12%      { transform: translate3d(-8px, 0, 0); }
+  24%      { transform: translate3d(7px, 0, 0); }
+  38%      { transform: translate3d(-5px, 0, 0); }
+  52%      { transform: translate3d(4px, 0, 0); }
+  68%      { transform: translate3d(-2px, 0, 0); }
+  84%      { transform: translate3d(1px, 0, 0); }
+}
+
+/* ============================================================
+   07 · 心跳光环（pulse）
+   两圈错开半个周期扩散，读起来才是"心跳"不是"呼吸"。
+   ============================================================ */
+
+.mk-pulse {
+  position: relative;
+}
+
+.mk-pulse::before,
+.mk-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  pointer-events: none;
+  opacity: 0;
+  animation: mk-pulse 2.4s var(--mk-ease-out) infinite;
+}
+
+.mk-pulse::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes mk-pulse {
+  0%   { transform: scale(0.86); opacity: 0.55; }
+  70%  { transform: scale(1.42); opacity: 0; }
+  100% { transform: scale(1.42); opacity: 0; }
+}
+
+/* ============================================================
+   08 · 液态形变（blob）
+   四段 border-radius 分别动，比单纯缩放更"有机"。
+   背景要由调用方给 —— 这层只负责形状。
+   ============================================================ */
+
+.mk-blob {
+  animation: mk-blob 11s var(--mk-ease-in-out) infinite;
+}
+
+@keyframes mk-blob {
+  0%, 100% { border-radius: 46% 54% 62% 38% / 52% 44% 56% 48%; }
+  33%      { border-radius: 63% 37% 40% 60% / 42% 63% 37% 58%; }
+  66%      { border-radius: 37% 63% 57% 43% / 63% 37% 52% 48%; }
+}
+
+/* ============================================================
+   09 · 扫描线（scan）
+   一层细密的静态横纹 + 一条缓慢下扫的亮带。
+   条纹必须是静态的：跟着动会变成摩尔纹，眼睛难受。
+   ============================================================ */
+
+.mk-scan {
+  --mk-scan-color: 184, 255, 61;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mk-scan::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+.mk-scan::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -40%;
+  height: 40%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(var(--mk-scan-color), 0.22) 55%,
+    transparent
+  );
+  animation: mk-scan-sweep 3.4s var(--mk-ease-in-out) infinite;
+}
+
+.mk-scan > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes mk-scan-sweep {
+  from { transform: translate3d(0, -10%, 0); }
+  to   { transform: translate3d(0, 380%, 0); }
+}
+
+/* ============================================================
+   10 · 边框跑光（border-run）
+   用 padding:1px + mask 抠出一个 1px 环，环上是旋转的 conic 渐变。
+   不旋转元素本身，所以圆角矩形不会被转歪。
+   ============================================================ */
+
+.mk-border-run {
+  position: relative;
+  --mk-brun-a: #b8ff3d;
+  --mk-brun-b: #5aa0ff;
+  --mk-brun-dur: 3s;
+}
+
+.mk-border-run::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--mk-angle, 0deg),
+    transparent 0 58%,
+    var(--mk-brun-a) 74%,
+    var(--mk-brun-b) 86%,
+    transparent 96%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: mk-angle-run var(--mk-brun-dur) linear infinite;
+}
+
+@keyframes mk-angle-run {
+  to { --mk-angle: 1turn; }
+}
+
+/* ============================================================
+   11 · 3D 立方体（cube）
+   stage 给透视，cube 自己转。六个面用 translateZ 推到半边长处。
+   ============================================================ */
+
+.mk-cube-stage {
+  perspective: 780px;
+  display: grid;
+  place-items: center;
+}
+
+.mk-cube {
+  --mk-cube-size: 96px;
+  position: relative;
+  width: var(--mk-cube-size);
+  height: var(--mk-cube-size);
+  transform-style: preserve-3d;
+  animation: mk-cube-spin 14s linear infinite;
+}
+
+.mk-cube__face {
+  --mk-h: calc(var(--mk-cube-size) / 2);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(184, 255, 61, 0.34);
+  background: rgba(184, 255, 61, 0.06);
+  color: rgba(184, 255, 61, 0.75);
+  font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+  backface-visibility: visible;
+}
+
+.mk-cube__face--front  { transform: translateZ(var(--mk-h)); }
+.mk-cube__face--back   { transform: rotateY(180deg) translateZ(var(--mk-h)); }
+.mk-cube__face--right  { transform: rotateY(90deg)  translateZ(var(--mk-h)); }
+.mk-cube__face--left   { transform: rotateY(-90deg) translateZ(var(--mk-h)); }
+.mk-cube__face--top    { transform: rotateX(90deg)  translateZ(var(--mk-h)); }
+.mk-cube__face--bottom { transform: rotateX(-90deg) translateZ(var(--mk-h)); }
+
+@keyframes mk-cube-spin {
+  from { transform: rotateX(-22deg) rotateY(0deg); }
+  to   { transform: rotateX(-22deg) rotateY(360deg); }
+}
+
+/* ============================================================
+   12 · 堆叠卡片（stack）
+   纯 sticky。每一项的 top 都往下错一格，滚动时依次叠上去。
+   不需要一行 JS，也不需要滚动事件。
+
+   这一条以前要求使用方自己写 --mk-i（demo 里就是手写的 0..4）。
+   现在没写也成立：top 的兜底值自己数兄弟。所以"加一张卡"只是
+   加一个 div，不用回头改行号。
+   ============================================================ */
+
+.mk-stack {
+  display: grid;
+  gap: 10px;
+  --mk-stack-gap: 18px;
+}
+
+.mk-stack__item {
+  position: sticky;
+  top: calc(8px + var(--mk-i, calc(sibling-index() - 1)) * var(--mk-stack-gap));
+}
+
+/* ============================================================
+   13 · 漂浮（float）
+   三档不同的周期与幅度，避免几个元素整齐划一地上下 ——
+   同步的漂浮看起来像故障。
+   ============================================================ */
+
+.mk-float {
+  animation: mk-float 5.5s var(--mk-ease-in-out) infinite;
+}
+
+.mk-float--slow { animation-duration: 7.5s; }
+.mk-float--fast { animation-duration: 4.2s; }
+
+@keyframes mk-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -7px, 0); }
+}
+
+/* ============================================================
+   14 · 撒花（confetti）
+   容器铺满视口、不吃事件；碎片本身由 confetti() 用 WAAPI 甩出去，
+   所以这里只管形状和颜色，不管运动。
+   ============================================================ */
+
+.mk-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mk-confetti__bit {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   15 · 磁性点阵（magneticGrid）
+   点阵本身是普通 grid，位移由 JS 按指针距离写 transform。
+   这里只给"被吸住"时的高亮过渡。
+   ============================================================ */
+
+.mk-mgrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 12px;
+  padding: 4px;
+}
+
+.mk-mgrid__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background-color var(--mk-dur-2) var(--mk-ease-out);
+  will-change: transform;
+}
+
+/* ============================================================
+   16 · 光标跟随（cursorFollower）
+   外圈缓动追、内点即时跟 —— 两者的滞后差就是"有重量"的错觉。
+   z-index 压在 toast 之上，保证任何页面都看得见。
+   ============================================================ */
+
+.mk-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9500;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--mk-dur-2) var(--mk-ease-out);
+}
+
+.mk-cursor.is-on { opacity: 1; }
+
+.mk-cursor__ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--mk-cursor-size, 30px);
+  height: var(--mk-cursor-size, 30px);
+  margin: calc(var(--mk-cursor-size, 30px) / -2) 0 0 calc(var(--mk-cursor-size, 30px) / -2);
+  border: 1px solid var(--mk-cursor-color, rgba(184, 255, 61, 0.75));
+  border-radius: 50%;
+  transition:
+    width var(--mk-dur-2) var(--mk-ease-out),
+    height var(--mk-dur-2) var(--mk-ease-out),
+    margin var(--mk-dur-2) var(--mk-ease-out),
+    background-color var(--mk-dur-2) var(--mk-ease-out);
+}
+
+.mk-cursor__dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--mk-cursor-color, rgba(184, 255, 61, 0.95));
+}
+
+/* 停在可点元素上：外圈胀开并变成半透明填充 */
+.mk-cursor.is-hot .mk-cursor__ring {
+  --mk-cursor-size: 56px;
+  background: rgba(184, 255, 61, 0.12);
+}
+
+/* ============================================================
+   降级：这一层整体是装饰，两种情况下直接关掉
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-glitch::before,
+  .mk-glitch::after,
+  .mk-neon,
+  .mk-wobble,
+  .mk-shake.is-shaking,
+  .mk-pulse::before,
+  .mk-pulse::after,
+  .mk-blob,
+  .mk-scan::after,
+  .mk-border-run::before,
+  .mk-cube,
+  .mk-float {
+    animation: none;
+  }
+  .mk-glitch::before,
+  .mk-glitch::after,
+  .mk-scan::before,
+  .mk-scan::after {
+    display: none;
+  }
+}
+
+/* 低端机：只留功能性反馈（tap / sheet / swipe），装饰层全下掉 */
+.mk-lite .mk-glitch::before,
+.mk-lite .mk-glitch::after,
+.mk-lite .mk-scan::before,
+.mk-lite .mk-scan::after,
+.mk-lite .mk-aurora::before,
+.mk-lite .mk-aurora::after {
+  display: none;
+}
+
+.mk-lite .mk-wobble,
+.mk-lite .mk-neon,
+.mk-lite .mk-blob,
+.mk-lite .mk-cube,
+.mk-lite .mk-float,
+.mk-lite .mk-pulse::before,
+.mk-lite .mk-pulse::after,
+.mk-lite .mk-border-run::before {
+  animation: none;
+}

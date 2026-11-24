@@ -1,0 +1,356 @@
+/* ============================================================
+   glass.css — 玻璃层：真的材质，不是"半透明卡片"。
+
+   和前三层的区别：
+     motion.css  是「怎么动」；
+     fun.css     是平面上的装饰（可以整层删掉）；
+     3d.css      是把元素推到 Z 轴；
+     这一层管的是「表面是什么做的」—— 背景模糊、边缘折射、镜面高光、
+     以及光在玻璃里流动的轨迹。
+
+   为什么单独一层：玻璃的降级方式和谁都不一样。
+     · fun / 3d 是装饰 → 直接关掉，信息不受损；
+     · 玻璃承载版面（导航栏、操作条），不能关掉，只能"冻住"：
+       停在最实的那一档，去掉流动、按压和高光的位置动画。
+     这是第三套契约，README 里单独记了一条。
+
+   边缘折射的做法不是我们发明的：位移图（圆角矩形 SDF → 向内取样 →
+   把 dx/dy 编进 R/G）来自 shuding/liquid-glass（MIT © 2025 Shu Ding），
+   由 src/core/glass.js 算出 feImage 的 dataURL，这里只负责引用那条 filter。
+   注意方向场被改写过：上游是径向（朝中心缩放），这里是 SDF 内法线 ——
+   详见 effects/refraction.md 第 3 节，README 第 22 条。
+
+   三个可调维度全部走变量，组件不需要知道内部结构：
+     --mk-glass-blur / --mk-glass-sat   材质本身
+     --mk-glass-x / -y / -o            高光位置与强度（由 glass.js 写入）
+     --mk-glass-band                    边缘那圈亮线的宽度（只是反光，不是厚度）
+
+   为什么 blur 要从 24px 降到 6px：
+     模糊和折射是在抢同一件事。背景糊得越狠，边缘那圈被折弯的纹理就越看不出来，
+     最后只剩一块灰板子 —— 这正是之前"不够苹果"的原因。
+   ============================================================ */
+
+:root {
+  --mk-glass-blur: 6px;
+  --mk-glass-sat: 178%;
+  --mk-glass-tint: rgba(255, 255, 255, 0.068);
+  --mk-glass-r: 26px;
+  --mk-glass-band: 1.5px;
+
+  /* 高光默认就亮着 —— 没挂 JS 的静态页面也该有玻璃感 */
+  --mk-glass-x: 30%;
+  --mk-glass-y: -8%;
+  --mk-glass-o: 0.26;
+
+  --mk-glass-lift: rgba(0, 0, 0, 0.62);
+}
+
+/* 把高光坐标登记成**可插值**的。
+   未登记的自定义属性是字符串：写个新值只会整块换掉，相邻两帧之间没有中间态，
+   transition / animation 对它一律无效。登记成 <percentage> 之后浏览器才知道
+   "30% → 62%" 中间有路可走 —— 触屏那一档（第 07 节）完全没有 rAF，
+   全靠这两条 transition 把光送过去再送回来。
+   不支持 @property 的引擎不会报错，只是退回"瞬间到位"，仍然可用。 */
+@property --mk-glass-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 30%;
+}
+
+@property --mk-glass-y {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: -8%;
+}
+
+/* ============================================================
+   01 · 基底材质（mk-glass）
+   ------------------------------------------------------------
+   四件事叠起来才像玻璃，缺一件就会退回"毛玻璃卡片"：
+     1. 边缘折射       —— backdrop-filter: url(#…) 把背景在边上折弯（JS 生成位移图）
+     2. backdrop 模糊  —— 提饱和、轻微压对比，把背景"磨"成玻璃里的像
+     3. 镜面高光       —— ::after 的径向渐变，位置跟光走
+     4. 一圈亮线       —— 1.5px 的 inset，玻璃边缘的反光
+   ============================================================ */
+
+.mk-glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--mk-glass-r);
+  background: var(--mk-glass-tint);
+  /* 没有折射图时（旧版浏览器 / 低端机 / 还没跑 JS）这是唯一的一层，必须能独立成立 */
+  -webkit-backdrop-filter: blur(var(--mk-glass-blur)) saturate(var(--mk-glass-sat));
+  backdrop-filter: blur(var(--mk-glass-blur)) saturate(var(--mk-glass-sat));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),   /* 顶面那道光 */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),  /* 底面反光，比顶面弱得多 */
+    0 0 0 1px rgba(255, 255, 255, 0.085),      /* 边缘线 */
+    0 18px 42px -18px var(--mk-glass-lift);    /* 玻璃压在背景上的投影 */
+}
+
+/* 折射生效时（glass.js 写入 --mk-glass-url 并加 .is-refract）。
+   两个细节不能省：
+     · contrast/brightness 略提 —— 位移之后像素被重采样，会软一档，
+       不提一点看起来像蒙了层雾；
+     · 这整条是覆盖而不是追加，所以 blur 必须再写一遍，否则折射一开模糊就没了。 */
+.mk-glass.is-refract {
+  -webkit-backdrop-filter: var(--mk-glass-url) blur(var(--mk-glass-blur)) contrast(1.12) brightness(1.04) saturate(var(--mk-glass-sat));
+  backdrop-filter: var(--mk-glass-url) blur(var(--mk-glass-blur)) contrast(1.12) brightness(1.04) saturate(var(--mk-glass-sat));
+}
+
+/* 边缘亮线：极细的一条，比"厚度圈"更像苹果。
+   之前 band 是 12px 的一条渐变 —— 那是"玻璃有侧面"的拟物思路；
+   液态玻璃的厚度是由折射给的，这里只负责那条反光的棱。
+   做法仍是"画一层再挖掉中间"：border 不会跟着圆角走，
+   也不会在圆角处均匀变细。 */
+.mk-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--mk-glass-band);
+  background: linear-gradient(
+    152deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    rgba(255, 255, 255, 0.02) 54%,
+    rgba(255, 255, 255, 0.12) 82%,
+    rgba(255, 255, 255, 0.38) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 镜面高光。screen 混合让它在深色底上也不会变脏。
+   opacity 用变量，所以 JS 只写数字、CSS 管过渡 —— 和 tilt 同一个约定。
+   强度比"无折射版本"低：边缘已经折出亮带，高光再压满就腻了。 */
+.mk-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    118% 88% at var(--mk-glass-x) var(--mk-glass-y),
+    rgba(255, 255, 255, 0.42),
+    rgba(255, 255, 255, 0.10) 26%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  opacity: var(--mk-glass-o);
+  mix-blend-mode: screen;
+  transition: opacity 360ms var(--mk-ease-out);
+}
+
+/* ============================================================
+   02 · 流动（mk-glass--liquid）
+   ------------------------------------------------------------
+   两团色斑在玻璃里慢慢错位，像光穿过水。
+   用 background-position 而不是再叠一层节点：position 走合成器，
+   不触发重排，也不会多一个必须被降级逻辑记住的伪元素。
+   ============================================================ */
+
+.mk-glass--liquid {
+  background-image:
+    radial-gradient(46% 70% at 24% 18%, rgba(184, 255, 61, 0.16), transparent 62%),
+    radial-gradient(52% 78% at 78% 84%, rgba(90, 160, 255, 0.20), transparent 64%);
+  background-size: 170% 170%, 190% 190%;
+  background-position: 0% 0%, 100% 100%;
+  animation: mk-glass-flow 15s var(--mk-ease-in-out) infinite alternate;
+}
+
+@keyframes mk-glass-flow {
+  from { background-position: 0% 0%, 100% 100%; }
+  to   { background-position: 100% 100%, 0% 0%; }
+}
+
+/* ============================================================
+   03 · 液态按压（mk-glass--pill / .is-press）
+   ------------------------------------------------------------
+   按下去不是"缩小"，是"先被压扁、再回弹拉长"——
+   真实的液滴接触平面就是这个形状变化，也是 iOS 26 控件的核心手感。
+   ------------------------------------------------------------
+   注意：别和 v-mk-tap 叠在同一个节点上。两者都写 transform，
+   后者的 scale(0.955) 会和这里的关键帧互相抢；要按压感就只用这一套。
+   ============================================================ */
+
+.mk-glass--pill {
+  border-radius: 999px;
+}
+
+.mk-glass.is-press {
+  animation: mk-glass-press 460ms var(--mk-ease-snap);
+}
+
+@keyframes mk-glass-press {
+  0%   { transform: scale(1, 1); }
+  28%  { transform: scale(1.055, 0.945); }  /* 压扁 */
+  60%  { transform: scale(0.972, 1.035); }  /* 回弹 */
+  100% { transform: scale(1, 1); }
+}
+
+/* 高光同时炸开一圈：形状和光必须一起变，只变形会像块橡胶 */
+.mk-glass.is-press::after {
+  animation: mk-glass-bloom 520ms var(--mk-ease-out);
+}
+
+@keyframes mk-glass-bloom {
+  from { opacity: 1; transform: scale(0.55); }
+  to   { opacity: var(--mk-glass-o); transform: scale(1.3); }
+}
+
+/* ============================================================
+   04 · 悬浮胶囊条（mk-glass--bar / mk-glass--float）
+   ------------------------------------------------------------
+   iOS 的底部操作条：浮在内容上、四边留白、底部自己吃安全区。
+   形状和定位分开 —— --bar 只决定"长成什么"，--float 才决定"钉在哪"，
+   这样把同一个条放进静态版式里做展示时不用再写一遍覆盖。
+   ============================================================ */
+
+.mk-glass--bar {
+  --mk-glass-r: 999px;
+  --mk-glass-blur: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.mk-glass--float {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 60;
+}
+
+/* ============================================================
+   05 · 滚动固化（mk-glass--sticky）
+   ------------------------------------------------------------
+   静止时几乎透明，内容滚到它下面时逐渐变实 —— 这就是 iOS 导航栏。
+   ------------------------------------------------------------
+   为什么固化的是"底色"而不是"模糊半径"：
+   blur() 的半径是 backdrop-filter 的参数，要让它随滚动插值，
+   得同时具备 @property 和 scroll() 时间轴；缺一个就变成
+   在区间中点"啪"地跳一档。而"变得更实"本身就是导航栏的观感来源，
+   模糊保持定值、只加深底色，代价为零、任何浏览器都不会跳。
+   ============================================================ */
+
+.mk-glass--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  --mk-glass-r: 0px;
+  --mk-glass-band: 0px;   /* 吸顶条不该有圆角厚度 */
+}
+
+@supports (animation-timeline: scroll()) {
+  .mk-glass--sticky {
+    animation: mk-glass-solidify linear both;
+    /* nearest 而不是 root：吸顶条未必在文档滚动里，也可能在一个
+       overflow: auto 的页面容器里（移动端 demo 就是这种）。
+       nearest 在两种情况下都指向"真正把它滚走的那个盒子"。 */
+    animation-timeline: scroll(nearest block);
+    animation-range: 0px 90px;
+  }
+}
+
+@keyframes mk-glass-solidify {
+  from { background-color: rgba(9, 12, 17, 0.10); }
+  to   { background-color: rgba(9, 12, 17, 0.78); }
+}
+
+/* ============================================================
+   06 · 触屏：一次点击，一段完整的动画
+   ------------------------------------------------------------
+   移动端没有 hover。缺了"指针停在那儿"这个前提，"高光追着指针走"
+   就没有输入源；而手指落下时又把要看的区域整个盖住了，跟手的结果是
+   用户什么也看不见。所以触屏上不复用桌面那套 rAF 跟随，改成
+   一次点击 = 一段有始有终的动画：
+
+     按下 → 光聚到触点、形状压扁再回弹、光晕从触点炸开
+     松手 → 停一拍（glass.js 的 linger，默认 520ms）→ 光散回静止位
+
+   这一节只挂 transition，不挂 animation：光的位置由 JS 写终值，
+   中间路径全交给浏览器插值。用 rAF 逐帧去写一个本来就能过渡的属性，
+   等于拿 JS 手搓缓动 —— 更贵，还抢不到合成器。
+
+   为什么只在粗指针上挂：桌面端的光跟着鼠标一路走，每一帧换个目标。
+   给它挂 transition，光就会永远落后指针一截，像拖着一根橡皮筋。
+   ============================================================ */
+
+@media (hover: none), (pointer: coarse) {
+  .mk-glass {
+    /* 散回去：慢。这是"光离开"而不是"光到达"，慢一点才像余晖 */
+    transition:
+      --mk-glass-x 420ms var(--mk-ease-out),
+      --mk-glass-y 420ms var(--mk-ease-out);
+  }
+
+  /* 聚过来：快。手指落下那一瞬间就该看到反应 */
+  .mk-glass.is-press {
+    transition:
+      --mk-glass-x 200ms var(--mk-ease-out),
+      --mk-glass-y 200ms var(--mk-ease-out);
+  }
+
+  /* 光晕从触点长出来，而不是从元素中心鼓包 ——
+     和上下文菜单从指尖撑开是同一条规矩。 */
+  .mk-glass.is-press::after {
+    transform-origin: var(--mk-glass-x) var(--mk-glass-y);
+  }
+}
+
+/* ============================================================
+   07 · 降级：冻住，不是删掉
+   ------------------------------------------------------------
+   顺序很重要 —— 先"减弱"，再"换材质"，最后才是"关动画"。
+   ============================================================ */
+
+/* 要求减少动效：光和流动都停，玻璃本身还在。
+   高光收成一个静态值，而不是彻底没有：一块完全没有反光的玻璃
+   在深色界面上会读成"一块更暗的矩形"。
+   折射保留 —— 它不是动画，是一张贴图，静止画面里它就是材质本身。 */
+@media (prefers-reduced-motion: reduce) {
+  .mk-glass--liquid,
+  .mk-glass.is-press,
+  .mk-glass.is-press::after {
+    animation: none;
+  }
+  .mk-glass {
+    --mk-glass-o: 0.22;
+    --mk-glass-x: 32%;
+    --mk-glass-y: -10%;
+  }
+  /* 两条过渡都要掐：::after 的 opacity，以及触屏那档写在 .mk-glass 上的
+     高光坐标位移。只掐一条会漏掉"光自己滑过去"这段动效 —— 它同样是动效。 */
+  .mk-glass,
+  .mk-glass.is-press,
+  .mk-glass::after { transition: none; }
+}
+
+/* 低端机 / 省电：backdrop-filter 是这一层最贵的东西，直接换实色。
+   注意这里不是"变透明了事" —— 要把底色补足，否则文字会糊在内容上。
+   折射也一并摘掉：feDisplacementMap 是逐像素重采样，和 backdrop-filter
+   叠在一起正是最贵的那一段。 */
+.mk-lite .mk-glass {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: rgba(16, 21, 29, 0.94);
+}
+
+.mk-lite .mk-glass.is-refract {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.mk-lite .mk-glass--liquid {
+  animation: none;
+  background-image: none;
+}
+
+.mk-lite .mk-glass::after {
+  opacity: 0.12;
+}
