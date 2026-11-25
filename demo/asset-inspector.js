@@ -296,6 +296,7 @@
         <button class="mki-btn mki-btn--primary" data-mki="prompt">复制 AI 提示词（第 8 栏）</button>
         <button class="mki-btn" data-mki="rule">复制 Skill 约束规则</button>
         <button class="mki-btn" data-mki="all">← 浏览全库 (${reg.count})</button>
+        <a class="mki-btn" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">★ GitHub Star</a>
       </div>
       <div class="mki-sec">
         <h3>8 · 去库化 AI 复现提示词</h3>
@@ -346,6 +347,7 @@
       <div class="mki-actions">
         <button class="mki-btn mki-btn--primary" data-mki="install">复制一键安装 Agent Skill 命令</button>
         <a class="mki-btn" href="./library.html">打开全屏资产库 →</a>
+        <a class="mki-btn" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">★ GitHub Star</a>
       </div>
       <input class="mki-search" type="search" placeholder="搜索效果名、性质（反馈/连续/方向/权重/材质/节奏）或关键词..." />
       <div class="mki-picker-list"></div>
