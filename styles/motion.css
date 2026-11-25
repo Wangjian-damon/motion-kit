@@ -1078,3 +1078,183 @@
 /* 不支持 View Transitions 的引擎里 name 会被静默忽略（实测：`0` / `*` 都
    compute 成 none），所以这里不写降级动画 —— 降级就是"没有过渡"，页面照样
    能用。按下反馈交给 v-mk-tap，别在这里叠第二层。 */
+
+/* ============================================================
+   原语 25 · 越界橡胶阻尼（mk-rubber）
+   ------------------------------------------------------------
+   JS 只写 --mk-rb（px），这里拼 transform。拖动中关过渡（跟手要硬），
+   松手开过渡（回弹要软）—— 同一个属性，两段手感。
+   回弹用 ease-snap：轻微过冲，读起来是"被弹回来"而不是"被拽回来"。
+   ============================================================ */
+
+.mk-rubber {
+  transform: translate3d(var(--mk-rb, 0px), 0, 0);
+  transition: transform var(--mk-dur-4) var(--mk-ease-snap);
+  touch-action: pan-y;          /* 横拖归我，竖滑留给页面 */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.mk-rubber[data-axis="y"] {
+  transform: translate3d(0, var(--mk-rb, 0px), 0);
+  touch-action: pan-x;
+}
+.mk-rubber.is-dragging { transition: none; cursor: grabbing; }
+
+/* 减弱动效：拖拽是操作不是装饰，保留；只把回弹压成近乎直接落位、去掉过冲 */
+@media (prefers-reduced-motion: reduce) {
+  .mk-rubber { transition-timing-function: var(--mk-ease-out); }
+}
+
+/* ============================================================
+   原语 26 · 堆叠轻提示（mk-toast-stack）
+   ------------------------------------------------------------
+   每条只认四个变量：--mk-ts-y / -s / -o / -clip（由 toastStack() 写）
+   外加拖动时的 --mk-ts-dx。所有条都贴在容器底边，靠 y 往上排。
+   ============================================================ */
+
+.mk-toast-stack {
+  position: relative;
+  height: var(--mk-ts-h, 0px);
+  transition: height var(--mk-dur-4) var(--mk-ease-out);
+}
+
+.mk-toast-stack__item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform-origin: 50% 100%;   /* 从底边缩：后排的"边"露在上面 */
+  transform:
+    translate3d(var(--mk-ts-dx, 0px), var(--mk-ts-y, 0px), 0)
+    scale(var(--mk-ts-s, 1));
+  opacity: var(--mk-ts-o, 1);
+  clip-path: inset(var(--mk-ts-clip, 0px) 0 0 0 round var(--mk-ts-r, 14px));
+  transition:
+    transform var(--mk-dur-4) var(--mk-ease-out),
+    opacity var(--mk-dur-4) var(--mk-ease-out),
+    clip-path var(--mk-dur-4) var(--mk-ease-out);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 展开态的条间缝也算命中区：指针从一条挪到下一条时不会穿过空隙触发 leave → 收起 */
+.mk-toast-stack__item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: var(--mk-ts-gap, 14px);
+}
+
+/* 收起时后排只是"一条边"，内容藏起来，不然三行字叠在一起糊成一团 */
+.mk-toast-stack__item > * { transition: opacity var(--mk-dur-3) var(--mk-ease-out); }
+.mk-toast-stack__item.is-behind > * { opacity: 0; }
+
+.mk-toast-stack__item.is-swiping { transition: none; }
+
+/* 退场：没被甩的往下沉一点再消失；被甩的沿 --mk-ts-dx 飞出（dx 已被写成整宽） */
+.mk-toast-stack__item.is-leaving {
+  opacity: 0;
+  transform:
+    translate3d(var(--mk-ts-dx, 0px), calc(var(--mk-ts-y, 0px) + 12px), 0)
+    scale(var(--mk-ts-s, 1));
+  transition-duration: 200ms;
+  pointer-events: none;
+}
+
+/* 新条从底边下方升上来（@starting-style：不需要 JS 再加一次类） */
+@starting-style {
+  .mk-toast-stack__item {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @starting-style {
+    .mk-toast-stack__item { transform: none; opacity: 0; }
+  }
+  .mk-toast-stack__item.is-leaving { transform: none; }
+}
+
+/* ============================================================
+   原语 27 · 态变按钮（mk-state-btn）
+   ------------------------------------------------------------
+   四个态的文案叠在同一个 grid 格子 → 按钮宽度 = 最宽那一态，切换时不跳。
+   旧文案往上退（160ms），新文案从下面进（240ms），各自淡 + 2px 模糊。
+   抖动用独立的 translate 属性，不碰 transform —— 按压反馈（tap / press）
+   写的是 transform，两者能叠在同一个按钮上。
+   ============================================================ */
+
+.mk-state-btn {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.mk-state-btn [data-for] {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate3d(0, 0.7em, 0);
+  filter: blur(2px);
+  transition:
+    opacity var(--mk-dur-3) var(--mk-ease-out),
+    transform var(--mk-dur-3) var(--mk-ease-out),
+    filter var(--mk-dur-3) var(--mk-ease-out);
+  pointer-events: none;
+}
+
+.mk-state-btn[data-state="idle"] [data-for="idle"],
+.mk-state-btn[data-state="loading"] [data-for="loading"],
+.mk-state-btn[data-state="success"] [data-for="success"],
+.mk-state-btn[data-state="error"] [data-for="error"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.mk-state-btn [data-for].is-leaving {
+  transform: translate3d(0, -0.7em, 0);
+  transition-duration: var(--mk-dur-2);
+}
+
+.mk-state-btn[aria-disabled="true"] { cursor: default; }
+
+.mk-state-btn__spin {
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: mk-state-spin 0.7s linear infinite;
+}
+
+@keyframes mk-state-spin { to { transform: rotate(1turn); } }
+
+.mk-state-btn.is-shaking { animation: mk-state-shake 360ms var(--mk-ease-out); }
+
+@keyframes mk-state-shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -4px; }
+  40% { translate: 4px; }
+  60% { translate: -3px; }
+  80% { translate: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-state-btn [data-for] { transform: none; filter: none; }
+  .mk-state-btn.is-shaking { animation: none; }
+  /* 转圈换成呼吸：仍然告诉你"在忙"，但没有旋转 */
+  .mk-state-btn__spin { animation: mk-state-breathe 1.2s ease-in-out infinite; border-right-color: currentColor; }
+}
+
+@keyframes mk-state-breathe { 50% { opacity: 0.35; } }

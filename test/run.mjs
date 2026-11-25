@@ -15,6 +15,9 @@ import { glassPoint, edgeWeight, smoothStep, roundedRectSDF, lensField, lingerRe
 import { longPress } from '../src/core/tap.js';
 import { placeMenu } from '../src/core/context-menu.js';
 import { shareName, canShare, startShare } from '../src/core/flip.js';
+import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
+import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
+import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -866,12 +869,98 @@ t('startShare：reduced=true 跳过过渡但仍跑回调', async () => {
   assert.equal(ran, 1);
 });
 
+console.log('\n橡胶越界阻尼');
+
+t('rubberBand：零位移与退化尺寸返回 0', () => {
+  assert.equal(rubberBand(0, 300), 0);
+  assert.equal(rubberBand(50, 0), 0);
+  assert.equal(rubberBand(50, -10), 0);
+  assert.equal(rubberBand(NaN, 300), 0);
+});
+
+t('rubberBand：奇函数对称、单调递增且严格小于渐近上限 dim', () => {
+  assert.equal(rubberBand(-80, 300), -rubberBand(80, 300));
+  const a = rubberBand(20, 300);
+  const b = rubberBand(100, 300);
+  const big = rubberBand(1e6, 300);
+  assert.ok(a > 0 && b > a && big < 300);
+  // 起点斜率趋近 RUBBER_C (0.55)
+  const slope = rubberBand(0.001, 300) / 0.001;
+  assert.ok(Math.abs(slope - RUBBER_C) < 1e-4, `起点斜率应为 ${RUBBER_C}，实际 ${slope}`);
+});
+
+t('rubberClamp：界内原样返回、界外阻尼、min>max 安全回落', () => {
+  assert.equal(rubberClamp(-50, -200, 0, 300), -50);
+  assert.ok(rubberClamp(40, -200, 0, 300) > 0 && rubberClamp(40, -200, 0, 300) < 40);
+  assert.ok(rubberClamp(-260, -200, 0, 300) < -200 && rubberClamp(-260, -200, 0, 300) > -260);
+  assert.equal(rubberClamp(0, 0, -50, 300), 0);
+});
+
+console.log('\n堆叠轻提示');
+
+t('stackLayout：收起态露出 14px 边、逐级缩 5%、超出 visible 隐藏', () => {
+  const geo = stackLayout([60, 60, 60, 60], { expanded: false, visible: 3, gap: 14, scaleStep: 0.05 });
+  assert.equal(geo[0].y, 0);
+  assert.equal(geo[0].scale, 1);
+  assert.equal(geo[0].front, true);
+  assert.equal(geo[1].y, -14);
+  assert.equal(geo[1].scale, 0.95);
+  assert.equal(geo[2].y, -28);
+  assert.equal(geo[2].scale, 0.9);
+  assert.equal(geo[3].opacity, 0);
+});
+
+t('stackLayout：后排更高时 clip 裁掉多余顶部，展开态全部不裁切且按真实高度累加', () => {
+  const collapsed = stackLayout([50, 90], { expanded: false });
+  assert.equal(collapsed[0].clip, 0);
+  assert.equal(collapsed[1].clip, 40);
+  const expanded = stackLayout([50, 90, 60], { expanded: true, gap: 14 });
+  assert.equal(expanded[0].y, 0);
+  assert.equal(expanded[1].y, -(50 + 14));
+  assert.equal(expanded[2].y, -(50 + 90 + 28));
+  assert.ok(expanded.every((g) => g.scale === 1 && g.clip === 0));
+});
+
+t('stackHeight：收起与展开高度准确', () => {
+  assert.equal(stackHeight([50, 90, 60], { expanded: false, visible: 3, gap: 14 }), 50 + 28);
+  assert.equal(stackHeight([50, 90, 60], { expanded: true, visible: 3, gap: 14 }), 50 + 90 + 60 + 28);
+  assert.equal(stackHeight([]), 0);
+});
+
+t('shouldSwipeToast：距离阈值或平均速度任一满足即判定甩走', () => {
+  assert.equal(shouldSwipeToast(50, 1000), true);
+  assert.equal(shouldSwipeToast(-50, 1000), true);
+  assert.equal(shouldSwipeToast(25, 120), true);   // 均速 0.208 > 0.11
+  assert.equal(shouldSwipeToast(25, 600), false);  // 慢拖不到 45px
+  assert.equal(shouldSwipeToast(0, 100), false);
+});
+
+console.log('\n态变按钮');
+
+t('nextButtonState：合法迁移与防重复提交', () => {
+  assert.equal(nextButtonState('idle', 'submit'), 'loading');
+  assert.equal(nextButtonState('loading', 'submit'), 'loading');
+  assert.equal(nextButtonState('success', 'submit'), 'success'); // 防重复提交
+  assert.equal(nextButtonState('error', 'submit'), 'loading');   // 失败态点一下重试
+  assert.equal(nextButtonState('loading', 'resolve'), 'success');
+  assert.equal(nextButtonState('loading', 'reject'), 'error');
+  assert.equal(nextButtonState('success', 'reset'), 'idle');
+  assert.equal(nextButtonState('error', 'reset'), 'idle');
+  assert.equal(nextButtonState('loading', 'reset'), 'loading');  // 加载中不能被 reset 打断
+});
+
+t('loadingRemaining：不足 400ms 补足余量，超过或非法输入不返回负数', () => {
+  assert.equal(loadingRemaining(1000, 1060, 400), 340);
+  assert.equal(loadingRemaining(1000, 1500, 400), 0);
+  assert.equal(loadingRemaining(NaN, 1500, 400), 0);
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 21, `应至少包含 21 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 24, `应至少包含 24 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

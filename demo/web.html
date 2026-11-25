@@ -1004,16 +1004,57 @@
   </section>
 
   <!-- ============ 滚动与提示 ============ -->
-  <section id="scroll">
+  <section id="scroll" data-mk-assets="toast-stack,state-button">
     <div class="wrap">
-      <div class="eyebrow" v-mk-enter>09 / 滚动与提示</div>
-      <h2 v-mk-enter>滚动驱动，与轻提示</h2>
+      <div class="eyebrow" v-mk-enter>09 / 滚动、堆叠提示与态变按钮</div>
+      <h2 v-mk-enter>滚动驱动、Sonner 堆叠提示与四态按钮</h2>
       <p class="lede" v-mk-enter>
-        <span class="tag">animation-timeline: view()</span> 在 Chromium 里是滚动驱动的原生方案，
-        不支持的浏览器自动退回静态。轻提示用 <span class="tag">@starting-style</span> 滑入。
+        <span class="tag">animation-timeline: view()</span> 原生滚动驱动；
+        <span class="tag">v-mk-toast-stack</span> 三层微缩露边 + 悬停展开 + 横甩消除；
+        <span class="tag">v-mk-state-btn</span> 四态同格零宽跳 + 400ms 防闪。
       </p>
 
       <div class="split-2">
+        <div class="showcase">
+          <h4>堆叠轻提示（Sonner 手感）</h4>
+          <p>连续点下面按钮叠几条；鼠标移上整摞展开并暂停计时，横向一甩消除。</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+            <button class="btn btn--accent mk-press" style="padding:8px 14px;font-size:13px" @click="pushStackToast(false)">+ 推一条提示</button>
+            <button class="btn btn--ghost mk-press" style="padding:8px 14px;font-size:13px" @click="pushStackToast(true)">+ 推一条高卡片</button>
+          </div>
+          <div style="min-height:118px;display:flex;align-items:flex-end">
+            <div class="mk-toast-stack" style="width:100%" v-mk-toast-stack="{ onDismiss: onStackDismiss }">
+              <div v-for="t in stackToasts" :key="t.id" :data-id="t.id"
+                   style="padding:12px 14px;border-radius:14px;background:#121822;border:1px solid rgba(255,255,255,0.12);box-shadow:0 12px 28px rgba(0,0,0,0.45)">
+                <div style="font-size:13.5px;font-weight:600;color:var(--fg)">{{ t.title }}</div>
+                <div v-if="t.desc" style="font-size:12px;color:var(--muted);margin-top:4px">{{ t.desc }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase">
+          <h4>态变按钮（Family / Linear 手感）</h4>
+          <p>四态叠在同一个 grid 格子里：切换全程宽度像素级不变，60ms 接口也会撑满 400ms 不闪屏。</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
+            <button type="button" class="btn btn--accent mk-press" v-mk-state-btn="runOkAction">
+              <span data-for="idle">保存更改</span>
+              <span data-for="loading"><i class="mk-state-btn__spin"></i>保存中…</span>
+              <span data-for="success">✓ 已保存</span>
+              <span data-for="error">保存失败</span>
+            </button>
+            <button type="button" class="btn btn--ghost mk-press" v-mk-state-btn="runErrAction">
+              <span data-for="idle">模拟失败重试</span>
+              <span data-for="loading"><i class="mk-state-btn__spin"></i>请求中…</span>
+              <span data-for="success">✓ 重试成功</span>
+              <span data-for="error">× 失败，点我重试</span>
+            </button>
+          </div>
+          <p style="margin-top:14px"><span class="tag">grid-area: 1 / 1</span> <span class="tag">aria-disabled</span> <span class="tag">minLoading: 400ms</span></p>
+        </div>
+      </div>
+
+      <div class="split-2" style="margin-top:18px">
         <div class="showcase">
           <h4>滚动长大（CSS 原生）</h4>
           <div class="mk-scroll-grow" style="height:110px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,rgba(90,160,255,0.18),rgba(184,255,61,0.14));border:1px solid var(--line)">
@@ -1023,7 +1064,7 @@
         </div>
 
         <div class="showcase">
-          <h4>轻提示</h4>
+          <h4>单条轻提示</h4>
           <p>从下方 16px 弹入，收起时反向。不打断操作。</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button class="btn mk-press" @click="toast">显示提示</button>
@@ -1071,6 +1112,31 @@
       const toastOn = ref(false);
       const toastClosing = ref(false);
       let toastTimer = 0;
+
+      /* ---------- 堆叠轻提示 + 态变按钮 ---------- */
+      let stackSeq = 2;
+      const stackToasts = ref([
+        { id: 1, title: '已同步到云端', desc: '悬停可展开，横向轻甩可关闭' },
+        { id: 2, title: '编译完成 · 24 张资产卡', desc: '' },
+      ]);
+      const pushStackToast = (tall) => {
+        const id = ++stackSeq;
+        stackToasts.value.push({
+          id,
+          title: tall ? `高卡片通知 #${id}` : `操作已提交 #${id}`,
+          desc: tall ? '收起态会用 clip-path 自动裁掉多余顶部，不会从最前卡片上方冒头。' : '4 秒后自动收起，悬停暂停计时',
+        });
+      };
+      const onStackDismiss = (el) => {
+        const id = Number(el.dataset.id);
+        stackToasts.value = stackToasts.value.filter((t) => t.id !== id);
+      };
+      const runOkAction = () => new Promise((r) => setTimeout(r, 80)); // 故意快于 400ms，验证防闪
+      let failOnce = true;
+      const runErrAction = () => new Promise((res, rej) => setTimeout(() => {
+        if (failOnce) { failOnce = false; rej(new Error('network')); }
+        else { failOnce = true; res(); }
+      }, 260));
 
       /* ---------- 平面补遗 ---------- */
       const dockIcons = [
@@ -1150,7 +1216,8 @@
       });
 
       return { caps, form, errors, sending, sent, popOpen, toastOn, toastClosing, toast, validateName, submit, reset, odoValue, rollOdometer,
-        dockIcons, segOn, scrambleWord, rollScramble, stackCards };
+        dockIcons, segOn, scrambleWord, rollScramble, stackCards,
+        stackToasts, pushStackToast, onStackDismiss, runOkAction, runErrAction };
     },
   });
 

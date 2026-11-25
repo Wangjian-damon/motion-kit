@@ -912,6 +912,27 @@
 
     <div class="divider"></div>
 
+    <!-- ============ 15. 橡胶越界阻尼 ============ -->
+    <section class="sec" id="sec-rubber-band" data-mk-assets="rubber-band">
+      <div class="sec-head" v-mk-enter>
+        <h2>15 / 橡胶越界阻尼</h2>
+        <p>
+          左右拖动下面这排卡片，拖到头时不会硬停，而是走 iOS 双曲阻尼
+          <span class="tag">c = 0.55</span> 越拉越重，松手弹性回位。
+        </p>
+      </div>
+      <div style="overflow:hidden;border-radius:16px;border:1px solid var(--line);background:var(--card);padding:12px">
+        <div v-mk-rubber style="display:flex;gap:10px;width:max-content">
+          <div v-for="n in 5" :key="n" style="width:128px;height:78px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;justify-content:space-between">
+            <small style="color:var(--accent);font-size:11px">0{{ n }}</small>
+            <b style="font-size:13.5px">向右或左拖过头</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
     <footer class="demo-foot" style="padding:28px 20px 40px;flex-direction:column;border:0">
       <span>Motion Kit · 移动端展示面</span>
       <span style="margin-top:6px"><a href="./library.html" style="color:var(--accent)">→ 打开 AI 资产库（复制 Prompt / Skill）</a></span>

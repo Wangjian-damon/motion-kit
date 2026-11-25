@@ -236,6 +236,9 @@ const delay = useStagger(70);
 | 分段控件 | `v-mk-seg` + `.mk-seg__pill` | 胶囊在选项间滑动，`dataset.value` 是唯一真源 |
 | 乱序解码 | `v-mk-scramble` | 左边先定、右边还在抖；每帧只改 textContent |
 | 共享元素转场 | `v-mk-share` + `MK.startShare()` | 浏览器插值尺寸/位置，库里零 FLIP 测量 |
+| 橡胶越界阻尼 | `v-mk-rubber` + `.mk-rubber` | iOS UIScrollView 双曲阻尼 `c=0.55`，越拉越重、松手弹回 |
+| 堆叠轻提示 | `v-mk-toast-stack` + `.mk-toast-stack` | Sonner 三层微缩露边 + 悬停展开暂停计时 + 均速横甩消除 |
+| 态变按钮 | `v-mk-state-btn` + `.mk-state-btn` | Family / Linear 四态同格零宽跳 + 400ms 防闪 + 防连点 |
 | **按下即反馈** | `v-mk-tap`（`.deep` 更深） | 绕开 iOS 的 100ms `:active` 延迟 |
 | **长按** | `v-mk-longpress` | 480ms，松手/滑走即取消，带短震动 |
 | **底部弹层** | `v-mk-sheet` + `.mk-sheet` | 抓手跟手拖拽，距离或速度判定收起 |

@@ -34,6 +34,9 @@ import { segmented, detent, segIndexAt } from '../core/seg.js';
 import { scrambleText, scrambleFrame } from '../core/scramble.js';
 import { glass, glassPoint, lingerRemaining, edgeWeight, refract, lensField } from '../core/glass.js';
 import { startShare, canShare, shareName } from '../core/flip.js';
+import { rubber, rubberBand, rubberClamp } from '../core/rubber.js';
+import { toastStack, stackLayout, stackHeight, shouldSwipeToast } from '../core/toast-stack.js';
+import { stateButton, nextButtonState, loadingRemaining } from '../core/state-button.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -653,6 +656,40 @@ const vMkFold = {
   },
 };
 
+/** 越界橡胶阻尼。value 可传 { axis, bounds, onSettle }。 */
+const vMkRubber = {
+  mounted(el, binding) {
+    el._mkRubberCleanup = rubber(el, binding.value || {});
+  },
+  unmounted(el) {
+    el._mkRubberCleanup?.();
+  },
+};
+
+/** 堆叠轻提示容器。value 可传 { visible, gap, scaleStep, lifetime, onDismiss }。 */
+const vMkToastStack = {
+  mounted(el, binding) {
+    el._mkToastStack = toastStack(el, binding.value || {});
+  },
+  unmounted(el) {
+    el._mkToastStack?.destroy();
+  },
+};
+
+/** 态变提交按钮。value 可传 { action, hold, minLoading, onChange } 或直接传异步函数。 */
+const vMkStateBtn = {
+  mounted(el, binding) {
+    el._mkStateOpts = typeof binding.value === 'function' ? { action: binding.value } : (binding.value || {});
+    el._mkStateBtn = stateButton(el, () => el._mkStateOpts);
+  },
+  updated(el, binding) {
+    el._mkStateOpts = typeof binding.value === 'function' ? { action: binding.value } : (binding.value || {});
+  },
+  unmounted(el) {
+    el._mkStateBtn?.destroy();
+  },
+};
+
 export const MotionKit = {
   install(app, options = {}) {
     if (options.tokens !== false) applyTokens(null, options.tokens || {});
@@ -695,6 +732,10 @@ export const MotionKit = {
     app.directive('mk-edgeback', vMkEdgeback);
     // 共享元素转场
     app.directive('mk-share', vMkShare);
+    // 业界标杆原语（橡胶阻尼 / 堆叠轻提示 / 态变按钮）
+    app.directive('mk-rubber', vMkRubber);
+    app.directive('mk-toast-stack', vMkToastStack);
+    app.directive('mk-state-btn', vMkStateBtn);
     // $mkShare：模板里换页时直接 this.$mkShare(() => { ... })
     app.config.globalProperties.$mkShare = startShare;
   },
@@ -709,6 +750,7 @@ export {
   vMk3d, vMkRing, vMkSphere, vMkTunnel, vMkFold,
   vMkDock, vMkSeg, vMkDetent, vMkScramble, vMkTabpop,
   vMkGlass, vMkEdgeback, vMkShare,
+  vMkRubber, vMkToastStack, vMkStateBtn,
 };
 export {
   inView, staggerIn, tilt, magnetic, spotlight, ripple, parallax, split,
@@ -721,6 +763,9 @@ export {
   glass, glassPoint, lingerRemaining, edgeWeight, refract, lensField, edgeSwipeBack, shouldGoBack,
   snapIndexAt, offsetForSnap, shouldDismiss,
   startShare, canShare, shareName,
+  rubber, rubberBand, rubberClamp,
+  toastStack, stackLayout, stackHeight, shouldSwipeToast,
+  stateButton, nextButtonState, loadingRemaining,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

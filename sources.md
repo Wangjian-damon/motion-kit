@@ -75,6 +75,15 @@
 | ~~P0~~ | ~~**多档位底部弹层（snap points）**~~ **已完成** | `sheet({ snapPoints })` 三档 + 速度投影落档；见 [`effects/snap-sheet.md`](./effects/snap-sheet.md) | Vaul 的 snapPoints、Apple Maps 面板 | `gesture.js` |
 | ~~P0~~ | ~~**共享元素转场（列表 → 详情）**~~ **已完成** | `shareName()` + `startShare()` + `v-mk-share`：只写 `view-transition-name`，插值全交给浏览器（库内零测量）；两引擎实测时长/曲线/几何逐帧对齐。见 [`effects/shared-element.md`](./effects/shared-element.md) 与 §4.3 | Framer Motion 的 `layoutId`、View Transitions API | `flip.js` + `motion.css` 原语 24 |
 | ~~P1~~ | ~~**卡片展开（原地放大成详情）**~~ **已一并收掉** | 它就是上一行的同一段代码 —— 点卡片、卡片自己长大成详情层，没有第二份实现；demo 第 14 节演的就是这个 | iOS App Store 卡片 | 复用 `flip.js`；两侧同一个 `view-transition-name`，但**必须错开持有**（见 §4.3 名字交接） |
+| ~~P0~~ | ~~**橡胶越界阻尼（rubber-band）**~~ **已完成** | `rubberBand()` / `rubberClamp()` + `rubber()` + `v-mk-rubber`：iOS 双曲阻尼 `c=0.55`，见 [`effects/rubber-band.md`](./effects/rubber-band.md) | iOS UIScrollView、Vaul、M3 Expressive | `rubber.js` + `motion.css` 原语 25 |
+| ~~P0~~ | ~~**堆叠轻提示（toast-stack）**~~ **已完成** | `stackLayout()` / `shouldSwipeToast()` + `toastStack()` + `v-mk-toast-stack`：3 层微缩露边 + 悬停展开 + 均速横甩，见 [`effects/toast-stack.md`](./effects/toast-stack.md) | Sonner (Emil Kowalski) | `toast-stack.js` + `motion.css` 原语 26 |
+| ~~P0~~ | ~~**态变按钮（state-button）**~~ **已完成** | `nextButtonState()` / `loadingRemaining()` + `stateButton()` + `v-mk-state-btn`：grid 同格零宽跳 + 400ms 防闪 + 防连点，见 [`effects/state-button.md`](./effects/state-button.md) | Family App、Linear、Emil Kowalski | `state-button.js` + `motion.css` 原语 27 |
+| P0 | **热身提示组（tooltip-group）** | 工具栏连续 hover 缺热身态（首个延迟 400ms 防误触，热身窗 300ms 内相邻 0ms 瞬切）+ 锚点防溢出 | Rauno Freiberg、Radix Tooltip / Base UI、CSS Anchor Positioning | `motion.css` + `tooltip.js`（顺带吃掉下方「锚点浮层」） |
+| P0 | **流体高度容器（fluid-height）** | 弹窗步骤切换与手风琴展开缺少平滑高度呼吸（零跳闪），需兼顾 `interpolate-size` 与 `ResizeObserver` 兜底 | Family App 托盘、`interpolate-size: allow-keywords` | `motion.css` + `fluid-height.js` |
+| P1 | **动态数字流（number-flow）** | 现有 `count-up` 偏向一次性入场，缺实时加减/余额变化时的「只滚变化位 + 符号让位 + 宽度平滑」 | NumberFlow (`@barvian`) | `count-up.js` 扩展或独立 `number-flow.js` |
+| P1 | **灵动胶囊展开（dynamic-pill）** | 顶部状态条 / AI 思考态在药丸与展开卡片间的连续容器形变 | Apple Dynamic Island、Family、Motion Primitives | `motion.css` + `flip.js` |
+| P1 | **形状形变按压（shape-morph）** | 按压/选中时圆角几何形变（如圆形压成微方圆角）配弹簧回弹 | Material 3 Expressive、iOS 26 控件 | `motion.css` / `glass.css` |
+| P1 | **滚动边缘羽化（scroll-fade）** | 横向标签栏与滚动容器边缘硬截断，用 `mask-image` + `scroll()` 做到滚到头自动消羽化 | Linear、Vercel、CSS `scroll()` Timeline | `motion.css`（纯 CSS 零 JS） |
 | P1 | **锚点浮层（气泡贴住一个元素，滚动跟着走）** | 只有 `openMenu()` 那种"定在指尖某一点、一滚就关"的菜单。缺的是**贴住元素**的浮层：tooltip、说明气泡、点开的迷你面板 | CSS Anchor Positioning（`anchor-name` / `position-anchor` / `position-area` / `position-try-fallbacks`），出处是 Popover API 的定位模型 | `motion.css` + 一小段 `anchor.js`；**不能取代 `openMenu()` 的 `bounds` 夹取**，理由见 §4.3 |
 | P2 | **沿路径运动（不是绕圆，是沿任意曲线）** | 3D 层所有"轨道"都建立在圆上（ring / orbit / tunnel）。缺的是**沿一条手绘曲线走**：小圆点沿曲线滑、卡片弧线入场、进度线上的游标 | CSS Motion Path（`offset-path: path()` / `offset-distance` / `offset-rotate: auto`） | `motion.css`；可完全零 JS（`animation-timeline: view()` 驱动 `offset-distance`） |
 | P1 | **上拉加载 / 无限滚动** | 只有下拉刷新，列表底部的「继续加载」完全没有词汇 | iOS 列表、原生 `IntersectionObserver` 哨兵 | `mobile.css` + `in-view.js` |
@@ -375,6 +384,10 @@ transform: translateY(calc(var(--mk-i, calc(sibling-index() - (sibling-count() +
 | Apple HIG | `developer.apple.com/design/human-interface-guidelines` | 手势语义、材质分层、控件形变；每一条都附「为什么这样」 | 具体数值（Apple 的时长对我们不适用） |
 | Material 3 | `m3.material.io` | 缓动/时长 token 体系、shape morph、Expressive 的弹簧规格 | 它的组件结构 |
 | Vaul | `vaul.emilkowal.ski` | 抽屉的 snap points、滚动锁、缩放背景 | React 实现 |
+| Sonner | `sonner.emilkowal.ski` | 轻提示的三层微缩露边、展开命中桥、切后台暂停计时与均速横甩消除 | React Store 与完整 Toast 组件 |
+| Family App | `family.co` / `benji.org` | 托盘流体高度呼吸、态变按钮零宽跳节奏、高初始缩放（`0.9→1`） | 加密钱包业务 UI |
+| NumberFlow | `number-flow.barvian.me` | 实时数字变动时只滚变化位、符号平滑让位与等宽对齐 | Web Component 运行时 |
+| Motion Primitives | `motion-primitives.com` | 克制的产品级微交互（胶囊展开、悬浮提示、手风琴节奏） | Framer Motion 运行时 |
 | Emil Kowalski | `animations.dev` / `emilkowalski.com` | 弹簧参数怎么选、什么时候不该加动画 | 课件的具体组件 |
 | Rauno Freiberg | `rauno.me` | 「看不见的交互细节」这类文章，最适合补微交互的最后一毫米 | 他的个人站特效 |
 | Josh Comeau | `joshwcomeau.com` | 弹簧物理、3D 按钮的透视算法 | 教程里的完整组件 |

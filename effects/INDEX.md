@@ -54,6 +54,9 @@
 | 分段控件 | [`seg`](./seg.md) | 连续 | ✅ |
 | 乱序解码 | `scramble` | 节奏 | — |
 | **共享元素转场（列表 → 详情）** | [`shared-element`](./shared-element.md) | 连续 | ✅ |
+| **橡胶越界阻尼** | [`rubber-band`](./rubber-band.md) | 权重 | ✅ |
+| **堆叠轻提示** | [`toast-stack`](./toast-stack.md) | 连续 | ✅ |
+| **态变按钮** | [`state-button`](./state-button.md) | 反馈 | ✅ |
 
 > `shared-element` 是这层里唯一**跨层**的一个：样式在 `motion.css`，名字生成和启动函数在
 > `flip.js`，绑定在 `v-mk-share`。它同时把 §4.3 那条「卡片展开」吃掉了 ——
@@ -129,7 +132,7 @@
 "回应本身要演一会儿"的也在这一栏，判据是**它不跟随、它自己走完**。
 
 `tap` · `press`（`.mk-press` / `.mk-squish` / `.mk-lift`）· [`ripple`](./ripple.md) ·
-[`long-press`](./long-press.md) · [`context-menu`](./context-menu.md) · [`tap`](./tap.md) ·
+[`long-press`](./long-press.md) · [`context-menu`](./context-menu.md) · [`state-button`](./state-button.md) ·
 `tab-pop` · `underline` · `glass-press` · [`glass-tap`](./glass-tap.md)
 
 `tap` 和 `press` 的分工容易混：`tap` 是**触屏专属**的（`:active` 在 iOS 上有 100ms 延迟），
@@ -141,7 +144,7 @@
 一个东西变成另一个东西，中间不能断。用户要能追踪「同一个元素」。
 
 [`bottom-sheet`](./bottom-sheet.md) · [`pop`](./pop.md) · [`shared-element`](./shared-element.md) ·
-`rail` · `seg` · `scroll-grow` · `progress` · `shimmer` · `parallax`
+[`toast-stack`](./toast-stack.md) · `rail` · [`seg`](./seg.md) · `scroll-grow` · `progress` · `shimmer` · `parallax`
 
 ### 方向 — 我从哪儿来、要往哪儿去
 
@@ -154,7 +157,7 @@
 连续手势里，手指和物体之间的"物理关系"。**有阻尼、有惯性、有阈值。**
 
 [`pull-refresh`](./pull-refresh.md) · [`detent`](./detent.md) · [`dock`](./dock.md) ·
-[`snap-sheet`](./snap-sheet.md) · `magnetic`
+[`snap-sheet`](./snap-sheet.md) · [`rubber-band`](./rubber-band.md) · `magnetic`
 
 ### 材质 — 这表面是什么做的
 
@@ -176,7 +179,7 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| ✅ 有卡 | 21 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split |
+| ✅ 有卡 | 24 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split / rubber-band / toast-stack / state-button |
 | ⬜ 待写 | ~20 | 按下面的优先级依次补 |
 | 🔲 不值得写 | 26 | 16 个 fun + 10 个 3d 里的多数，理由见各节说明 |
 
