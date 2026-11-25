@@ -1,12 +1,13 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**24** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**27** 张纯净去库化跨平台动效资产卡。
 
-## 反馈（6）
+## 反馈（7）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `cell-flash` | 单元格涨跌脉冲 | both | 实时表格里某个数字变动时，按涨/跌方向在单元格背景打出一记「80ms 瞬时亮起 → 650ms 缓慢退去」的绿/红脉冲，并锁定等宽数字防止整列左右抖动。 | `./effects/cell-flash.md` |
 | `context-menu` | 长按上下文菜单 | touch | 按住 480ms：整页缩一点、背景糊掉、菜单从指尖那个点撑开；点外部或按 Esc 收起。 | `./effects/context-menu.md` |
 | `glass-tap` | 点击高光 | touch | 玻璃上的光不跟着手指走 —— 点一下，光聚到触点、形状压扁回弹、光晕炸开，然后自己散回去。 | `./effects/glass-tap.md` |
 | `long-press` | 长按 | touch | 按住不动 480ms，元素轻微下沉、震一下，并触发回调；提前松手或手指滑走即取消。 | `./effects/long-press.md` |
@@ -49,10 +50,12 @@
 | `glass-base` | 玻璃基底材质 | both | 把导航栏、操作条、浮层卡片做成有厚度的实心玻璃：低模糊高饱和底材 + 沿圆角连续的 1.5px 斜向亮棱 + 镜面高光，且不挂 JS 也能静态成立。 | `./effects/glass-base.md` |
 | `refraction` | 边缘折射 | both | 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。 | `./effects/refraction.md` |
 
-## 节奏（3）
+## 节奏（5）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `bar-grow` | 条形数据生长 | both | 表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。 | `./effects/bar-grow.md` |
 | `count-up` | 数字滚动 / 里程表 | both | 两条路：`countUp` 用 rAF 逐帧算值（通用、可格式化）；`odometer` 给每位数 建一列 0–9，只写一次 transform、由 CSS 过渡滑到位（几十个数字同屏也不掉帧）。 | `./effects/count-up.md` |
 | `enter` | 进场 | both | 元素滚到视口内才入场：上移 16px + 淡入，一组元素按 70ms 级联，全程零滚动监听。 | `./effects/enter.md` |
+| `sparkline-draw` | 迷你走势线生长 | both | 纯函数把一串数字映射成轻量 SVG 迷你折线与渐变面积，进入视口时线条从左向右 520ms 平滑描绘，面积晚 120ms 淡入，末端数据点最后轻弹落位。 | `./effects/sparkline-draw.md` |
 | `split` | 逐词逐字入场 | both | 初始化时一次性把标题拆成词/字片段并写入递增索引，入场时纯靠 CSS `transition-delay` 按节奏逐个浮现，滚动与缩放零计算。 | `./effects/split.md` |

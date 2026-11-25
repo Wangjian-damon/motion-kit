@@ -239,6 +239,9 @@ const delay = useStagger(70);
 | 橡胶越界阻尼 | `v-mk-rubber` + `.mk-rubber` | iOS UIScrollView 双曲阻尼 `c=0.55`，越拉越重、松手弹回 |
 | 堆叠轻提示 | `v-mk-toast-stack` + `.mk-toast-stack` | Sonner 三层微缩露边 + 悬停展开暂停计时 + 均速横甩消除 |
 | 态变按钮 | `v-mk-state-btn` + `.mk-state-btn` | Family / Linear 四态同格零宽跳 + 400ms 防闪 + 防连点 |
+| 条形数据生长 | `v-mk-bar` + `.mk-bar` | Stripe / Vercel Analytics `scaleX` 合成器生长 + 320ms 封顶级联 |
+| 单元格涨跌脉冲 | `MK.flashCell()` + `.mk-cell` | Bloomberg / Linear 实时表格快亮慢退涨跌脉冲 + `tabular-nums` |
+| 迷你走势线生长 | `v-mk-spark` + `.mk-spark` | Stripe / Apple Stocks 零图表库 SVG 折线三拍描绘 |
 | **按下即反馈** | `v-mk-tap`（`.deep` 更深） | 绕开 iOS 的 100ms `:active` 延迟 |
 | **长按** | `v-mk-longpress` | 480ms，松手/滑走即取消，带短震动 |
 | **底部弹层** | `v-mk-sheet` + `.mk-sheet` | 抓手跟手拖拽，距离或速度判定收起 |

@@ -37,6 +37,7 @@ import { startShare, canShare, shareName } from '../core/flip.js';
 import { rubber, rubberBand, rubberClamp } from '../core/rubber.js';
 import { toastStack, stackLayout, stackHeight, shouldSwipeToast } from '../core/toast-stack.js';
 import { stateButton, nextButtonState, loadingRemaining } from '../core/state-button.js';
+import { barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline } from '../core/data.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -690,6 +691,36 @@ const vMkStateBtn = {
   },
 };
 
+/** 条形/进度生长。value 可传数字（0..100）或 { value, max, index }。 */
+const vMkBar = {
+  mounted(el, binding) {
+    const o = typeof binding.value === 'number' ? { value: binding.value } : (binding.value || {});
+    el._mkBar = barGrow(el, o);
+  },
+  updated(el, binding) {
+    const o = typeof binding.value === 'number' ? { value: binding.value } : (binding.value || {});
+    el._mkBar?.update(o.value ?? 0, o.max);
+  },
+  unmounted(el) {
+    el._mkBar?.destroy();
+  },
+};
+
+/** 迷你走势线。value 可传数字数组或 { values, width, height }。 */
+const vMkSpark = {
+  mounted(el, binding) {
+    const o = Array.isArray(binding.value) ? { values: binding.value } : (binding.value || {});
+    el._mkSpark = sparkline(el, o.values || [], o);
+  },
+  updated(el, binding) {
+    const o = Array.isArray(binding.value) ? { values: binding.value } : (binding.value || {});
+    if (o.values) el._mkSpark?.update(o.values);
+  },
+  unmounted(el) {
+    el._mkSpark?.destroy();
+  },
+};
+
 export const MotionKit = {
   install(app, options = {}) {
     if (options.tokens !== false) applyTokens(null, options.tokens || {});
@@ -736,6 +767,9 @@ export const MotionKit = {
     app.directive('mk-rubber', vMkRubber);
     app.directive('mk-toast-stack', vMkToastStack);
     app.directive('mk-state-btn', vMkStateBtn);
+    // 数据展示三件套（条形生长 / 走势线）
+    app.directive('mk-bar', vMkBar);
+    app.directive('mk-spark', vMkSpark);
     // $mkShare：模板里换页时直接 this.$mkShare(() => { ... })
     app.config.globalProperties.$mkShare = startShare;
   },
@@ -751,6 +785,7 @@ export {
   vMkDock, vMkSeg, vMkDetent, vMkScramble, vMkTabpop,
   vMkGlass, vMkEdgeback, vMkShare,
   vMkRubber, vMkToastStack, vMkStateBtn,
+  vMkBar, vMkSpark,
 };
 export {
   inView, staggerIn, tilt, magnetic, spotlight, ripple, parallax, split,
@@ -766,6 +801,7 @@ export {
   rubber, rubberBand, rubberClamp,
   toastStack, stackLayout, stackHeight, shouldSwipeToast,
   stateButton, nextButtonState, loadingRemaining,
+  barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

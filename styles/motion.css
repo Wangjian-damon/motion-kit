@@ -1258,3 +1258,129 @@
 }
 
 @keyframes mk-state-breathe { 50% { opacity: 0.35; } }
+
+/* ============================================================
+   原语 28 · 条形/进度生长（mk-bar）
+   ------------------------------------------------------------
+   严禁动画 width/height：全程用 scaleX / scaleY 走合成器。
+   入场按 --mk-bar-d 级联（上限 320ms），入场后清零延迟，
+   后续数据实时变化时原地平滑伸缩、不从 0 重播。
+   ============================================================ */
+
+.mk-bar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  height: 8px;
+}
+
+.mk-bar__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mk-bar-color, currentColor);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  transition: transform var(--mk-dur-5) var(--mk-ease-out);
+  transition-delay: var(--mk-bar-d, 0ms);
+}
+
+.mk-bar.is-in .mk-bar__fill {
+  transform: scaleX(var(--mk-bar-p, 0));
+}
+
+.mk-bar--vertical {
+  width: 12px;
+  height: 100%;
+}
+
+.mk-bar--vertical .mk-bar__fill {
+  transform-origin: 50% 100%;
+  transform: scaleY(0);
+}
+
+.mk-bar--vertical.is-in .mk-bar__fill {
+  transform: scaleY(var(--mk-bar-p, 0));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-bar__fill { transition-duration: 1ms; transition-delay: 0ms; }
+}
+
+/* ============================================================
+   原语 29 · 单元格涨跌脉冲（mk-cell）
+   ------------------------------------------------------------
+   实时表格数字强制 tabular-nums 等宽防左右抖动。
+   80ms 快速亮起、650ms 缓退，只动背景色不碰布局。
+   ============================================================ */
+
+.mk-cell {
+  font-variant-numeric: tabular-nums;
+  border-radius: 6px;
+}
+
+.mk-cell.is-up { animation: mk-cell-up 730ms var(--mk-ease-out); }
+.mk-cell.is-down { animation: mk-cell-down 730ms var(--mk-ease-out); }
+
+@keyframes mk-cell-up {
+  0%   { background-color: transparent; }
+  12%  { background-color: rgba(74, 222, 128, 0.28); }
+  100% { background-color: transparent; }
+}
+
+@keyframes mk-cell-down {
+  0%   { background-color: transparent; }
+  12%  { background-color: rgba(248, 113, 113, 0.28); }
+  100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-cell.is-up, .mk-cell.is-down { animation-duration: 120ms; }
+}
+
+/* ============================================================
+   原语 30 · 迷你走势线描绘（mk-spark）
+   ------------------------------------------------------------
+   路径从左向右描绘（520ms），下方渐变面积晚 120ms 淡入，
+   末点圆点最后落位，零图表库依赖。
+   ============================================================ */
+
+.mk-spark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mk-spark-color, #b8ff3d);
+}
+.mk-spark[data-trend="down"] { color: var(--mk-spark-down, #f87171); }
+
+.mk-spark__line {
+  stroke-dasharray: var(--mk-spark-len, 240);
+  stroke-dashoffset: var(--mk-spark-len, 240);
+  transition: stroke-dashoffset 520ms var(--mk-ease-out);
+}
+
+.mk-spark__area {
+  opacity: 0;
+  transition: opacity 380ms var(--mk-ease-out) 120ms;
+}
+
+.mk-spark__dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.4);
+  transition: opacity 180ms var(--mk-ease-out) 380ms, transform 240ms var(--mk-ease-snap) 380ms;
+}
+
+.mk-spark.is-in .mk-spark__line { stroke-dashoffset: 0; }
+.mk-spark.is-in .mk-spark__area { opacity: 1; }
+.mk-spark.is-in .mk-spark__dot  { opacity: 1; transform: scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-spark__line, .mk-spark__area, .mk-spark__dot {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+    transform: none;
+  }
+}

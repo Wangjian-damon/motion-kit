@@ -57,6 +57,9 @@
 | **橡胶越界阻尼** | [`rubber-band`](./rubber-band.md) | 权重 | ✅ |
 | **堆叠轻提示** | [`toast-stack`](./toast-stack.md) | 连续 | ✅ |
 | **态变按钮** | [`state-button`](./state-button.md) | 反馈 | ✅ |
+| **条形数据生长** | [`bar-grow`](./bar-grow.md) | 节奏 | ✅ |
+| **单元格涨跌脉冲** | [`cell-flash`](./cell-flash.md) | 反馈 | ✅ |
+| **迷你走势线生长** | [`sparkline-draw`](./sparkline-draw.md) | 节奏 | ✅ |
 
 > `shared-element` 是这层里唯一**跨层**的一个：样式在 `motion.css`，名字生成和启动函数在
 > `flip.js`，绑定在 `v-mk-share`。它同时把 §4.3 那条「卡片展开」吃掉了 ——
@@ -133,7 +136,7 @@
 
 `tap` · `press`（`.mk-press` / `.mk-squish` / `.mk-lift`）· [`ripple`](./ripple.md) ·
 [`long-press`](./long-press.md) · [`context-menu`](./context-menu.md) · [`state-button`](./state-button.md) ·
-`tab-pop` · `underline` · `glass-press` · [`glass-tap`](./glass-tap.md)
+[`cell-flash`](./cell-flash.md) · `tab-pop` · `underline` · `glass-press` · [`glass-tap`](./glass-tap.md)
 
 `tap` 和 `press` 的分工容易混：`tap` 是**触屏专属**的（`:active` 在 iOS 上有 100ms 延迟），
 `.mk-press` 那一组是**两端共用**的类（桌面 `:hover`/`:active` 就够）。
@@ -170,8 +173,8 @@
 
 **多于一个元素**时的时序。单个元素的进出场不算节奏，算连续。
 
-[`enter`](./enter.md) · `wipe` · `split` · `draw` · [`count-up`](./count-up.md)（含 odometer） · `marquee` ·
-`typing` · `scramble`
+[`enter`](./enter.md) · `wipe` · [`split`](./split.md) · `draw` · [`count-up`](./count-up.md)（含 odometer） ·
+[`bar-grow`](./bar-grow.md) · [`sparkline-draw`](./sparkline-draw.md) · `marquee` · `typing` · `scramble`
 
 ---
 
@@ -179,7 +182,7 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| ✅ 有卡 | 24 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split / rubber-band / toast-stack / state-button |
+| ✅ 有卡 | 27 | 手势八件套 + context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split / rubber-band / toast-stack / state-button / bar-grow / cell-flash / sparkline-draw |
 | ⬜ 待写 | ~20 | 按下面的优先级依次补 |
 | 🔲 不值得写 | 26 | 16 个 fun + 10 个 3d 里的多数，理由见各节说明 |
 

@@ -18,6 +18,7 @@ import { shareName, canShare, startShare } from '../src/core/flip.js';
 import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
 import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
+import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -955,12 +956,55 @@ t('loadingRemaining：不足 400ms 补足余量，超过或非法输入不返回
   assert.equal(loadingRemaining(NaN, 1500, 400), 0);
 });
 
+console.log('\n数据展示三件套');
+
+t('barRatio：归一化到 0..1，越界与非法输入安全归零', () => {
+  assert.equal(barRatio(50, 100), 0.5);
+  assert.equal(barRatio(150, 100), 1);
+  assert.equal(barRatio(-20, 100), 0);
+  assert.equal(barRatio(50, 0), 0);
+  assert.equal(barRatio(NaN, 100), 0);
+});
+
+t('barStagger：线性递增且严格封顶 320ms', () => {
+  assert.equal(barStagger(0), 0);
+  assert.equal(barStagger(3, 36, 320), 108);
+  assert.equal(barStagger(25, 36, 320), 320);
+  assert.equal(barStagger(-2), 0);
+});
+
+t('valueDelta：准确判涨跌与死区过滤，非有限数返回 same', () => {
+  assert.equal(valueDelta(10, 12), 'up');
+  assert.equal(valueDelta(10, 8), 'down');
+  assert.equal(valueDelta(10, 10), 'same');
+  assert.equal(valueDelta(10, 10.02, 0.05), 'same');
+  assert.equal(valueDelta(NaN, 10), 'same');
+});
+
+t('sparklineGeometry：坐标归一化、全平不除零、空数组安全', () => {
+  const g = sparklineGeometry([10, 20, 15, 30], { width: 120, height: 36, pad: 4 });
+  assert.equal(g.points.length, 4);
+  assert.equal(g.points[0].x, 4);
+  assert.equal(g.points[3].x, 116);
+  assert.equal(g.points[0].y, 32); // 最小值落在底边 pad
+  assert.equal(g.points[3].y, 4);  // 最大值落在顶边 pad
+  assert.equal(g.trend, 'up');
+  assert.ok(g.linePath.startsWith('M ') && g.areaPath.endsWith('Z'));
+
+  const flat = sparklineGeometry([5, 5, 5], { width: 120, height: 36, pad: 4 });
+  assert.ok(flat.points.every((p) => p.y === 18));
+  assert.equal(flat.trend, 'same');
+
+  const empty = sparklineGeometry([]);
+  assert.equal(empty.linePath, '');
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 24, `应至少包含 24 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 27, `应至少包含 27 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

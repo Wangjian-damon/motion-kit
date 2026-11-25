@@ -6,6 +6,8 @@
 <title>Motion Kit · AI 动效资产库</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23b8ff3d'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="../styles/motion.css" />
+<link rel="stylesheet" href="../styles/mobile.css" />
+<link rel="stylesheet" href="../styles/glass.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
@@ -113,12 +115,100 @@
   .asset-card {
     display: flex; flex-direction: column;
     border: 1px solid var(--line); border-radius: 18px;
-    background: var(--card); padding: 20px;
+    background: var(--card); padding: 16px;
     transition: border-color var(--mk-dur-2) var(--mk-ease-out),
                 transform var(--mk-dur-2) var(--mk-ease-out);
   }
   @media (hover: hover) {
     .asset-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  }
+
+  /* 卡片顶部：原地实时演示舞台 */
+  .asset-stage {
+    position: relative;
+    height: 132px;
+    margin-bottom: 14px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background:
+      radial-gradient(240px 100px at 50% 0%, rgba(184, 255, 61, 0.06), transparent 70%),
+      #090d14;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .pv-col { display: flex; flex-direction: column; }
+  .pv-row { display: flex; align-items: center; }
+  .pv-bar-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+  .pv-bar-row span:first-child { width: 32px; }
+  .pv-bar-row em { font-style: normal; width: 32px; text-align: right; color: var(--fg); }
+  .pv-metric {
+    padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(255,255,255,0.03); text-align: center; min-width: 96px;
+  }
+  .pv-metric small { display: block; font-size: 10.5px; color: var(--muted); margin-bottom: 2px; }
+  .pv-metric strong { font-size: 17px; padding: 2px 6px; display: inline-block; }
+  .pv-spark-box { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 11px; }
+  .pv-btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06); color: var(--fg);
+    font: 520 11px/1 inherit; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .pv-btn:hover { border-color: rgba(184,255,61,0.45); color: var(--accent); }
+  .pv-corner { position: absolute; right: 8px; top: 8px; z-index: 4; }
+  .pv-corner-l { position: absolute; left: 8px; top: 8px; z-index: 4; }
+  .pv-cta {
+    appearance: none; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--accent); color: #07090d; font: 600 13px/1 inherit;
+    padding: 11px 22px;
+  }
+  .pv-toast-card {
+    padding: 9px 12px; border-radius: 11px; font-size: 12px; color: var(--fg);
+    background: #141b26; border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  }
+  .pv-chip-card {
+    width: 104px; padding: 12px 10px; border-radius: 10px; text-align: center;
+    background: #141a24; border: 1px solid rgba(255,255,255,0.09); font-size: 11.5px; color: #cfd6e2;
+  }
+  .pv-tap-demo { padding: 10px 14px; font-size: 12.5px; border-radius: 11px; }
+  .pv-tap-accent { background: var(--accent); color: #07090d; border-color: var(--accent); }
+  .pv-ripple-pad {
+    appearance: none; width: 92%; height: 82px; border-radius: 12px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+    color: #cfd6e2; font: 500 12.5px/1 inherit;
+  }
+  .pv-dock { display: flex; align-items: flex-end; gap: 8px; padding: 8px 14px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); }
+  .pv-dock-item { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: #161d29; border: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+  .pv-seg { width: 82%; padding: 4px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); }
+  .pv-mini-block {
+    width: 64px; height: 52px; border-radius: 10px; display: grid; place-items: center;
+    background: #141a24; border: 1px solid rgba(255,255,255,0.1); font-weight: 650; font-size: 14px; color: var(--accent);
+  }
+  .pv-pop-card {
+    padding: 12px 16px; border-radius: 12px; background: #151c27;
+    border: 1px solid rgba(184,255,61,0.3); font-size: 12.5px; color: var(--fg);
+  }
+  .pv-glass-bg {
+    background:
+      radial-gradient(circle at 22% 30%, #3b82f6 0%, transparent 45%),
+      radial-gradient(circle at 78% 72%, #b8ff3d 0%, transparent 45%),
+      #0b101a;
+  }
+  .pv-glass-stripes {
+    background:
+      repeating-linear-gradient(125deg, rgba(184,255,61,0.35) 0 10px, rgba(59,130,246,0.35) 10px 20px, #0b101a 20px 30px);
+  }
+  .pv-share-card {
+    padding: 12px 18px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+    background: linear-gradient(135deg, rgba(184,255,61,0.22), rgba(59,130,246,0.24));
+    border: 1px solid rgba(184,255,61,0.35);
+  }
+  .pv-share-open {
+    width: 92%; padding: 14px 16px; border-radius: 14px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+    background: linear-gradient(135deg, rgba(184,255,61,0.3), rgba(59,130,246,0.32));
+    border: 1px solid rgba(184,255,61,0.5);
   }
   .asset-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
   .asset-title { margin: 0; font-size: 17px; font-weight: 620; letter-spacing: -0.015em; }
@@ -271,7 +361,9 @@
   </div>
 </div>
 
+<script src="./motion-kit.global.js"></script>
 <script src="./registry.data.js"></script>
+<script src="./card-previews.js"></script>
 <script>
 (() => {
   const reg = window.__MK_REGISTRY__;
@@ -320,10 +412,14 @@
     'rubber-band': './mobile.html#sec-rubber-band',
     'toast-stack': './web.html#scroll',
     'state-button': './web.html#scroll',
+    'bar-grow': './web.html#data',
+    'cell-flash': './web.html#data',
+    'sparkline-draw': './web.html#data',
   };
   let activeNature = '全部';
   let activeLayer = '全部';
   let activeCard = null;
+  let activeTeardowns = [];
 
   const copyInstallBtn = document.getElementById('copyInstallCmd');
   if (copyInstallBtn) {
@@ -497,6 +593,8 @@
     });
 
     countMeta.textContent = `显示 ${list.length} / ${reg.count} 张跨平台资产卡`;
+    activeTeardowns.forEach((fn) => { try { fn(); } catch {} });
+    activeTeardowns = [];
     grid.innerHTML = '';
 
     if (list.length === 0) {
@@ -509,6 +607,7 @@
       el.className = 'asset-card';
       const demoHref = DEMO_LINKS[card.id];
       el.innerHTML = `
+        <div class="asset-stage" data-stage="${esc(card.id)}"></div>
         <div class="asset-head">
           <h2 class="asset-title">${esc(card.name)}</h2>
           <span class="asset-id">${esc(card.id)}</span>
@@ -524,13 +623,16 @@
           <button class="act act--primary" data-act="prompt">Copy Prompt</button>
           <button class="act" data-act="rule">Copy Skill</button>
           <button class="act" data-act="detail">查看详情</button>
-          ${demoHref ? `<a class="act" href="${demoHref}" style="text-decoration:none;">体验效果 →</a>` : ''}
+          ${demoHref ? `<a class="act" href="${demoHref}" style="text-decoration:none;">完整演示 →</a>` : ''}
         </div>
       `;
       el.querySelector('[data-act="prompt"]').onclick = (ev) => copyText(fullPrompt(card), ev.currentTarget, '已复制 Prompt');
       el.querySelector('[data-act="rule"]').onclick = (ev) => copyText(card.ai_assets.skill_rule, ev.currentTarget, '已复制 Skill');
       el.querySelector('[data-act="detail"]').onclick = () => openDrawer(card);
       grid.appendChild(el);
+      if (typeof window.mountCardPreview === 'function') {
+        activeTeardowns.push(window.mountCardPreview(card.id, el.querySelector('.asset-stage')));
+      }
     }
   }
 

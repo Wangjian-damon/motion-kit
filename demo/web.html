@@ -1075,6 +1075,61 @@
     </div>
   </section>
 
+  <!-- ============ 10 / 实时数据表格生长 ============ -->
+  <section id="data" data-mk-assets="bar-grow,cell-flash,sparkline-draw">
+    <div class="wrap">
+      <div class="eyebrow" v-mk-enter>10 / 数据展示与表格生长</div>
+      <h2 v-mk-enter>零图表库的实时数据表格三件套</h2>
+      <p class="lede" v-mk-enter>
+        <span class="tag">v-mk-bar</span> 全程 <span class="tag">scaleX</span> 生长（不触排、更新原地伸缩），
+        <span class="tag">flashCell</span> 80ms 亮起 + 650ms 缓退（<span class="tag">tabular-nums</span> 零抖动），
+        <span class="tag">v-mk-spark</span> 原生 SVG 折线三拍描绘。
+      </p>
+      <div class="showcase" style="padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <strong style="font-size:15px">核心接口实时指标</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn btn--accent mk-press" style="padding:8px 14px;font-size:13px" @click="tickMetrics">模拟实时刷新</button>
+            <button type="button" class="btn btn--ghost mk-press" style="padding:8px 14px;font-size:13px" @click="replaySpark">重播走势线</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--line);color:var(--muted);text-align:left">
+                <th style="padding:8px 10px">服务</th>
+                <th style="padding:8px 10px;text-align:right">QPS</th>
+                <th style="padding:8px 10px;width:210px">负载占比</th>
+                <th style="padding:8px 10px;text-align:right">7 日趋势</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in metrics" :key="row.name" style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                <td style="padding:11px 10px;font-weight:560">{{ row.name }}</td>
+                <td style="padding:11px 10px;text-align:right">
+                  <span class="mk-cell" :ref="el => setMetricCell(row.name, el)" style="padding:3px 8px;display:inline-block;font-weight:600">
+                    {{ row.qps.toLocaleString() }}
+                  </span>
+                </td>
+                <td style="padding:11px 10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="mk-bar" style="flex:1;color:var(--accent)" v-mk-bar="{ value: row.load, max: 100, index: idx }">
+                      <span class="mk-bar__fill"></span>
+                    </div>
+                    <span class="mk-cell" style="width:36px;text-align:right;color:var(--muted);font-size:12px">{{ row.load }}%</span>
+                  </div>
+                </td>
+                <td style="padding:11px 10px;text-align:right">
+                  <span v-mk-spark="{ values: row.trend, width: 110, height: 30 }" :key="row.name + '-' + sparkKey"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;width:min(1080px,calc(100% - 48px))">
       <span>Motion Kit · 自用组件库</span>
@@ -1137,6 +1192,29 @@
         if (failOnce) { failOnce = false; rej(new Error('network')); }
         else { failOnce = true; res(); }
       }, 260));
+
+      /* ---------- 10 / 实时数据表格 ---------- */
+      const metrics = ref([
+        { name: 'auth-gateway', qps: 1420, load: 74, trend: [18, 24, 21, 30, 36, 33, 44] },
+        { name: 'edge-router',  qps: 2890, load: 88, trend: [40, 44, 42, 48, 55, 61, 68] },
+        { name: 'search-index', qps: 840,  load: 42, trend: [52, 48, 46, 44, 39, 36, 31] },
+        { name: 'billing-api',  qps: 615,  load: 31, trend: [14, 15, 19, 17, 22, 26, 29] },
+      ]);
+      const metricCells = new Map();
+      const setMetricCell = (name, el) => { if (el) metricCells.set(name, el); };
+      const sparkKey = ref(0);
+      const tickMetrics = () => {
+        metrics.value.forEach((row) => {
+          const prev = row.qps;
+          const delta = Math.round((Math.random() - 0.45) * 260);
+          row.qps = Math.max(120, prev + delta);
+          row.load = Math.min(98, Math.max(12, row.load + Math.round((Math.random() - 0.5) * 24)));
+          row.trend = [...row.trend.slice(1), Math.max(8, row.trend[row.trend.length - 1] + Math.round((Math.random() - 0.45) * 14))];
+          const dir = MK.valueDelta(prev, row.qps);
+          MK.flashCell(metricCells.get(row.name), dir);
+        });
+      };
+      const replaySpark = () => { sparkKey.value++; };
 
       /* ---------- 平面补遗 ---------- */
       const dockIcons = [
@@ -1217,7 +1295,8 @@
 
       return { caps, form, errors, sending, sent, popOpen, toastOn, toastClosing, toast, validateName, submit, reset, odoValue, rollOdometer,
         dockIcons, segOn, scrambleWord, rollScramble, stackCards,
-        stackToasts, pushStackToast, onStackDismiss, runOkAction, runErrAction };
+        stackToasts, pushStackToast, onStackDismiss, runOkAction, runErrAction,
+        metrics, setMetricCell, sparkKey, tickMetrics, replaySpark };
     },
   });
 

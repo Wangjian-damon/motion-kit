@@ -1,20 +1,43 @@
 {
   "schemaVersion": 1,
-  "count": 24,
+  "count": 27,
   "byLayer": {
+    "motion": 14,
     "mobile": 10,
-    "motion": 11,
     "glass": 3
   },
   "byNature": {
+    "节奏": 5,
     "连续": 5,
-    "反馈": 6,
-    "节奏": 3,
+    "反馈": 7,
     "权重": 5,
     "方向": 3,
     "材质": 2
   },
   "effects": [
+    {
+      "id": "bar-grow",
+      "name": "条形数据生长",
+      "layer": "motion",
+      "nature": "节奏",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "v-mk-bar + .mk-bar / .mk-bar__fill / barRatio() / barStagger()",
+      "source": "Stripe / Vercel Analytics 表格占比条与柱状图生长（scaleX 合成器 + 封顶级联）",
+      "file": "effects/bar-grow.md",
+      "summary": "表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。",
+      "problem": "**数据表里的占比条瞬间拍在脸上缺少量级比较感，而动画 `width` 会把整张表拖进每帧重排。** 更糟的是如果给 30 行表格每行加 `40ms` 延迟，最后一行要等 1.2 秒才开始动——数据界面的第一优先级是扫读速度，动效绝不能拖慢人看数。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| Stripe / Linear 看板条形图入场时的轻快生长节奏与原地更新伸缩 | 图表库运行时与整段 SVG/Canvas 重绘 |\n| `scaleX(var(--p))` + `transform-origin: 0 50%` 全程合成器层运动 | 动画 `width` / `height` 触发每帧 Layout |\n| `barStagger` 320ms 封顶 + 入场后清零延迟 | 超过 10 行的无上限延迟级联 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 归一化比例 `p` | `clamp(value / max, 0, 1)` | 异常负值、超上限或 `max <= 0` 统一安全钳制，绝不撑破轨道 |\n| 生长时长 | `--mk-dur-5` = 560ms | 数据量级需要稍微多一点时间让眼睛比较长短，但超过 700ms 显得拖沓 |\n| 行级联步长 / 封顶 | `36ms` / `320ms` | 前 8–9 行形成利落斜波，第 10 行起全部封顶在 320ms 同步到达，不拖慢长表扫读 |\n| 入场后延迟归零 | `0ms` | 后续实时筛选或切换周期时，条形必须立刻原地伸缩，不能再等 stagger 延迟 |",
+      "implementation": "```\nsrc/core/data.js:12   barRatio(value, max)          纯函数，归一化并钳制 0..1\nsrc/core/data.js:19   barStagger(index, step, cap)  纯函数，封顶级联延迟\nsrc/core/data.js:28   barGrow(el, opts)             只写 --mk-bar-p / --mk-bar-d，IO 触发 .is-in\nstyles/motion.css     .mk-bar / .mk-bar__fill / .mk-bar--vertical\n```",
+      "degradation": "**走 `motion` 档：减，不关。**\n\n`prefers-reduced-motion: reduce` 下将 `transition-duration` 压到 `1ms`、`transition-delay` 清零，条形直接以精确比例呈现，数据可视化信息 100% 完整保留。",
+      "pitfalls": "**① 直接动画 `width: 0% → 72%`。**\n表格里 20 行同时改 `width` 会连续触发 20 次重排；必须让填充层固定 `width: 100%`，通过 `transform: scaleX(var(--p))` 与 `transform-origin: 0 50%` 缩放。\n\n**② 数据刷新时先归零再重新长一遍。**\n筛选日期或实时更新数值时如果把 `.is-in` 摘掉重播，整张表会闪烁跳动；正确做法是只更新 `--p`，让条形从旧长度原地滑到新长度。\n\n**③ 忘了在入场后把 `transition-delay` 清零。**\n如果不清零，第 8 行在后续点击“切换周期”时每次都要慢 288ms 才动，看着像数据卡顿。\n\n**④ 圆角填充条在 `scaleX` 很小时显得被压扁。**\n给外层轨道 `.bar` 设 `overflow: hidden; border-radius: 999px` 负责裁切左右外圆角，比给内层做复杂 clip 更稳。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零重排的表格条形 / 柱状图数据生长动效（零图表库依赖）。\n\n原理一句话：填充条固定 100% 宽度，用 transform: scaleX(var(--bar-p))（竖柱用 scaleY）在合成器层生长，入场级联严格封顶 320ms，数据更新时原地伸缩不归零。\n\n做法：\n1. 纯函数：\n   - barRatio(value, max = 100)：非有限数或 max <= 0 返回 0，否则 clamp(value / max, 0, 1)。\n   - barStagger(index, step = 36, cap = 320)：index <= 0 返回 0，否则 Math.min(cap, Math.round(index * step))。\n2. 结构与 CSS：\n   - 轨道 .bar：position: relative; overflow: hidden; border-radius: 999px; height: 8px;\n   - 填充 .bar-fill：display: block; width: 100%; height: 100%; transform-origin: 0 50%; transform: scaleX(0); transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--bar-d, 0ms);\n   - 激活态 .bar.is-in .bar-fill：transform: scaleX(var(--bar-p, 0));\n   - 竖向柱状图变体 .bar--vertical：transform-origin: 50% 100%，用 scaleY(0) → scaleY(var(--bar-p, 0))。\n3. 触发与更新：\n   - 挂载时写入 --bar-p 与 --bar-d，用 IntersectionObserver（once: true）在进入视口时加 .is-in。\n   - 入场完成后（约 stagger + 520ms）立刻将 --bar-d 置为 0ms。\n   - 后续数据更新时直接覆写 --bar-p（不移除 .is-in），让条形从旧比例原地平滑伸缩到新比例。\n\n硬要求：\n- 严禁动画 width 或 height —— 必须用 transform: scaleX / scaleY 走合成器。\n- 表格行级联延迟必须封顶 <= 320ms，且入场后清零延迟，避免二次更新拖沓。\n- 数值展示列必须配 font-variant-numeric: tabular-nums 防止数字与条形对齐抖动。\n- prefers-reduced-motion: reduce 下将过渡时长压到 1ms、延迟清零，直接显示最终比例。\n\n验收：\n- 20 行表格进入视口时前 9 行呈平滑斜波生长，第 10–20 行在 320ms 封顶同步到位，整表 0.9s 内全部静止。\n- 切换数据周期时，所有条形无延迟、不归零，原地平滑伸缩到新值。\n- 传入负数、NaN 或 max=0 时条形安全停在 0，不抛错不溢出。\n- 减弱动效模式下条形立即可见且比例准确。",
+        "dont_do": "- 别动画 `width` 或 `flex-basis` —— 表格里几十行同时触发重排会直接掉帧。\n- 别给长表格每一行无限累加 stagger —— 第 30 行等 1.5 秒才长出来会毁掉后台可读性。\n- 别在数据更新时把条形重置为 0 再重新生长 —— 那是视觉噪音，原地差值过渡才传达“变化量”。",
+        "skill_rule": "# 条形数据生长 (bar-grow) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】填充条固定 100% 宽度，用 transform: scaleX(var(--bar-p))（竖柱用 scaleY）在合成器层生长，入场级联严格封顶 320ms，数据更新时原地伸缩不归零。\n\n【硬要求】\n- 严禁动画 width 或 height —— 必须用 transform: scaleX / scaleY 走合成器。\n- 表格行级联延迟必须封顶 <= 320ms，且入场后清零延迟，避免二次更新拖沓。\n- 数值展示列必须配 font-variant-numeric: tabular-nums 防止数字与条形对齐抖动。\n- prefers-reduced-motion: reduce 下将过渡时长压到 1ms、延迟清零，直接显示最终比例。\n\n【验收标准】\n- 20 行表格进入视口时前 9 行呈平滑斜波生长，第 10–20 行在 320ms 封顶同步到位，整表 0.9s 内全部静止。\n- 切换数据周期时，所有条形无延迟、不归零，原地平滑伸缩到新值。\n- 传入负数、NaN 或 max=0 时条形安全停在 0，不抛错不溢出。\n- 减弱动效模式下条形立即可见且比例准确。\n\n【禁止做法】\n- 别动画 `width` 或 `flex-basis` —— 表格里几十行同时触发重排会直接掉帧。\n- 别给长表格每一行无限累加 stagger —— 第 30 行等 1.5 秒才长出来会毁掉后台可读性。\n- 别在数据更新时把条形重置为 0 再重新生长 —— 那是视觉噪音，原地差值过渡才传达“变化量”。"
+      }
+    },
     {
       "id": "bottom-sheet",
       "name": "底部弹层",
@@ -36,6 +59,29 @@
         "prompt": "实现 iOS 风格的底部弹层（sheet）。结构固定三件套：\n\n原理一句话：一条位移过渡 + 一个纯函数判定（距离或末速，任一满足即收起）。没有物理引擎，判定只用到 dy 和 px/ms 两个数。\n\n  <div class=\"sheet-backdrop\"></div>\n  <div class=\"sheet\">\n    <div class=\"sheet-grabber\"></div>   <!-- 唯一的拖拽区 -->\n    ...内容...\n  </div>\n\n行为：\n- 入场：从 translateY(100%) 到 0，380ms，cubic-bezier(0.22, 1, 0.36, 1)。\n  用 @starting-style 让入场不需要 JS 加类：\n    .sheet { transform: translate3d(0, 0, 0); transition: transform 380ms var(--ease-out); }\n    @starting-style { .sheet { transform: translate3d(0, 100%, 0); } }\n- 拖拽只发生在抓手（grabber）上，抓手设 touch-action: none；\n  面板内容区保持默认，照样能滚。抓手视觉 40×4px，但热区至少 96×32px\n  （用 ::before 扩大，不要真把条画大）。\n- 拖动中：面板跟手 translate3d(0, y, 0)（y 钳在 0..height），\n  遮罩透明度 = clamp(1 - y / (height * 1.5), 0, 1)。\n  除数用 1.5：拖到 100% 时遮罩还剩 1/3，否则视觉上面板还有一半在屏里、\n  遮罩却全透明了，读起来像\"遮罩先跑了\"。\n- 松手判定（纯函数，方便单测）：\n    收起 = (dy > 0) && (dy > height * 0.28 || velocity > 0.55 /* px/ms */)\n  往上拖（dy <= 0）一律不算收起。\n- 收起动画：先清 inline transition 恢复 CSS 过渡，等一帧（requestAnimationFrame）\n  再加 .is-closing 类。同一帧内既清 transform 又加类，过渡会被浏览器合并掉，\n  面板会直接消失而不是滑下去。收起结束用 transitionend + 560ms 兜底\n  （过渡被中断时 transitionend 不会来）。\n- 速度计算用 PointerEvent.timeStamp（不要 performance.now()），单位 px/ms。\n\n硬要求：\n- 拖动期间 inline transform，松手后清掉 inline 让 CSS 接管 —— 两种状态不能混写。\n- prefers-reduced-motion：时长压到 120ms，且 @starting-style 改成\n  { transform: none; opacity: 0 }（入场变纯淡入，位移不算\"减弱\"）。\n- pointercancel 不能走\"松手判定\"——浏览器抢走手势时用户没有松手，\n  必须直接走回弹分支，否则面板会在用户没操作时自己关掉。\n- onClose 回调在收起过渡结束后触发，由调用方负责隐藏节点；\n  组件自己不要 remove() 节点。\n\n验收：\n- 拖到 30% 高度松手 → 收起；拖到 15% 慢慢松手 → 回弹到 0。\n- 拖到 15% 快速一甩（末速 > 0.55px/ms）→ 收起。\n- 拖到 60% 后触发 pointercancel → 回弹，不收起。\n- 抓手以外的区域拖动 → 面板不动，内容正常滚动。\n- 减弱动效 → 淡入淡出，无位移。",
         "dont_do": "- 别把整个面板设 `touch-action: none`，内容就滚不动了。\n- 别用 `bottom` / `top` 做跟手位移 —— 那是布局属性，每帧重排。只用 `transform`。\n- 别让遮罩和面板各用一条缓动 —— 拖到一半松手时两者会不同步地回去，接缝看得见。\n- 别给面板加 `will-change: transform` 常驻 —— 拖拽开始时加、结束 时摘，否则多一层合成。",
         "skill_rule": "# 底部弹层 (bottom-sheet) · 跨平台动效规范\n性质：连续 ｜ 平台：touch\n\n【核心原理】一条位移过渡 + 一个纯函数判定（距离或末速，任一满足即收起）。没有物理引擎，判定只用到 dy 和 px/ms 两个数。\n\n【硬要求】\n- 拖动期间 inline transform，松手后清掉 inline 让 CSS 接管 —— 两种状态不能混写。\n- prefers-reduced-motion：时长压到 120ms，且 @starting-style 改成\n  { transform: none; opacity: 0 }（入场变纯淡入，位移不算\"减弱\"）。\n- pointercancel 不能走\"松手判定\"——浏览器抢走手势时用户没有松手，\n  必须直接走回弹分支，否则面板会在用户没操作时自己关掉。\n- onClose 回调在收起过渡结束后触发，由调用方负责隐藏节点；\n  组件自己不要 remove() 节点。\n\n【验收标准】\n- 拖到 30% 高度松手 → 收起；拖到 15% 慢慢松手 → 回弹到 0。\n- 拖到 15% 快速一甩（末速 > 0.55px/ms）→ 收起。\n- 拖到 60% 后触发 pointercancel → 回弹，不收起。\n- 抓手以外的区域拖动 → 面板不动，内容正常滚动。\n- 减弱动效 → 淡入淡出，无位移。\n\n【禁止做法】\n- 别把整个面板设 `touch-action: none`，内容就滚不动了。\n- 别用 `bottom` / `top` 做跟手位移 —— 那是布局属性，每帧重排。只用 `transform`。\n- 别让遮罩和面板各用一条缓动 —— 拖到一半松手时两者会不同步地回去，接缝看得见。\n- 别给面板加 `will-change: transform` 常驻 —— 拖拽开始时加、结束 时摘，否则多一层合成。"
+      }
+    },
+    {
+      "id": "cell-flash",
+      "name": "单元格涨跌脉冲",
+      "layer": "motion",
+      "nature": "反馈",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "flashCell(el, dir) / valueDelta(prev, next) + .mk-cell",
+      "source": "Bloomberg / Stripe / Linear 实时表格数值变动脉冲（80ms 亮起 → 650ms 缓退 + tabular-nums）",
+      "file": "effects/cell-flash.md",
+      "summary": "实时表格里某个数字变动时，按涨/跌方向在单元格背景打出一记「80ms 瞬时亮起 → 650ms 缓慢退去」的绿/红脉冲，并锁定等宽数字防止整列左右抖动。",
+      "problem": "**在 30–100 格的实时监控或行情表里，数字静默刷新等于没刷新。** 人眼无法同时扫描几十个单元格去比对刚才哪一格变了；反过来如果给变动格加缩放或弹跳，整张表格的对齐线会瞬间崩掉。只动背景色、快亮慢退，是信息密度最高且零干扰的反馈语言。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 金融终端与现代监控面板的「快起慢落」非对称色彩脉冲（12% 峰值、88% 衰减） | 改变字号、加粗或 `scale` 弹跳（破坏表格对齐） |\n| `font-variant-numeric: tabular-nums` 强制等宽数字 | 每次更新都重播入场动画或全行闪烁 |\n| 纯函数 `valueDelta(prev, next, eps)` 判定方向与死区过滤 | 浮点微小噪声导致单元格不停乱闪 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 总时长 | `730ms`（12% ≈ 88ms 亮起，642ms 退去） | 亮起必须像电脉冲一样干脆（≤100ms 抓眼），退去要慢到余光能扫到、又不至于把表格染花 |\n| 峰值透明度 | `rgba(..., 0.28)` | 足够在深色或浅色底上被余光捕捉，同时保证前景数字对比度全程清晰可读 |\n| 等宽数字 | `tabular-nums` | `1` 和 `8` 等宽，数字刷新时小数点与右对齐列纹丝不动 |\n| 死区阈值 `eps` | 默认 `0`，可配置 | 对带浮点抖动的传感器/延迟指标，可设 `eps` 屏蔽无意义微变 |",
+      "implementation": "```\nsrc/core/data.js:65   valueDelta(prev, next, eps)   纯函数，返回 'up' | 'down' | 'same'\nsrc/core/data.js:75   flashCell(el, dir)            摘类 + reflow + 加 .is-up / .is-down\nstyles/motion.css     .mk-cell / @keyframes mk-cell-up / @keyframes mk-cell-down\n```",
+      "degradation": "**走 `motion` 档：减，不关。**\n\n`prefers-reduced-motion: reduce` 下将脉冲动画压短到 `120ms`，去掉长时间缓变余辉，避免对前庭/视觉敏感用户造成大片闪烁干扰，同时保留变动提示。",
+      "pitfalls": "**① 表格数字列忘了加 `font-variant-numeric: tabular-nums`。**\n数字从 `11.11` 变成 `88.88` 时整列宽度左右跳动，看几秒钟就会头晕；这是实时表格的第一铁律。\n\n**② 高频连续刷新时直接 `classList.add('is-up')` 导致第二次不闪。**\n如果上一次 730ms 还没播完，同帧重复加同一个类浏览器不会重播关键帧；必须先 `remove('is-up', 'is-down')` 再触发一次 `void el.offsetWidth` 重排后再加类。\n\n**③ 初始渲染（挂载第 1 帧）就把所有单元格全闪一遍。**\n初始加载不是“涨跌变化”，只有前后两个有效数值都存在且 `valueDelta(prev, next) !== 'same'` 时才允许触发脉冲。\n\n**④ 只靠红/绿色区分涨跌，忽略色盲用户。**\n脉冲只负责「吸引注意力到变动格」，单元格文案本身应配 `+` / `-` 或 `↑` / `↓` 符号，不把颜色当唯一信息通道。\n\n---",
+      "ai_assets": {
+        "prompt": "实现实时数据表格的单元格涨跌脉冲动效（零依赖，仅背景色脉冲 + 等宽数字）。\n\n原理一句话：纯函数对比新旧值判定 up/down/same，仅对变动单元格触发「80ms 快亮 → 650ms 慢退」的背景色关键帧，配合 tabular-nums 保证数字列零抖动。\n\n做法：\n1. 纯函数 valueDelta(prev, next, eps = 0)：\n   - 若 prev 或 next 非有限数字，返回 'same'。\n   - 若 Math.abs(next - prev) <= eps，返回 'same'。\n   - 否则返回 next > prev ? 'up' : 'down'。\n2. CSS 样式：\n   - 单元格 .data-cell：font-variant-numeric: tabular-nums; border-radius: 6px;\n   - 关键帧（快起慢落非对称曲线，总长 730ms）：\n     @keyframes cell-up   { 0% { background-color: transparent; } 12% { background-color: rgba(74, 222, 128, 0.28); } 100% { background-color: transparent; } }\n     @keyframes cell-down { 0% { background-color: transparent; } 12% { background-color: rgba(248, 113, 113, 0.28); } 100% { background-color: transparent; } }\n   - .data-cell.is-up { animation: cell-up 730ms cubic-bezier(0.22, 1, 0.36, 1); }\n   - .data-cell.is-down { animation: cell-down 730ms cubic-bezier(0.22, 1, 0.36, 1); }\n3. 触发逻辑 flashCell(el, dir)：\n   - 仅在已有旧值且 dir 为 'up' 或 'down' 时触发（首屏初次渲染不闪）。\n   - 先 el.classList.remove('is-up', 'is-down')，再 void el.offsetWidth 强制重排，再加对应类，确保连续两次上涨也能可靠重播。\n\n硬要求：\n- 所有变动数字单元格必须设 font-variant-numeric: tabular-nums，禁止列宽跳动。\n- 严禁在脉冲中修改 transform / scale / font-weight / padding（会破坏表格对齐或触排）。\n- 颜色不可作为涨跌唯一信号，需与 +/- 或 ↑/↓ 文案配合。\n- prefers-reduced-motion: reduce 下将动画时长压缩至 120ms，避免大面积长时间闪烁。\n\n验收：\n- 数值从 120 变为 135 时，单元格在 90ms 内闪绿并在 ~730ms 内平滑退回透明；表格其他未变动格完全静止。\n- 500ms 内连续两次上涨，第二次脉冲正常重播不丢失。\n- 数值未变或传入 NaN 时不闪；首屏初次加载不闪。\n- 数字从 111.11 变为 888.88 时，小数点与右边界位置 0px 偏移。",
+        "dont_do": "- 别给变动单元格加 `scale(1.06)` 弹跳 —— 表格里同时跳三格会显得非常廉价且破坏对齐。\n- 别忘记 `tabular-nums` —— 比例字体下数字刷新会让整列像地震一样左右晃。\n- 别在首次渲染数据加载完时把全表闪成一片绿 —— 只有增量变化才配脉冲。",
+        "skill_rule": "# 单元格涨跌脉冲 (cell-flash) · 跨平台动效规范\n性质：反馈 ｜ 平台：both\n\n【核心原理】纯函数对比新旧值判定 up/down/same，仅对变动单元格触发「80ms 快亮 → 650ms 慢退」的背景色关键帧，配合 tabular-nums 保证数字列零抖动。\n\n【硬要求】\n- 所有变动数字单元格必须设 font-variant-numeric: tabular-nums，禁止列宽跳动。\n- 严禁在脉冲中修改 transform / scale / font-weight / padding（会破坏表格对齐或触排）。\n- 颜色不可作为涨跌唯一信号，需与 +/- 或 ↑/↓ 文案配合。\n- prefers-reduced-motion: reduce 下将动画时长压缩至 120ms，避免大面积长时间闪烁。\n\n【验收标准】\n- 数值从 120 变为 135 时，单元格在 90ms 内闪绿并在 ~730ms 内平滑退回透明；表格其他未变动格完全静止。\n- 500ms 内连续两次上涨，第二次脉冲正常重播不丢失。\n- 数值未变或传入 NaN 时不闪；首屏初次加载不闪。\n- 数字从 111.11 变为 888.88 时，小数点与右边界位置 0px 偏移。\n\n【禁止做法】\n- 别给变动单元格加 `scale(1.06)` 弹跳 —— 表格里同时跳三格会显得非常廉价且破坏对齐。\n- 别忘记 `tabular-nums` —— 比例字体下数字刷新会让整列像地震一样左右晃。\n- 别在首次渲染数据加载完时把全表闪成一片绿 —— 只有增量变化才配脉冲。"
       }
     },
     {
@@ -427,6 +473,29 @@
         "prompt": "实现一个多档位底部面板（snap points）。原生 Pointer Events + CSS 过渡，不引依赖。\n\n原理一句话：档位是一组固定的位移落点，松手时把\"当前位移 + 速度×一小段时间\"投影成一个落点，\n再取最近的档 —— 一套最近邻数学同时覆盖\"慢慢拖\"和\"轻甩\"。\n\n结构：\n  <div class=\"backdrop\"></div>\n  <div class=\"sheet\" style=\"max-height: 82dvh\">\n    <div class=\"grabber\" data-handle></div>\n    ...内容...\n  </div>\n\n档位用「面板自身可见高度的比例」表示，升序，例如 [0.35, 0.62, 1]。\n位移 = 高度 × (1 − 比例)：全开 0，完全收起 = 高度。\n\n单指针拖动（只接主键 e.button === 0），pointerdown 时调 setPointerCapture，\n这样手指移出元素也继续收到 move。\n\n拖动中：transform = translate3d(0, clamp(当前档位移 + dy, 0, 高度), 0)，\n并且该元素 transition: none。\n\n松手：\n1. 若是 pointercancel → 不做任何判定，直接滑回当前档（浏览器抢走手势不是用户松手）。\n2. 若 velocity > 0.55 px/ms 且当前位移已到最低档（容差 1px）→ 关闭。\n3. 否则取档：\n     projected = clamp(offset + velocity * 160, 0, 高度)   // 160ms 投影窗口\n     在 [各档位移..., 高度] 里找距离 projected 最近的；若最近的正好是最后那个\n     (= 高度) → 关闭；否则吸附到该档位移。\n4. 恢复过渡（transition: ''）后再写新的 transform，让过渡从当前跟手位置接管。\n\n硬要求：\n- 档位位移必须**用到时现算**（高度 × (1 − 比例)），不要在初始化时缓存 ——\n  节点在 display:none 状态下 offsetHeight 是 0，缓存会让面板永远停在全开档。\n- 位移一律走 transform，不要动 top / bottom / height。\n- 投影结果必须 clamp 到 0..高度。不钳的话往上狂甩会算出负落点。\n- 有档位时遮罩**不要**跟手变淡。档位之间是稳态，跟手淡出会让最低档看起来像快关了。\n  遮罩只在真正关闭时过渡到 0。\n- 关闭 = 滑到 translateY(100%)，然后通知调用方隐藏节点；组件自己不要 remove 节点。\n- 调用方传初始档位时，下标按\"排序后的档位数组\"数；实现内部必须自己 sort 一次。\n\n验收：\n- 从最低档慢慢往上拖 27% 高度（正好到中档）→ 停在 62%，位移 = 高度 × 0.38。\n- 再慢慢往上拖 38% 高度 → 停在 0（全开）。\n- 从全开慢慢往下拖 20% 高度 → 回到 62%（不是直接关）。\n- 在最低档往下轻甩（约 0.5px/ms，只拖 70px）→ 面板关闭。\n- 慢慢往下拖 25% 高度（从 62% 出发）→ 停在最低档，不关。\n- 拖到任意位置派发 pointercancel → 滑回拖动前那一档，不关闭。\n- 关闭后重新打开 → 回到调用方指定的初始档，且没有\"先闪一下全开\"。",
         "dont_do": "- 别用 height / max-height 做档位切换 —— 每帧重排，而且会打断内容滚动。\n- 别把\"拖得够远\"和\"甩得够快\"写成两个并列的 if —— 它们要合成一个投影落点。\n- 别在最低档只靠投影判断关闭 —— 最低档到关闭档隔着一整段高度，\n  必须单独给\"在最低档甩一把\"开一条判定。\n- 别给面板常驻 will-change: transform —— 拖动开始加、结束摘。",
         "skill_rule": "# 多档位弹层 (snap-sheet) · 跨平台动效规范\n性质：权重 ｜ 平台：touch\n\n【核心原理】档位是一组固定的位移落点，松手时把\"当前位移 + 速度×一小段时间\"投影成一个落点，\n\n【硬要求】\n- 档位位移必须**用到时现算**（高度 × (1 − 比例)），不要在初始化时缓存 ——\n  节点在 display:none 状态下 offsetHeight 是 0，缓存会让面板永远停在全开档。\n- 位移一律走 transform，不要动 top / bottom / height。\n- 投影结果必须 clamp 到 0..高度。不钳的话往上狂甩会算出负落点。\n- 有档位时遮罩**不要**跟手变淡。档位之间是稳态，跟手淡出会让最低档看起来像快关了。\n  遮罩只在真正关闭时过渡到 0。\n- 关闭 = 滑到 translateY(100%)，然后通知调用方隐藏节点；组件自己不要 remove 节点。\n- 调用方传初始档位时，下标按\"排序后的档位数组\"数；实现内部必须自己 sort 一次。\n\n【验收标准】\n- 从最低档慢慢往上拖 27% 高度（正好到中档）→ 停在 62%，位移 = 高度 × 0.38。\n- 再慢慢往上拖 38% 高度 → 停在 0（全开）。\n- 从全开慢慢往下拖 20% 高度 → 回到 62%（不是直接关）。\n- 在最低档往下轻甩（约 0.5px/ms，只拖 70px）→ 面板关闭。\n- 慢慢往下拖 25% 高度（从 62% 出发）→ 停在最低档，不关。\n- 拖到任意位置派发 pointercancel → 滑回拖动前那一档，不关闭。\n- 关闭后重新打开 → 回到调用方指定的初始档，且没有\"先闪一下全开\"。\n\n【禁止做法】\n- 别用 height / max-height 做档位切换 —— 每帧重排，而且会打断内容滚动。\n- 别把\"拖得够远\"和\"甩得够快\"写成两个并列的 if —— 它们要合成一个投影落点。\n- 别在最低档只靠投影判断关闭 —— 最低档到关闭档隔着一整段高度，\n  必须单独给\"在最低档甩一把\"开一条判定。\n- 别给面板常驻 will-change: transform —— 拖动开始加、结束摘。"
+      }
+    },
+    {
+      "id": "sparkline-draw",
+      "name": "迷你走势线生长",
+      "layer": "motion",
+      "nature": "节奏",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "v-mk-spark + .mk-spark / sparklineGeometry() / sparkline()",
+      "source": "Stripe / Vercel / Apple Stocks 表格内嵌迷你折线（零图表库 SVG stroke-dashoffset 描绘）",
+      "file": "effects/sparkline-draw.md",
+      "summary": "纯函数把一串数字映射成轻量 SVG 迷你折线与渐变面积，进入视口时线条从左向右 520ms 平滑描绘，面积晚 120ms 淡入，末端数据点最后轻弹落位。",
+      "problem": "**表格里嵌一条 7 日趋势线能瞬间传达“正在涨还是正在跌”，但为此引入几百 KB 的图表库完全杀鸡用牛刀。** 静态折线又缺少时间从左向右流淌的方向感；用 50 行纯数学 + 原生 SVG `stroke-dashoffset` 就能拿到媲美 Stripe 表格的手感。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| Stripe / Apple Stocks 表格折线的三拍层次（描线 → 面积淡入 → 末点落位） | ECharts / Chart.js / D3 运行时依赖 |\n| 纯函数 `sparklineGeometry()` 处理全平数据（`min === max` 居中画线不除零） | 复杂的坐标轴、网格线与图例（迷你走势线只传达趋势形状） |\n| 按首尾趋势自动标 `data-trend=\"up|down\"` 切换涨跌主题色 | 手写死 `stroke-dasharray: 999` 导致短线前半段空等 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 描线时长 | `520ms`（`ease-out`） | 足够看清曲线从左到右走完的趋势方向，又不至于超过 600ms 拖慢页面 |\n| 面积淡入延迟 | `120ms`（时长 `380ms`） | 等折线先画出开头再垫上渐变底色，视觉层次更干净，不抢线条风头 |\n| 末点落位延迟 | `380ms`（`scale 0.4 → 1`） | 恰好在笔尖快走到最右端时轻弹亮起，像给趋势打上句号 |\n| 线宽 / 内边距 | `1.75px` / `4px` | 1px 在高分屏偏细、2.5px 在 36px 高单元格里太粗；4px pad 保证极值点和末点圆点不被 viewBox 裁切 |",
+      "implementation": "```\nsrc/core/data.js:90    sparklineGeometry(values, opts)  纯函数，输出 linePath / areaPath / points / trend\nsrc/core/data.js:121   sparkline(el, values, opts)      生成 SVG，量 getTotalLength() 写 --mk-spark-len\nstyles/motion.css      .mk-spark / __line / __area / __dot\n```",
+      "degradation": "**走 `motion` 档：减，不关。**\n\n`prefers-reduced-motion: reduce` 下所有描绘、淡入与圆点缩放的时长压到 `1ms`、延迟归零，完整走势线、渐变面积与末点直接呈现。",
+      "pitfalls": "**① 所有数据点相等（全平直线 `max === min`）时直接除以 `max - min` 算出 `NaN`。**\n必须显式判断 `span === 0`，把所有点放在垂直中线 `y = height / 2`，正常画出水平线。\n\n**② `stroke-dasharray` 随便写死成 `1000`。**\n当真实路径只有 140px 时，写死 1000 会让动画前 85% 的时间线条都藏在负偏移里根本看不见，最后 80ms 突然闪完。必须调用 `line.getTotalLength()` 写入真实长度。\n\n**③ 没留 `pad` 内边距导致波峰、波谷或末端圆点被 SVG 边缘削掉一半。**\n圆点半径 `2.6px` + 线宽一半，至少留 `4px` 内边距。\n\n**④ 同一页面多条走势线共用了相同的 `<linearGradient id=\"spark-grad\">`。**\n如果多行表格共用同一个 gradient id，某一行被筛选卸载时，其余所有行的渐变填充会瞬间消失。每条实例必须生成唯一 gradient id。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零图表库依赖的迷你走势线生长动效（SVG Sparkline Draw）。\n\n原理一句话：纯函数将数字数组归一化为 SVG 折线与封闭面积路径，读取真实 path.getTotalLength() 写入 CSS 变量，通过 stroke-dashoffset 按「描线 → 面积淡入 → 末点落位」三拍完成生长。\n\n做法：\n1. 纯函数 sparklineGeometry(values, { width = 120, height = 36, pad = 4 })：\n   - 过滤非有限数；若为空返回空路径。\n   - 计算 min / max / span = max - min；innerW = width - pad * 2，innerH = height - pad * 2。\n   - 每个点：x = n === 1 ? width / 2 : pad + (i / (n - 1)) * innerW；y = span === 0 ? height / 2 : pad + (1 - (v - min) / span) * innerH（全平数据居中画线，绝不除零）。\n   - linePath = \"M x0 y0 L x1 y1 ...\"；areaPath = linePath + \" L xLast (height-pad) L x0 (height-pad) Z\"；trend = 末值与首值比较得 'up' | 'down' | 'same'。\n2. SVG 渲染（每条实例必须用唯一 linearGradient id）：\n   - 渐变填充从 currentColor 26% 透明到 0%；\n   - 折线：fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"；\n   - 末点：<circle cx={last.x} cy={last.y} r=\"2.6\" fill=\"currentColor\" />；\n   - 挂载后立刻测量 len = Math.ceil(line.getTotalLength()) 写入容器变量 --spark-len。\n3. 三拍 CSS 过渡（进入视口加 .is-in 触发）：\n   - 折线：stroke-dasharray: var(--spark-len); stroke-dashoffset: var(--spark-len) → 0（520ms cubic-bezier(0.22,1,0.36,1)）；\n   - 面积：opacity: 0 → 1（380ms ease-out，delay 120ms）；\n   - 末点：opacity: 0, scale(0.4) → opacity: 1, scale(1)（240ms cubic-bezier(0.34,1.56,0.64,1)，delay 380ms，注意 transform-box: fill-box; transform-origin: center）。\n\n硬要求：\n- 必须用 path.getTotalLength() 写精确路径长度，严禁写死 500 或 1000。\n- 全平数据（如 [5, 5, 5, 5]）与单点数据不得出现 NaN。\n- 每条走势线的 SVG linearGradient id 必须全局唯一，防止多行表格删行时连带销毁渐变。\n- prefers-reduced-motion: reduce 下将三拍时长压到 1ms、延迟清零，直接显示完整图形。\n\n验收：\n- 折线在 520ms 内从最左平滑描到最右，中途无停顿或末段加速；渐变面积随后浮现，末点在笔尖到达时轻弹亮起。\n- 传入 [10, 10, 10, 10] 输出水平中线且无 NaN；传入上涨/下跌数组自动切换对应趋势色。\n- 同一表格渲染 10 行走势线并删除第 1 行，其余 9 行渐变填充保持正常。",
+        "dont_do": "- 别为了表格里一条 120×36 的走势线引入 ECharts / Chart.js / Recharts。\n- 别把 `stroke-dasharray` 写死成一个大数 —— 会导致曲线开头空等、结尾瞬闪。\n- 别忘了 `transform-box: fill-box` —— SVG `<circle>` 默认以整个 SVG `(0,0)` 为缩放原点，不写这行圆点会从左上角飞进来。",
+        "skill_rule": "# 迷你走势线生长 (sparkline-draw) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】纯函数将数字数组归一化为 SVG 折线与封闭面积路径，读取真实 path.getTotalLength() 写入 CSS 变量，通过 stroke-dashoffset 按「描线 → 面积淡入 → 末点落位」三拍完成生长。\n\n【硬要求】\n- 必须用 path.getTotalLength() 写精确路径长度，严禁写死 500 或 1000。\n- 全平数据（如 [5, 5, 5, 5]）与单点数据不得出现 NaN。\n- 每条走势线的 SVG linearGradient id 必须全局唯一，防止多行表格删行时连带销毁渐变。\n- prefers-reduced-motion: reduce 下将三拍时长压到 1ms、延迟清零，直接显示完整图形。\n\n【验收标准】\n- 折线在 520ms 内从最左平滑描到最右，中途无停顿或末段加速；渐变面积随后浮现，末点在笔尖到达时轻弹亮起。\n- 传入 [10, 10, 10, 10] 输出水平中线且无 NaN；传入上涨/下跌数组自动切换对应趋势色。\n- 同一表格渲染 10 行走势线并删除第 1 行，其余 9 行渐变填充保持正常。\n\n【禁止做法】\n- 别为了表格里一条 120×36 的走势线引入 ECharts / Chart.js / Recharts。\n- 别把 `stroke-dasharray` 写死成一个大数 —— 会导致曲线开头空等、结尾瞬闪。\n- 别忘了 `transform-box: fill-box` —— SVG `<circle>` 默认以整个 SVG `(0,0)` 为缩放原点，不写这行圆点会从左上角飞进来。"
       }
     },
     {
