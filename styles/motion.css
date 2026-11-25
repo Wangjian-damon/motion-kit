@@ -1025,3 +1025,56 @@
   /* JS 那边已经直接出正文，这里只是双保险 */
   .mk-scramble { font-variant-numeric: normal; }
 }
+
+/* ============================================================
+   追加原语 24 · 共享元素转场（列表 → 详情 / 卡片长大）
+   ============================================================
+
+   JS 只做两件事：给两侧写同一个 view-transition-name、在回调里换 DOM。
+   尺寸和位置的插值全部由浏览器负责 —— 这个文件里没有任何 transform 补间。
+
+   为什么规则必须写在这里、而不是过渡开始前注入 <style>：
+   实测两个引擎都**不认**运行时注入的 ::view-transition-* 规则，时长仍是
+   默认 0.25s。规则必须随样式表预先加载。
+
+   为什么要挂在 :root.mk-vt-share 上而不是裸写 ::view-transition-group(*)：
+   裸写会波及同页所有转场（包括别人家的）。挂类之后只有本次转场生效，
+   摘类立刻回到默认 —— 实测过：别人家的 group 仍是 0.25s。
+   ============================================================ */
+
+/* 元素侧：一个变量就是一个名字。名字必须是合法标识符（见 flip.js shareName）。 */
+.mk-share {
+  view-transition-name: var(--mk-share, none);
+  view-transition-class: mk-share;
+}
+
+/* 时长走 token，由 flip.js 写在 :root 上；自定义属性可以穿进伪元素（实测）。 */
+:root { --mk-share-dur: 380ms; }
+
+/* 根层（整页）不做交叉淡入淡出 —— 换页的淡入淡出会和元素长大叠在一起，
+   变成"整页糊一下再飞"。只让共享元素动。 */
+:root.mk-vt-share::view-transition-old(root),
+:root.mk-vt-share::view-transition-new(root) {
+  animation: none;
+}
+
+/* view-transition-class 选中这一族：一组卡片可以各自带不同的 --mk-share，
+   规则只写一条。 */
+:root.mk-vt-share::view-transition-group(*.mk-share) {
+  animation-duration: var(--mk-share-dur, 380ms);
+  animation-timing-function: var(--mk-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* startViewTransition 自己不认 reduce（实测两引擎时长仍是 250ms），
+     所以这里必须手写。带作用域，不误伤别人家的转场。 */
+  :root.mk-vt-share::view-transition-group(*),
+  :root.mk-vt-share::view-transition-old(*),
+  :root.mk-vt-share::view-transition-new(*) {
+    animation-duration: 1ms !important;
+  }
+}
+
+/* 不支持 View Transitions 的引擎里 name 会被静默忽略（实测：`0` / `*` 都
+   compute 成 none），所以这里不写降级动画 —— 降级就是"没有过渡"，页面照样
+   能用。按下反馈交给 v-mk-tap，别在这里叠第二层。 */

@@ -410,6 +410,69 @@
   .ctx-row b { display: block; font-size: 14px; font-weight: 600; }
   .ctx-row small { font-size: 11.5px; color: var(--muted); }
   .ctx-dots { margin-left: auto; color: var(--muted); font-size: 16px; letter-spacing: 1px; }
+
+  /* ---- 14 共享元素转场（列表 → 详情） ---- */
+  .share-list { display: grid; gap: 10px; margin-top: 12px; }
+  .share-card {
+    position: relative;
+    min-height: 84px;
+    padding: 14px 15px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .share-card__glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 100% at 15% 0%, rgba(var(--tone), 0.30), transparent 70%);
+    pointer-events: none;
+  }
+  .share-card__kicker {
+    position: relative; font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgb(var(--tone));
+  }
+  .share-card__title {
+    position: relative; font-size: 15px; font-weight: 620; letter-spacing: -0.01em;
+  }
+
+  /* 详情层：盖满 .screen，自己滚。用 v-if 让它和列表**互斥出现** ——
+     同一时刻只能有一个元素持有同一个 view-transition-name，
+     两边同时挂会 InvalidStateError（实测，WebKit 报得更早）。 */
+  .share-detail {
+    position: absolute; inset: 0;
+    background: #0a0d12;
+    z-index: 5;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .share-detail__hero {
+    position: relative;
+    min-height: 208px;
+    padding: 18px 20px 22px;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+    background: radial-gradient(130% 110% at 15% 0%, rgba(var(--tone), 0.34), transparent 72%);
+    border-bottom: 1px solid var(--line);
+  }
+  .share-detail__body { padding: 18px 20px 32px; }
+  .share-detail__body p {
+    margin: 0 0 12px; font-size: 13.5px; line-height: 1.65; color: var(--muted);
+  }
+  .share-detail__body p b { color: var(--fg); font-weight: 600; }
+  .share-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+    padding: 7px 13px 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--fg); font-size: 12.5px;
+  }
+  .share-hint {
+    margin-top: 10px; font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
 </style>
 </head>
 <body>
@@ -810,12 +873,72 @@
 
     <div class="divider"></div>
 
+    <!-- ============ 14 共享元素转场 ============ -->
+    <section class="sec">
+      <div class="sec-head" v-mk-enter>
+        <h2>14 / 共享元素转场</h2>
+        <p>
+          点一张卡片，它<b>自己长大成详情页</b>，不是淡入一个新页面。
+          <span class="tag">v-mk-share</span> 只写一个名字，
+          尺寸和位置的插值由浏览器在两个快照之间算 —— 库里面一行 FLIP 测量都没有。
+        </p>
+      </div>
+
+      <!-- 名字是"接力棒"，同一时刻只能有一个人拿着。详情打开时整排卡片
+           把名字交出去（→ null 即 none），详情层接住同名 —— 交接在
+           startViewTransition 回调的同一帧完成，浏览器才看得到"同一个元素
+           从这儿长到那儿"。两边同时挂着就是 InvalidStateError，过渡不启动。 -->
+      <div class="share-list" v-mk-enter="{ delay: 60 }">
+        <div
+          class="share-card"
+          v-for="c in shareCards"
+          :key="c.id"
+          :style="{ '--tone': c.tone }"
+          v-mk-share="shareOpen ? null : 'card-' + c.id"
+          v-mk-tap
+          @click="openShare(c)"
+        >
+          <span class="share-card__glow"></span>
+          <span class="share-card__kicker">{{ c.kicker }}</span>
+          <b class="share-card__title">{{ c.title }}</b>
+        </div>
+      </div>
+
+      <p class="share-hint">
+        打开详情后，页首那块渐变<b>就是刚才那张卡片</b>的位置与尺寸在插值。
+        按返回时是反向的同一段过渡。
+      </p>
+    </section>
+
+    <div class="divider"></div>
+
     <footer class="demo-foot" style="padding:28px 20px 40px;flex-direction:column;border:0">
       <span>Motion Kit · 移动端展示面</span>
       <span style="margin-top:6px"><a href="./web.html">→ 切到 Web 端展示面</a></span>
     </footer>
 
   </div>
+
+  <!-- 详情层：在 .device 内、.screen 之上。
+       用 v-if 与列表互斥 —— 同一时刻只能有一个元素持有同一个
+       view-transition-name，两边同时挂会 InvalidStateError（实测）。
+       注意这里**不套 Vue <transition>**：淡入会和元素长大的插值叠在一起，
+       变成"糊一下再飞"。整页淡入淡出由 CSS 的 ::view-transition-old(root) 关掉了。 -->
+  <article
+    v-if="shareOpen"
+    class="share-detail"
+    :style="{ '--tone': shareOpen.tone }"
+    v-mk-share="'card-' + shareOpen.id"
+  >
+    <header class="share-detail__hero">
+      <span class="share-card__kicker">{{ shareOpen.kicker }}</span>
+      <b class="share-card__title" style="font-size:21px">{{ shareOpen.title }}</b>
+    </header>
+    <div class="share-detail__body">
+      <button class="share-back" type="button" v-mk-tap @click="closeShare">← 返回</button>
+      <p v-for="(para, i) in shareOpen.body" :key="i" v-html="para"></p>
+    </div>
+  </article>
 
   <!-- 底部标签栏 -->
   <nav class="tabbar">
@@ -978,6 +1101,65 @@
         ctxLast.value = `${file.name} · 打开`;
       };
 
+      /* ---------- 共享元素转场 ----------
+         关键不在这几个 data 上，在 shareOpen 的切换方式：
+         必须走 $mkShare，让"换 DOM"发生在 startViewTransition 的回调里。
+         直接给 shareOpen 赋值的话 DOM 先变了，浏览器拍不到旧快照，
+         结果就是硬切 —— 看起来"没生效"，其实名字和 CSS 都对。 */
+      const shareCards = [
+        {
+          id: 'pulse',
+          kicker: 'Motion',
+          title: '长按 480ms 之后',
+          tone: '125, 211, 252',
+          body: [
+            '这张详情页的页首不是新画的 —— <b>它就是刚才那张卡片</b>的位置和尺寸在插值。',
+            '库这边只做了一件事：给两侧写同一个 <b>view-transition-name</b>。',
+            '剩下的量旧矩形、量新矩形、算 transform，全部交给浏览器。',
+          ],
+        },
+        {
+          id: 'glass',
+          kicker: 'Material',
+          title: '玻璃层为什么不糊',
+          tone: '184, 255, 61',
+          body: [
+            '折射靠的是 <b>feDisplacementMap</b> 把边缘像素按法线推一下，不是 blur。',
+            '所以玻璃上压文字时，字的边缘会跟着弯 —— 那是真的在折光。',
+            '代价是不能整层加 <b>backdrop-filter</b>，两层折射会互相打架。',
+          ],
+        },
+        {
+          id: 'budget',
+          kicker: 'Budget',
+          title: '省电不是关掉动画',
+          tone: '255, 120, 220',
+          body: [
+            '低端机降级分三档，不是一刀切 <b>animation: none</b>。',
+            '装饰层整层关掉；位移归零但保留透明度；玻璃冻住材质只停流动。',
+            '判据是 <b>4 核以下或内存 4GB 以下</b>，外加用户的 reduced-motion 偏好。',
+          ],
+        },
+      ];
+      const shareOpen = ref(null);
+
+      // 必须走 startShare：DOM 要在回调里换，浏览器才拍得到"旧 -> 新"两个快照。
+      // 直接给 shareOpen 赋值 DOM 先变了，就只剩硬切（看着像"没生效"）。
+      // 回调里还要 await nextTick —— Vue 的更新是异步的，不等它，
+      // 浏览器拍"新快照"时 DOM 还是旧的，两端一模一样，什么都不动。
+      const openShare = (card) => {
+        MK.startShare(async () => {
+          shareOpen.value = card;
+          await Vue.nextTick();
+        });
+      };
+      const closeShare = () => {
+        MK.startShare(async () => {
+          shareOpen.value = null;
+          await Vue.nextTick();
+        });
+      };
+
       /* ---------- 左滑列表 ---------- */
       const items = ref([
         { id: 1, initial: 'A', title: '入场曲线', desc: 'cubic-bezier(0.22, 1, 0.36, 1)' },
@@ -1110,6 +1292,7 @@
         sheetOpen, sheetTitle, sheetOpts, openSheet, closeSheet, afterClose, pick,
         snapOpen, snapLabel, snapMount, places, openSnap, closeSnap,
         ctxFiles, ctxItems, ctxPick, ctxOpen, ctxLast,
+        shareCards, shareOpen, openShare, closeShare,
         items, remove,
         feeds, refresh,
         onHold,

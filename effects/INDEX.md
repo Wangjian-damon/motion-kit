@@ -53,6 +53,11 @@
 | 停靠栏放大 | [`dock`](./dock.md) | 权重 | ✅ |
 | 分段控件 | `seg` | 连续 | — |
 | 乱序解码 | `scramble` | 节奏 | — |
+| **共享元素转场（列表 → 详情）** | [`shared-element`](./shared-element.md) | 连续 | ✅ |
+
+> `shared-element` 是这层里唯一**跨层**的一个：样式在 `motion.css`，名字生成和启动函数在
+> `flip.js`，绑定在 `v-mk-share`。它同时把 §4.3 那条「卡片展开」吃掉了 ——
+> 卡片长大成详情就是同一个 `view-transition-name` 的两种写法，不需要第二份实现。
 
 ### `mobile.css` — 触控表面的尺度分叉与专属原语
 
@@ -135,8 +140,8 @@
 
 一个东西变成另一个东西，中间不能断。用户要能追踪「同一个元素」。
 
-[`bottom-sheet`](./bottom-sheet.md) · [`pop`](./pop.md) · `rail` · `seg` · `scroll-grow` ·
-`progress` · `shimmer` · `parallax`
+[`bottom-sheet`](./bottom-sheet.md) · [`pop`](./pop.md) · [`shared-element`](./shared-element.md) ·
+`rail` · `seg` · `scroll-grow` · `progress` · `shimmer` · `parallax`
 
 ### 方向 — 我从哪儿来、要往哪儿去
 
@@ -171,8 +176,8 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| ✅ 有卡 | 17 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap |
-| ⬜ 待写 | ~24 | 按下面的优先级依次补 |
+| ✅ 有卡 | 18 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element |
+| ⬜ 待写 | ~23 | 按下面的优先级依次补 |
 | 🔲 不值得写 | 26 | 16 个 fun + 10 个 3d 里的多数，理由见各节说明 |
 
 **待写的优先级**（和 sources.md 的缺口队列不同 —— 这里排的是「知识价值」，不是「功能缺口」）：

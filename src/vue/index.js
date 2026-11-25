@@ -33,6 +33,7 @@ import { dock, dockScale } from '../core/dock.js';
 import { segmented, detent, segIndexAt } from '../core/seg.js';
 import { scrambleText, scrambleFrame } from '../core/scramble.js';
 import { glass, glassPoint, lingerRemaining, edgeWeight, refract, lensField } from '../core/glass.js';
+import { startShare, canShare, shareName } from '../core/flip.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -477,6 +478,44 @@ const vMkScramble = {
   },
 };
 
+/* ============================================================
+   以下是「共享元素转场」（styles/motion.css + src/core/flip.js）。
+   这一条最不像"动效指令"：它不产生任何动画，只负责给元素一个名字。
+   真正的插值由浏览器在两个快照之间算 —— 这个库里没有一行 FLIP 测量。
+   ============================================================ */
+
+/**
+ * 给元素挂一个共享元素名字。
+ *
+ *   <article v-mk-share="'shot-' + item.id">…</article>
+ *   <article v-mk-share="{ name: 'shot-' + item.id }">…</article>
+ *
+ * 名字必须唯一 —— 同一时刻只有**一个**元素能持有某个 view-transition-name，
+ * 两个同时挂会被判成 InvalidStateError（WebKit 报得比 Chrome 更早），
+ * 过渡不启动（但 DOM 回调照跑）。列表页和详情页之间做交接时，
+ * 用 v-if 让它们互斥出现即可，指令本身不需要管这件事。
+ *
+ * 传 { auto: false } 可以只要类名不要名字（自己用 CSS 变量控制）。
+ */
+const vMkShare = {
+  mounted(el, binding) {
+    el.classList.add('mk-share');
+    applyShareName(el, binding.value);
+  },
+  updated(el, binding) {
+    applyShareName(el, binding.value);
+  },
+  unmounted(el) {
+    el.style.removeProperty('--mk-share');
+  },
+};
+
+function applyShareName(el, value) {
+  const o = typeof value === 'string' ? { name: value } : value || {};
+  if (o.name != null) el.style.setProperty('--mk-share', shareName(o.name));
+  else el.style.removeProperty('--mk-share');
+}
+
 /** 标签栏弹跳：点一次播一次。给 .mk-tabbtn 用，图标外层是 .mk-tabbtn__icon。 */
 const vMkTabpop = {
   mounted(el) {
@@ -654,6 +693,10 @@ export const MotionKit = {
     // 玻璃层
     app.directive('mk-glass', vMkGlass);
     app.directive('mk-edgeback', vMkEdgeback);
+    // 共享元素转场
+    app.directive('mk-share', vMkShare);
+    // $mkShare：模板里换页时直接 this.$mkShare(() => { ... })
+    app.config.globalProperties.$mkShare = startShare;
   },
 };
 
@@ -665,7 +708,7 @@ export {
   vMkBounce, vMkShake, vMkMgrid, vMkCursor,
   vMk3d, vMkRing, vMkSphere, vMkTunnel, vMkFold,
   vMkDock, vMkSeg, vMkDetent, vMkScramble, vMkTabpop,
-  vMkGlass, vMkEdgeback,
+  vMkGlass, vMkEdgeback, vMkShare,
 };
 export {
   inView, staggerIn, tilt, magnetic, spotlight, ripple, parallax, split,
@@ -677,6 +720,7 @@ export {
   dock, dockScale, segmented, detent, segIndexAt, scrambleText, scrambleFrame,
   glass, glassPoint, lingerRemaining, edgeWeight, refract, lensField, edgeSwipeBack, shouldGoBack,
   snapIndexAt, offsetForSnap, shouldDismiss,
+  startShare, canShare, shareName,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

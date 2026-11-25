@@ -17,6 +17,7 @@
 |---|---|---|
 | 主交互 | 悬停 | 按下 |
 | 独有 | 倾斜、光斑、磁吸、组内变暗、下划线、停靠栏、分段控件、乱序解码 | 深按压、长按、底部弹层拖拽、左滑、下拉刷新、横向吸附、拖动刻度、标签弹跳、边缘返回 |
+| 共用 | 共享元素转场（两端都成立，但触屏上更常用：列表 → 详情） | 同左 |
 | 位移 | 16 / 32px | 12 / 20px |
 | 编排 | 70ms / 项 | 45ms / 项 |
 | 入场时长 | 380 / 560ms | 320 / 420ms |
@@ -48,7 +49,8 @@ src/
     fun.js           撒花 / 抖动 / 逐字弹跳 / 光标 / 磁吸点阵  ← 趣味层
     scene3d.js       指针倾斜 / 环形 / 球面 / 隧道 / 折纸 / 扇形  ← 3D 层
     glass.js         玻璃的高光（桌面悬停跟随 / 触屏点击动画）← 玻璃层
-  vue/index.js       Vue 3 插件：31 个指令
+    flip.js          共享元素转场（只写 view-transition-name，不做测量）
+  vue/index.js       Vue 3 插件：32 个指令
   taro/index.js      Taro 适配：3 个 composable
 styles/
   motion.css         两端共用的词汇（纯 CSS 变量驱动）
@@ -58,7 +60,7 @@ styles/
   glass.css          玻璃层：真材质，降级是"冻住"不是"删掉"
 demo/
   index.html         入口，选 Web / 移动端 / 好玩的 / 3D  web.html           宽幅版式，hover 驱动，10 个区块
-  mobile.html        390px 设备框，13 个区块，触控驱动
+  mobile.html        390px 设备框，14 个区块，触控驱动
   fun.html           16 张可交互卡片 + 慢放 / 暂停 / 单卡重播
   3d.html            10 个三维场景：景深 / 环形 / 隧道 / 球面 / 轨道 / 折纸
   demo.css           两个面共用的皮肤（颜色/按钮/卡片/标签）
@@ -81,6 +83,7 @@ effects/             知识库：一个效果一张卡，写「为什么长这�
   bottom-sheet.md    底部弹层：28% / 0.55px/ms、@starting-style 那一帧
   edge-back.md       边缘返回：20px / 8px / 1/3，桌面鼠标不设防
   refraction.md      边缘折射：哪三行属性少一行就灰图、方向场与上游的分叉
+  shared-element.md  共享元素转场：名字交接（撞名就静默失败）、规则必须预加载
 ```
 
 ## 快速开始
@@ -210,6 +213,7 @@ const delay = useStagger(70);
 | 停靠栏放大 | `v-mk-dock` + `.mk-dock__item` | 指针距离 → 邻近项放大，平方衰减 |
 | 分段控件 | `v-mk-seg` + `.mk-seg__pill` | 胶囊在选项间滑动，`dataset.value` 是唯一真源 |
 | 乱序解码 | `v-mk-scramble` | 左边先定、右边还在抖；每帧只改 textContent |
+| 共享元素转场 | `v-mk-share` + `MK.startShare()` | 浏览器插值尺寸/位置，库里零 FLIP 测量 |
 | **按下即反馈** | `v-mk-tap`（`.deep` 更深） | 绕开 iOS 的 100ms `:active` 延迟 |
 | **长按** | `v-mk-longpress` | 480ms，松手/滑走即取消，带短震动 |
 | **底部弹层** | `v-mk-sheet` + `.mk-sheet` | 抓手跟手拖拽，距离或速度判定收起 |
@@ -579,7 +583,7 @@ iOS Safari 上 `:active` 要等约 100ms 才亮，这段时间就是"按了没�
 
 - `demo/index.html` —— 入口，选 Web / 移动端 / 好玩的 / 3D
 - `demo/web.html` —— 宽幅、hover 驱动、10 个区块（指针词汇全在这里）
-- `demo/mobile.html` —— 390×844 设备框，手机上就是全屏、13 个区块（触控词汇全在这里）
+- `demo/mobile.html` —— 390×844 设备框，手机上就是全屏、14 个区块（触控词汇全在这里）
 - `demo/fun.html` —— 16 张卡片，每张都在动；能把整页慢放到 0.1 倍速、暂停、单卡重播
 - `demo/3d.html` —— 10 个三维场景；触屏上提示改成"把手机左右倾一下"
 
@@ -601,7 +605,7 @@ npx esbuild demo/entry.js --bundle --format=iife \
 ## 自测
 
 ```bash
-node test/run.mjs    # 104 项通过
+node test/run.mjs    # 113 项通过
 ```
 
 覆盖：弹簧起点/收敛/过冲边界/时长区间/采样点数/合法 keyframes 文本/未知预设报错、
@@ -619,13 +623,20 @@ token 递增/上限/stagger 封顶/CSS 变量注入在无 DOM 环境下安全返
 退化尺寸返回 null/位移一律朝内/`R` 存 x、`G` 存 y、`B` 空、`A` 全不透明/
 `scale` 与 `strength` 成正比/降采样后力道仍在 85% 以上/长边压在采样上限内/
 超大圆角被钳制/极扁条也能出图）、
-边缘返回（向左拖永不触发/拖过 1/3 屏宽/只认向右的快甩/零宽度安全）。
+边缘返回（向左拖永不触发/拖过 1/3 屏宽/只认向右的快甩/零宽度安全）、
+共享元素转场（名字永远是合法标识符/同种子同名/不同种子不撞名/数字与同值字符串同名/
+缺种子不抛/无 DOM 时安全返回 false/不支持 VT 时直接跑回调/reduced 时跳过但照跑回调）。
 
 ## 已知边界
 
 - `linear()` 需要 Chrome 113+ / Safari 17.2+；旧 webview 走 snap 降级，手感接近但无过冲。
 - `mk-pop` / `mk-toast` 的入场依赖 `@starting-style` + `transition-behavior: allow-discrete`（Baseline 2024-08）。不支持时降级为直接显隐。
 - `mk-split` 的 `line` 模式只按 `\n` 切，不做测量换行——测量会强制同步布局。
+- `v-mk-share` 依赖 `document.startViewTransition`（Chrome 111+ / Safari 18+）。不支持时
+  直接改 DOM、硬切，**不补降级动画**；`prefers-reduced-motion` 也是同一个分支（API 自己不认）。
+- 同一个 `view-transition-name` **同一时刻只能有一个元素持有**。列表 → 详情这类切换必须
+  在打开时把列表项的名字摘掉（`v-mk-share="open ? null : name"`），两侧同时挂会
+  `InvalidStateError`，过渡不启动但回调整跑 —— 现象是硬切。详见 [`effects/shared-element.md`](./effects/shared-element.md)。
 - 小程序端 tilt/magnetic/spotlight 不提供——触屏上本就不该有。
 - `useEnter()` 在小程序里需要给目标节点显式 `:id`，`Taro.createIntersectionObserver` 靠选择器命中。
 

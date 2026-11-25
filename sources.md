@@ -73,8 +73,8 @@
 |---|---|---|---|---|
 | ~~P0~~ | ~~**长按上下文菜单**~~ **已完成** | `contextMenu()` + `v-mk-ctxmenu`：整页缩 0.96、菜单从指尖撑开、三向翻边；见 [`effects/context-menu.md`](./effects/context-menu.md) | iOS 14+ 原生菜单、Vaul、Radix ContextMenu | `context-menu.js` + `mobile.css` |
 | ~~P0~~ | ~~**多档位底部弹层（snap points）**~~ **已完成** | `sheet({ snapPoints })` 三档 + 速度投影落档；见 [`effects/snap-sheet.md`](./effects/snap-sheet.md) | Vaul 的 snapPoints、Apple Maps 面板 | `gesture.js` |
-| P0 | **共享元素转场（列表 → 详情）** —— 两引擎实测通过（2026-11），见 §4.3 | 完全没有。现在换页只能硬切或整体淡入 | Framer Motion 的 `layoutId`、View Transitions API | 新增 `flip.js`（只写 `view-transition-name`，不做测量 —— 测量交给浏览器） |
-| P1 | **卡片展开（原地放大成详情）** —— **不要单独实现，它是上一行的同一段代码** | 共享元素的一种特例：点卡片，卡片自己长大，不做页面切换 | iOS App Store 卡片 | 复用 `flip.js`；给列表项和详情同时挂同一个 `view-transition-name` 即可，DOM 不用复制两份 |
+| ~~P0~~ | ~~**共享元素转场（列表 → 详情）**~~ **已完成** | `shareName()` + `startShare()` + `v-mk-share`：只写 `view-transition-name`，插值全交给浏览器（库内零测量）；两引擎实测时长/曲线/几何逐帧对齐。见 [`effects/shared-element.md`](./effects/shared-element.md) 与 §4.3 | Framer Motion 的 `layoutId`、View Transitions API | `flip.js` + `motion.css` 原语 24 |
+| ~~P1~~ | ~~**卡片展开（原地放大成详情）**~~ **已一并收掉** | 它就是上一行的同一段代码 —— 点卡片、卡片自己长大成详情层，没有第二份实现；demo 第 14 节演的就是这个 | iOS App Store 卡片 | 复用 `flip.js`；两侧同一个 `view-transition-name`，但**必须错开持有**（见 §4.3 名字交接） |
 | P1 | **锚点浮层（气泡贴住一个元素，滚动跟着走）** | 只有 `openMenu()` 那种"定在指尖某一点、一滚就关"的菜单。缺的是**贴住元素**的浮层：tooltip、说明气泡、点开的迷你面板 | CSS Anchor Positioning（`anchor-name` / `position-anchor` / `position-area` / `position-try-fallbacks`），出处是 Popover API 的定位模型 | `motion.css` + 一小段 `anchor.js`；**不能取代 `openMenu()` 的 `bounds` 夹取**，理由见 §4.3 |
 | P2 | **沿路径运动（不是绕圆，是沿任意曲线）** | 3D 层所有"轨道"都建立在圆上（ring / orbit / tunnel）。缺的是**沿一条手绘曲线走**：小圆点沿曲线滑、卡片弧线入场、进度线上的游标 | CSS Motion Path（`offset-path: path()` / `offset-distance` / `offset-rotate: auto`） | `motion.css`；可完全零 JS（`animation-timeline: view()` 驱动 `offset-distance`） |
 | P1 | **上拉加载 / 无限滚动** | 只有下拉刷新，列表底部的「继续加载」完全没有词汇 | iOS 列表、原生 `IntersectionObserver` 哨兵 | `mobile.css` + `in-view.js` |
@@ -85,8 +85,9 @@
 | P3 | **触觉节奏（haptic pattern）** | `buzz()` 只有单次短震；真实控件的「刻度感」是连续微震 | Core Haptics、Android `VibrationEffect` 波形 | `tap.js`（能力探测后降级为空操作） |
 | P3 | **玻璃控制条的形变（select → pill）** | 玻璃有了，但没有「一个控件从方形吸成胶囊」的 morph | iOS 26 Liquid Glass 控件、Material shape morph | `glass.css` |
 
-> P0 三条都是「移动端最常被感知、我们完全没有」的位置。多档位弹层与长按上下文菜单
-> 已完成（2025-11），只剩共享元素转场。
+> P0 三条都是「移动端最常被感知、我们完全没有」的位置。**三条全部完成**：
+> 多档位弹层与长按上下文菜单（2025-11）、共享元素转场（2026-11，含 P1 的卡片展开）。
+> 下一个月的默认任务从这里往下取 —— 最靠前的是 P1「锚点浮层」和「上拉加载」。
 
 ### 4.1 平台能力债（和上面那张表抢同一个月的名额）
 
@@ -136,9 +137,10 @@ transform: translateY(calc(var(--mk-i, calc(sibling-index() - (sibling-count() +
 
 判据同 §4.1：两个引擎都真的动起来，且**现有的某段代码可以整块删掉**。三条都满足。
 
-**① 共享元素转场（`document.startViewTransition`）** —— 这一条把 `flip.js` 的计划整个改掉了（还没写，正好省下）。
+**① 共享元素转场（`document.startViewTransition`）** —— **已收（2026-11-24）**：`flip.js` 只做能力探测、名字生成、换 DOM 和清理，
+一行测量都没有；demo 第 14 节、知识卡 [`effects/shared-element.md`](./effects/shared-element.md)。
 
-原本计划的是 Framer 那套：量旧位置 → 量化新位置 → 写 transform → 下一帧归零（FLIP）。
+这一条把 `flip.js` 的计划整个改掉了。原本计划的是 Framer 那套：量旧位置 → 量新位置 → 写 transform → 下一帧归零（FLIP）。
 在这两个引擎里完全不需要 —— 浏览器会自己给每个 `view-transition-name` 建一个
 `::view-transition-group(name)` 伪元素，**尺寸和位置都是插值的**，产品代码只写一行变量：
 
@@ -149,6 +151,15 @@ transform: translateY(calc(var(--mk-i, calc(sibling-index() - (sibling-count() +
 切换时两侧同时改 `--mk-share`（旧元素设 `none`，新元素设同一个名字），然后
 `startViewTransition(() => { ...改 DOM... })`。时长和页面淡入淡出由根类上的那几条规则管，
 见下面「降级的正确写法」一段 —— **不要**在元素层写 `::view-transition-old(root)`。
+
+**落地时又踩了两条计划里没写的**（写进卡片 §7 了，这里记一笔就够）：
+
+- 「两侧同时改」在 Vue 里不能写成"两个元素各挂一个同名"。第一版就是这样：列表项和详情层都绑
+  `'card-' + id`，控制台直接 `Unexpected duplicate view-transition-name`，过渡整段不启动、
+  回调整跑 —— 页面看起来就是硬切。可行写法是**手交棒**：详情打开时列表项绑
+  `shareOpen ? null : 'card-' + id`（指令收到 `null` 摘掉变量 → `none`），详情层接住同名。
+- 回调里必须 `await Vue.nextTick()`。少了这行浏览器拍"新快照"的时机在 Vue flush 之前，
+  等于什么都没变；现象是**名字和 CSS 全对但一点动画都没有**，最容易误判成 API 没生效。
 
 实测（Chrome 157 / WebKit 27.2 逐项一致）：`::view-transition-group` 的宽度在过渡中
 `120 → 202 → 311 → 378 → 399px` 连续变化（目标 400px），两个引擎都给出同一条曲线，

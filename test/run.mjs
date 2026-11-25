@@ -14,6 +14,7 @@ import { scrambleFrame } from '../src/core/scramble.js';
 import { glassPoint, edgeWeight, smoothStep, roundedRectSDF, lensField, lingerRemaining } from '../src/core/glass.js';
 import { longPress } from '../src/core/tap.js';
 import { placeMenu } from '../src/core/context-menu.js';
+import { shareName, canShare, startShare } from '../src/core/flip.js';
 
 let pass = 0;
 const t = (name, fn) => {
@@ -792,5 +793,76 @@ t('longPress：到点触发一次', () => assert.ok(lp.firedOnce));
 t('longPress：触发后的 click 被拦（document 捕获 + preventDefault）', () => assert.ok(lp.suppressed));
 t('longPress：短按的 click 畅通', () => assert.ok(lp.shortTapClick));
 t('longPress：拦截窗口过期后 click 畅通', () => assert.ok(lp.windowExpires));
+
+console.log('\n共享元素转场');
+
+// 名字合法与否是"过渡到底跑不跑"的唯一开关，也是唯一会**静默**失败的地方，
+// 所以 shareName 单拎出来钉：合法标识符 + 同种子同名 + 异种子不撞名。
+const NAME_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+t('shareName：输出永远是合法标识符', () => {
+  for (const seed of [0, 7, 12, 'a b', '1hero', 'mk-s0', '*', '', '中文', '拍立得', '🎉', '-x-', '--']) {
+    const n = shareName(seed);
+    assert.match(n, NAME_RE, `种子 ${JSON.stringify(seed)} 生成了非法名字 ${n}`);
+  }
+});
+
+t('shareName：同种子同名字（可重复渲染）', () => {
+  for (const seed of [0, 'shot-3', '中文', '']) {
+    assert.equal(shareName(seed), shareName(seed), `种子 ${JSON.stringify(seed)} 不稳定`);
+  }
+});
+
+t('shareName：不同种子不撞名（撞名 = InvalidStateError）', () => {
+  // 这些都是实测会被判成 none 的种子 —— 最容易被"统统退回同一个占位符"害到
+  const seeds = ['*', '', '中文', '拍立得', '🎉', '-x-', '--', '!!!', '@@@', '/'];
+  const names = new Map();
+  for (const seed of seeds) {
+    const n = shareName(seed);
+    assert.ok(
+      !names.has(n),
+      `${JSON.stringify(seed)} 与 ${JSON.stringify(names.get(n))} 撞成 ${n}`,
+    );
+    names.set(n, seed);
+  }
+});
+
+t('shareName：数字种子与同值字符串同名字', () => {
+  assert.equal(shareName(3), shareName('3'));
+});
+
+t('shareName：自定义前缀生效', () => {
+  assert.equal(shareName('a', 'hero'), 'hero-a');
+});
+
+t('shareName：缺种子时不抛、不产生非法字符', () => {
+  // 指令层已经拦了 name == null；这里只保证兜底路径安全
+  for (const v of [null, undefined, '']) assert.match(shareName(v), NAME_RE);
+});
+
+t('canShare：Node 里安全返回 false', () => {
+  assert.equal(canShare(), false);
+});
+
+t('startShare：不支持 VT 时直接跑回调并 resolve', async () => {
+  globalThis.document = new EventTarget();
+  let ran = 0;
+  const r = await startShare(() => { ran++; });
+  delete globalThis.document;
+  assert.equal(ran, 1, '降级是"没有过渡"，不是"没有更新"');
+  assert.equal(r, null);
+});
+
+t('startShare：reduced=true 跳过过渡但仍跑回调', async () => {
+  globalThis.document = new EventTarget();
+  globalThis.document.documentElement = {
+    classList: { add() {}, remove() {} },
+    style: { setProperty() {}, removeProperty() {} },
+  };
+  let ran = 0;
+  await startShare(() => { ran++; }, { reduced: true });
+  delete globalThis.document;
+  assert.equal(ran, 1);
+});
 
 console.log(`\n${pass} 项通过${process.exitCode ? '，有失败' : ''}\n`);
