@@ -15,6 +15,7 @@ import { glassPoint, edgeWeight, smoothStep, roundedRectSDF, lensField, lingerRe
 import { longPress } from '../src/core/tap.js';
 import { placeMenu } from '../src/core/context-menu.js';
 import { shareName, canShare, startShare } from '../src/core/flip.js';
+import { parseCard, validateCard, buildRegistry } from '../scripts/build-registry.mjs';
 
 let pass = 0;
 const t = (name, fn) => {
@@ -863,6 +864,51 @@ t('startShare：reduced=true 跳过过渡但仍跑回调', async () => {
   await startShare(() => { ran++; }, { reduced: true });
   delete globalThis.document;
   assert.equal(ran, 1);
+});
+
+console.log('\n资产注册表与知识卡校验');
+
+t('buildRegistry：全部效果卡通过八栏与无私有类名校验', () => {
+  const { registry, errors } = buildRegistry();
+  assert.equal(errors.length, 0, JSON.stringify(errors));
+  assert.ok(registry.count >= 18, `应至少包含 18 张卡，实际 ${registry.count}`);
+  for (const card of registry.effects) {
+    assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
+    assert.ok(card.ai_assets.skill_rule.length > 40, `${card.id} skill_rule 过短`);
+  }
+});
+
+t('validateCard：第 8 栏泄露本库私有类名会被拦截', () => {
+  const md = [
+    '---',
+    'id: demo-bad',
+    'name: 测试',
+    'layer: motion',
+    'nature: 反馈',
+    'platform: both',
+    'status: shipped',
+    'entry: .demo',
+    'source: test',
+    '---',
+    '## 1 一句话\na',
+    '## 2 交互问题\nb',
+    '## 3 手感来源\nc',
+    '## 4 参数与为什么\nd',
+    '## 5 实现落点\ne',
+    '## 6 降级契约\nf',
+    '## 7 容易做错的地方\ng',
+    '## 8 AI 提示词\n```text\n请给元素加 .mk-tap 类\n```',
+  ].join('\n');
+  const card = parseCard(md, 'effects/demo-bad.md');
+  const errs = validateCard(card, 'demo-bad.md');
+  assert.ok(errs.some((e) => e.includes('私有标识符')), `应拦住 .mk-tap，实际: ${errs}`);
+});
+
+t('validateCard：非法性质或空栏位会被拦截', () => {
+  const card = parseCard('---\nid: x\nname: x\nlayer: motion\nnature: 反馈+权重\nplatform: web\nstatus: shipped\nentry: x\nsource: x\n---\n## 1 一句话\na', 'effects/x.md');
+  const errs = validateCard(card, 'x.md');
+  assert.ok(errs.some((e) => e.includes('非法 nature')));
+  assert.ok(errs.some((e) => e.includes('第 7 栏为空')));
 });
 
 console.log(`\n${pass} 项通过${process.exitCode ? '，有失败' : ''}\n`);
