@@ -34,7 +34,7 @@
 | 指针光斑 / 描边聚光 | `spotlight` | 材质 | — |
 | 点击涟漪 | [`ripple`](./ripple.md) | 反馈 | ✅ |
 | 视差 | `parallax` | 连续 | — |
-| 逐词 / 逐字入场 | `split` | 节奏 | — |
+| 逐词 / 逐字入场 | [`split`](./split.md) | 节奏 | ✅ |
 | SVG 线条描绘 | `draw` | 节奏 | — |
 | 数字滚动 | [`count-up`](./count-up.md) | 节奏 | ✅ |
 | 里程表翻数 | [`count-up`](./count-up.md)（odometer 段） | 节奏 | ✅ |
@@ -51,7 +51,7 @@
 | 下划线生长 | `underline` | 反馈 | — |
 | 弹层 / 轻提示 | [`pop`](./pop.md) | 连续 | ✅ |
 | 停靠栏放大 | [`dock`](./dock.md) | 权重 | ✅ |
-| 分段控件 | `seg` | 连续 | — |
+| 分段控件 | [`seg`](./seg.md) | 连续 | ✅ |
 | 乱序解码 | `scramble` | 节奏 | — |
 | **共享元素转场（列表 → 详情）** | [`shared-element`](./shared-element.md) | 连续 | ✅ |
 
@@ -102,7 +102,7 @@
 
 | 效果 | id | 性质 | 卡 |
 |---|---|---|---|
-| 基底材质 | `glass-base` | 材质 | — |
+| 基底材质 | [`glass-base`](./glass-base.md) | 材质 | ✅ |
 | 边缘折射 | [`refraction`](./refraction.md) | 材质 | ✅ |
 | 液态按压 | `glass-press` | 反馈 | — |
 | 点击高光 | [`glass-tap`](./glass-tap.md) | 反馈 | ✅ |
@@ -176,15 +176,15 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| ✅ 有卡 | 18 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element |
-| ⬜ 待写 | ~23 | 按下面的优先级依次补 |
+| ✅ 有卡 | 21 | 手势八件套（tap / long-press / bottom-sheet / snap-sheet / pull-refresh / swipe / edge-back / detent）+ context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split |
+| ⬜ 待写 | ~20 | 按下面的优先级依次补 |
 | 🔲 不值得写 | 26 | 16 个 fun + 10 个 3d 里的多数，理由见各节说明 |
 
 **待写的优先级**（和 sources.md 的缺口队列不同 —— 这里排的是「知识价值」，不是「功能缺口」）：
 
-1. **`glass-base` 补充** — 玻璃层剩下的知识还在 README 第 18–22 条里，`refraction` 已有卡，基底材质还没有
-2. **`seg`** — 和 `detent` 同源（位置离散、移动连续），写清"为什么值只有一个真源"
-3. **`split`** — 中英文分词规则（CJK 按字、拉丁按词、全角标点并入前段）值得单独记
+1. ~~**`glass-base` 补充**~~ **已完成** — [`glass-base.md`](./glass-base.md)
+2. ~~**`seg`**~~ **已完成** — [`seg.md`](./seg.md)
+3. ~~**`split`**~~ **已完成** — [`split.md`](./split.md)
 4. **`magnetic` / `tilt`** — rAF lerp 的"到位即停"和 dock 的"平方衰减"是同一族数学
 
 ---

@@ -15,7 +15,7 @@ import { glassPoint, edgeWeight, smoothStep, roundedRectSDF, lensField, lingerRe
 import { longPress } from '../src/core/tap.js';
 import { placeMenu } from '../src/core/context-menu.js';
 import { shareName, canShare, startShare } from '../src/core/flip.js';
-import { parseCard, validateCard, buildRegistry } from '../scripts/build-registry.mjs';
+import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
 const t = (name, fn) => {
@@ -868,13 +868,17 @@ t('startShare：reduced=true 跳过过渡但仍跑回调', async () => {
 
 console.log('\n资产注册表与知识卡校验');
 
-t('buildRegistry：全部效果卡通过八栏与无私有类名校验', () => {
+t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 18, `应至少包含 18 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 21, `应至少包含 21 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
+    assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);
     assert.ok(card.ai_assets.skill_rule.length > 40, `${card.id} skill_rule 过短`);
+    assert.equal(PRIVATE_ID_RE.test(card.ai_assets.skill_rule), false, `${card.id} skill_rule 泄露私有标识`);
+    const consumer = renderConsumerCardMarkdown(card);
+    assert.equal(PRIVATE_ID_RE.test(consumer), false, `${card.id} 消费卡泄露私有标识`);
   }
 });
 

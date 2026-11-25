@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Motion Kit · AI 动效资产库</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23b8ff3d'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../styles/motion.css" />
+<link rel="stylesheet" href="./demo.css" />
+<style>
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 460px at 82% -10%, rgba(184, 255, 61, 0.09), transparent 60%),
+      radial-gradient(640px 400px at 6% 8%, rgba(80, 140, 255, 0.08), transparent 62%),
+      var(--bg);
+  }
+
+  .top {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    background: rgba(7, 9, 13, 0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-in {
+    width: min(1140px, calc(100% - 40px));
+    margin: 0 auto;
+    height: 58px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    color: var(--fg); text-decoration: none; font-weight: 620; font-size: 14.5px;
+    letter-spacing: -0.01em;
+  }
+  .brand-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 12px rgba(184, 255, 61, 0.65);
+  }
+  .nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 6px 11px; border-radius: 999px;
+    transition: color var(--mk-dur-1) var(--mk-ease-out), background var(--mk-dur-1) var(--mk-ease-out);
+  }
+  .nav a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .nav a.is-cur { color: #07090d; background: var(--accent); font-weight: 560; }
+
+  .wrap { width: min(1140px, calc(100% - 40px)); margin: 0 auto; padding: 48px 0 96px; }
+
+  .hero h1 {
+    font-size: clamp(28px, 4.4vw, 44px);
+    line-height: 1.08; letter-spacing: -0.035em; font-weight: 660;
+    margin: 0 0 12px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p { color: var(--muted); max-width: 62ch; margin: 0 0 28px; font-size: 15px; }
+
+  .controls {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 18px; border-radius: 18px;
+    border: 1px solid var(--line); background: var(--card);
+    margin-bottom: 24px;
+  }
+  .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .search {
+    flex: 1 1 240px; min-width: 200px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line); border-radius: 12px;
+    color: var(--fg); font: inherit; font-size: 14px;
+    padding: 10px 14px; outline: none;
+    transition: border-color var(--mk-dur-1) var(--mk-ease-out);
+  }
+  .search:focus { border-color: rgba(184, 255, 61, 0.5); }
+  .search::placeholder { color: var(--muted); }
+
+  .chip {
+    appearance: none; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); font: inherit; font-size: 12.5px;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    transition: all var(--mk-dur-1) var(--mk-ease-out);
+  }
+  .chip:hover { color: var(--fg); border-color: rgba(255,255,255,0.2); }
+  .chip.is-on {
+    color: #07090d; background: var(--accent); border-color: var(--accent);
+    font-weight: 560;
+  }
+  .chip--sub.is-on {
+    color: var(--fg); background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28);
+  }
+  .count-meta { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 16px;
+  }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+  .asset-card {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--line); border-radius: 18px;
+    background: var(--card); padding: 20px;
+    transition: border-color var(--mk-dur-2) var(--mk-ease-out),
+                transform var(--mk-dur-2) var(--mk-ease-out);
+  }
+  @media (hover: hover) {
+    .asset-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  }
+  .asset-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .asset-title { margin: 0; font-size: 17px; font-weight: 620; letter-spacing: -0.015em; }
+  .asset-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--muted); }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted);
+  }
+  .badge--nature { color: var(--accent); border-color: rgba(184, 255, 61, 0.28); background: rgba(184, 255, 61, 0.08); }
+  .asset-summary {
+    margin: 0 0 14px; color: #cfd6e2; font-size: 13.5px; line-height: 1.58;
+    flex: 1;
+  }
+  .asset-source {
+    font-size: 12px; color: var(--muted); margin: 0 0 16px;
+    padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .act {
+    appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+    color: var(--fg); font: inherit; font-size: 12.5px; font-weight: 520;
+    padding: 7px 12px; border-radius: 10px; cursor: pointer;
+    transition: all var(--mk-dur-1) var(--mk-ease-out);
+  }
+  .act:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.07); }
+  .act--primary {
+    background: var(--accent); color: #07090d; border-color: var(--accent);
+  }
+  .act--primary:hover { filter: brightness(0.95); background: var(--accent); border-color: var(--accent); }
+  .act.is-copied { background: #22c55e; color: #041309; border-color: #22c55e; }
+
+  /* 详情抽屉 */
+  .drawer-mask {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(3, 5, 9, 0.72);
+    backdrop-filter: blur(6px);
+    display: none; justify-content: flex-end;
+  }
+  .drawer-mask.is-open { display: flex; }
+  .drawer {
+    width: min(680px, 100%); height: 100%; overflow-y: auto;
+    background: #0b0f16; border-left: 1px solid var(--line);
+    padding: 28px 26px 64px;
+  }
+  .drawer-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 20px;
+  }
+  .drawer-close {
+    appearance: none; border: 1px solid var(--line); background: transparent;
+    color: var(--fg); width: 34px; height: 34px; border-radius: 10px;
+    cursor: pointer; font-size: 18px; line-height: 1; flex: none;
+  }
+  .drawer-sec { margin-bottom: 22px; }
+  .drawer-sec h3 {
+    margin: 0 0 8px; font-size: 12px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .drawer-pre {
+    margin: 0 0 10px; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; line-height: 1.62; color: #dbe2ee;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 16px;
+  }
+  .drawer-p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.68; color: #cfd6e2; }
+  .drawer-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px; background: rgba(255,255,255,0.08); color: #e2f5b5;
+    padding: 1px 5px; border-radius: 5px;
+  }
+  .drawer-list { margin: 0 0 10px; padding-left: 18px; color: #cfd6e2; font-size: 13.5px; }
+  .drawer-list li { margin-bottom: 5px; }
+  .drawer-table-wrap { overflow-x: auto; margin-bottom: 10px; }
+  .drawer-table {
+    width: 100%; border-collapse: collapse; font-size: 12.5px; color: #cfd6e2;
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  }
+  .drawer-table th, .drawer-table td {
+    text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    vertical-align: top;
+  }
+  .drawer-table th { background: rgba(255,255,255,0.04); color: var(--fg); font-weight: 600; }
+
+  .empty {
+    grid-column: 1 / -1; text-align: center; padding: 64px 20px;
+    color: var(--muted); border: 1px dashed var(--line); border-radius: 18px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="./index.html"><span class="brand-dot"></span>Motion Kit · AI 资产库</a>
+    <nav class="nav">
+      <a href="./library.html" class="is-cur">资产库</a>
+      <a href="./web.html">Web 端</a>
+      <a href="./mobile.html">移动端</a>
+      <a href="./fun.html">好玩的</a>
+      <a href="./3d.html">3D</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">AI-Readable Motion Registry</span>
+    <h1>把动效抽成 <em>Prompt 与 Skill</em>，<br />在任意技术栈零幻觉复现。</h1>
+    <p>
+      所有资产均编译自仓库 <code>effects/*.md</code> 唯一真源。在 Web / 移动端真实演示页也可直接点选任意效果原地取用；
+      或者执行一次全局安装，让你的 AI Agent 在所有项目里自动识别、自动取用。
+    </p>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;border:1px solid rgba(184,255,61,0.28);background:rgba(184,255,61,0.06);margin-bottom:24px;">
+      <span style="font-size:12.5px;color:#d9ff8f;font-weight:560;">✦ 开源一行安装（无需克隆，全机 Agent 自动取用）：</span>
+      <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#eef2f7;background:rgba(0,0,0,0.35);padding:5px 10px;border-radius:8px;">npx github:wangjian-damon/motion-kit install</code>
+      <button id="copyInstallCmd" class="act act--primary" style="margin-left:auto;">复制安装命令</button>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="筛选与检索">
+    <div class="controls-row">
+      <input id="q" class="search" type="search" placeholder="搜索效果名、id、来源、物理参数或踩坑关键词..." />
+      <span id="countMeta" class="count-meta"></span>
+    </div>
+    <div class="controls-row" id="natureFilters"></div>
+    <div class="controls-row" id="layerFilters"></div>
+  </section>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
+
+<div class="drawer-mask" id="drawerMask" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+  <div class="drawer">
+    <div class="drawer-top">
+      <div>
+        <h2 id="drawerTitle" style="margin:0 0 6px;font-size:22px;"></h2>
+        <div id="drawerMeta" class="badges" style="margin:0;"></div>
+      </div>
+      <button class="drawer-close" id="drawerClose" aria-label="关闭">×</button>
+    </div>
+    <div class="actions" style="margin-bottom:22px;">
+      <button class="act act--primary" id="drawerCopyPrompt">复制 AI 提示词（第 8 栏）</button>
+      <button class="act" id="drawerCopyRule">复制 Skill 约束规则</button>
+    </div>
+    <div id="drawerBody"></div>
+  </div>
+</div>
+
+<script src="./registry.data.js"></script>
+<script>
+(() => {
+  const reg = window.__MK_REGISTRY__;
+  const grid = document.getElementById('grid');
+  const qInput = document.getElementById('q');
+  const countMeta = document.getElementById('countMeta');
+  const natureBox = document.getElementById('natureFilters');
+  const layerBox = document.getElementById('layerFilters');
+  const mask = document.getElementById('drawerMask');
+  const drawerTitle = document.getElementById('drawerTitle');
+  const drawerMeta = document.getElementById('drawerMeta');
+  const drawerBody = document.getElementById('drawerBody');
+  const drawerClose = document.getElementById('drawerClose');
+  const drawerCopyPrompt = document.getElementById('drawerCopyPrompt');
+  const drawerCopyRule = document.getElementById('drawerCopyRule');
+
+  if (!reg || !Array.isArray(reg.effects)) {
+    grid.innerHTML = '<div class="empty">未加载到 registry.data.js，请先运行 <code>node scripts/build-registry.mjs</code>。</div>';
+    return;
+  }
+
+  const NATURES = ['全部', '反馈', '连续', '方向', '权重', '材质', '节奏'];
+  const LAYERS = ['全部', 'motion', 'mobile', 'glass', '3d'];
+  const DEMO_LINKS = {
+    'tap': './mobile.html#sec-tap',
+    'long-press': './mobile.html#sec-tap',
+    'bottom-sheet': './mobile.html#sec-bottom-sheet',
+    'swipe': './mobile.html#sec-swipe',
+    'pull-refresh': './mobile.html#sec-pull-refresh',
+    'sticky-title': './mobile.html#sec-sticky-title',
+    'detent': './mobile.html#sec-detent',
+    'glass-base': './mobile.html#sec-glass',
+    'refraction': './mobile.html#sec-glass',
+    'glass-tap': './mobile.html#sec-glass',
+    'edge-back': './mobile.html#sec-edge-back',
+    'snap-sheet': './mobile.html#sec-snap-sheet',
+    'context-menu': './mobile.html#sec-context-menu',
+    'shared-element': './mobile.html#sec-shared-element',
+    'enter': './web.html#capability',
+    'count-up': './web.html#number',
+    'ripple': './web.html#form',
+    'pop': './web.html#pop',
+    'split': './web.html#reveal',
+    'dock': './web.html#planar',
+    'seg': './web.html#planar',
+  };
+  let activeNature = '全部';
+  let activeLayer = '全部';
+  let activeCard = null;
+
+  const copyInstallBtn = document.getElementById('copyInstallCmd');
+  if (copyInstallBtn) {
+    copyInstallBtn.onclick = () => copyText('npx github:wangjian-damon/motion-kit install', copyInstallBtn, '已复制命令');
+  }
+
+  function inlineMd(s) {
+    return esc(s)
+      .replace(/`([^`]+)`/g, '<code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:rgba(255,255,255,0.08);color:#e2f5b5;padding:1px 5px;border-radius:5px;">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#eef2f7;">$1</strong>');
+  }
+
+  async function copyText(text, btn, doneLabel = '已复制') {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const orig = btn.textContent;
+    btn.textContent = doneLabel;
+    btn.classList.add('is-copied');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('is-copied');
+    }, 1400);
+  }
+
+  function fullPrompt(card) {
+    const p = card.ai_assets.prompt || '';
+    const d = card.ai_assets.dont_do ? `\n\n别让它做的：\n${card.ai_assets.dont_do}` : '';
+    return p + d;
+  }
+
+  function renderChips() {
+    natureBox.innerHTML = '';
+    for (const n of NATURES) {
+      const b = document.createElement('button');
+      b.className = 'chip' + (activeNature === n ? ' is-on' : '');
+      const cnt = n === '全部' ? reg.count : (reg.byNature[n] || 0);
+      b.textContent = `${n} (${cnt})`;
+      b.onclick = () => { activeNature = n; renderChips(); renderGrid(); };
+      natureBox.appendChild(b);
+    }
+
+    layerBox.innerHTML = '';
+    for (const l of LAYERS) {
+      const b = document.createElement('button');
+      b.className = 'chip chip--sub' + (activeLayer === l ? ' is-on' : '');
+      const cnt = l === '全部' ? reg.count : (reg.byLayer[l] || 0);
+      b.textContent = l === '全部' ? `全部层 (${cnt})` : `${l} (${cnt})`;
+      b.onclick = () => { activeLayer = l; renderChips(); renderGrid(); };
+      layerBox.appendChild(b);
+    }
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderMd(md = '') {
+    const lines = String(md).replace(/\r\n/g, '\n').split('\n');
+    const out = [];
+    let i = 0;
+    const fmt = (txt) =>
+      esc(txt)
+        .replace(/`([^`]+)`/g, '<code class="drawer-code">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#eef2f7;">$1</strong>');
+
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (!line) { i++; continue; }
+      if (line.startsWith('```')) {
+        i++;
+        const buf = [];
+        while (i < lines.length && !lines[i].trim().startsWith('```')) { buf.push(lines[i]); i++; }
+        i++;
+        out.push(`<pre class="drawer-pre">${esc(buf.join('\n'))}</pre>`);
+        continue;
+      }
+      if (line.startsWith('|') && i + 1 < lines.length && /^\|[\s:-]+\|/.test(lines[i + 1].trim())) {
+        const parseRow = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+        const head = parseRow(lines[i]);
+        i += 2;
+        const rows = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) { rows.push(parseRow(lines[i])); i++; }
+        out.push(`<div class="drawer-table-wrap"><table class="drawer-table"><thead><tr>${head.map((h) => `<th>${fmt(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${fmt(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+        continue;
+      }
+      if (/^[-*]\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) { items.push(lines[i].trim().replace(/^[-*]\s+/, '')); i++; }
+        out.push(`<ul class="drawer-list">${items.map((it) => `<li>${fmt(it)}</li>`).join('')}</ul>`);
+        continue;
+      }
+      const p = [];
+      while (i < lines.length && lines[i].trim() && !lines[i].trim().startsWith('```') && !lines[i].trim().startsWith('|') && !/^[-*]\s+/.test(lines[i].trim())) {
+        p.push(lines[i].trim()); i++;
+      }
+      out.push(`<p class="drawer-p">${fmt(p.join(' '))}</p>`);
+    }
+    return out.join('');
+  }
+
+  function openDrawer(card) {
+    activeCard = card;
+    drawerTitle.textContent = `${card.name} · ${card.id}`;
+    drawerMeta.innerHTML = `
+      <span class="badge badge--nature">${esc(card.nature)}</span>
+      <span class="badge">${esc(card.layer)}</span>
+      <span class="badge">${esc(card.platform)}</span>
+      <span class="badge">${esc(card.file)}</span>
+    `;
+    drawerBody.innerHTML = `
+      <div class="drawer-sec">
+        <h3>8 · AI 复现提示词（去库化，可直接粘给 Cursor / Antigravity）</h3>
+        <pre class="drawer-pre">${esc(fullPrompt(card))}</pre>
+      </div>
+      <div class="drawer-sec">
+        <h3>Skill Rule（去库化，可写入 .cursorrules / AGENTS.md）</h3>
+        <pre class="drawer-pre">${esc(card.ai_assets.skill_rule)}</pre>
+      </div>
+      <div class="drawer-sec">
+        <h3>2 · 交互问题</h3>
+        ${renderMd(card.problem)}
+      </div>
+      <div class="drawer-sec">
+        <h3>4 · 参数与为什么</h3>
+        ${renderMd(card.params)}
+      </div>
+      <div class="drawer-sec">
+        <h3>6 · 降级契约</h3>
+        ${renderMd(card.degradation)}
+      </div>
+      <div class="drawer-sec">
+        <h3>7 · 容易做错的地方</h3>
+        ${renderMd(card.pitfalls)}
+      </div>
+    `;
+    mask.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    mask.classList.remove('is-open');
+    document.body.style.overflow = '';
+    activeCard = null;
+  }
+
+  drawerClose.onclick = closeDrawer;
+  mask.onclick = (e) => { if (e.target === mask) closeDrawer(); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && activeCard) closeDrawer(); });
+
+  drawerCopyPrompt.onclick = () => activeCard && copyText(fullPrompt(activeCard), drawerCopyPrompt, '已复制 Prompt');
+  drawerCopyRule.onclick = () => activeCard && copyText(activeCard.ai_assets.skill_rule, drawerCopyRule, '已复制 Skill Rule');
+
+  function renderGrid() {
+    const q = qInput.value.trim().toLowerCase();
+    const list = reg.effects.filter((e) => {
+      if (activeNature !== '全部' && e.nature !== activeNature) return false;
+      if (activeLayer !== '全部' && e.layer !== activeLayer) return false;
+      if (!q) return true;
+      const hay = [e.id, e.name, e.nature, e.layer, e.platform, e.summary, e.source, e.ai_assets.prompt, e.pitfalls].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+
+    countMeta.textContent = `显示 ${list.length} / ${reg.count} 张跨平台资产卡`;
+    grid.innerHTML = '';
+
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="empty">没有匹配的动效资产卡，换个关键词或筛选条件试试。</div>';
+      return;
+    }
+
+    for (const card of list) {
+      const el = document.createElement('article');
+      el.className = 'asset-card';
+      const demoHref = DEMO_LINKS[card.id];
+      el.innerHTML = `
+        <div class="asset-head">
+          <h2 class="asset-title">${esc(card.name)}</h2>
+          <span class="asset-id">${esc(card.id)}</span>
+        </div>
+        <div class="badges">
+          <span class="badge badge--nature">${esc(card.nature)}</span>
+          <span class="badge">${esc(card.layer)}</span>
+          <span class="badge">${esc(card.platform)}</span>
+        </div>
+        <p class="asset-summary">${inlineMd(card.summary)}</p>
+        <p class="asset-source">来源：${inlineMd(card.source)}</p>
+        <div class="actions">
+          <button class="act act--primary" data-act="prompt">Copy Prompt</button>
+          <button class="act" data-act="rule">Copy Skill</button>
+          <button class="act" data-act="detail">查看详情</button>
+          ${demoHref ? `<a class="act" href="${demoHref}" style="text-decoration:none;">体验效果 →</a>` : ''}
+        </div>
+      `;
+      el.querySelector('[data-act="prompt"]').onclick = (ev) => copyText(fullPrompt(card), ev.currentTarget, '已复制 Prompt');
+      el.querySelector('[data-act="rule"]').onclick = (ev) => copyText(card.ai_assets.skill_rule, ev.currentTarget, '已复制 Skill');
+      el.querySelector('[data-act="detail"]').onclick = () => openDrawer(card);
+      grid.appendChild(el);
+    }
+  }
+
+  qInput.addEventListener('input', renderGrid);
+  renderChips();
+  renderGrid();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "name": "motion-kit",
+  "version": "1.0.0",
+  "description": "Cross-platform AI motion & interaction asset library (framework-agnostic prompts, physics specs, and zero-dependency web/mobile reference primitives).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wangjian-damon/motion-kit.git"
+  },
+  "homepage": "https://wangjian-damon.github.io/motion-kit/demo/",
+  "bin": {
+    "motion-kit": "./bin/cli.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build-registry.mjs",
+    "test": "node test/run.mjs",
+    "check": "node scripts/build-registry.mjs && node test/run.mjs"
+  },
+  "files": [
+    "bin/",
+    "dist/registry.json",
+    "effects/",
+    ".agents/skills/motion-kit-apply/",
+    "src/",
+    "styles/",
+    "README.md"
+  ],
+  "keywords": [
+    "motion",
+    "animation",
+    "ui",
+    "ux",
+    "ai-skills",
+    "agent-skills",
+    "micro-interactions",
+    "gestures",
+    "liquid-glass"
+  ]
+}

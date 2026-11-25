@@ -488,7 +488,7 @@
     </div>
 
     <!-- ============ 01 触控反馈 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-tap" data-mk-assets="tap,long-press">
       <div class="sec-head" v-mk-enter>
         <h2>01 / 按下即响应</h2>
         <p>
@@ -519,7 +519,7 @@
     </section>
 
     <!-- ============ 02 底部弹层 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-bottom-sheet" data-mk-assets="bottom-sheet">
       <div class="sec-head" v-mk-enter>
         <h2>02 / 底部弹层</h2>
         <p>
@@ -535,7 +535,7 @@
     </section>
 
     <!-- ============ 03 左滑操作 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-swipe" data-mk-assets="swipe">
       <div class="sec-head" v-mk-enter>
         <h2>03 / 左滑操作</h2>
         <p>
@@ -562,7 +562,7 @@
     </section>
 
     <!-- ============ 04 下拉刷新 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-pull-refresh" data-mk-assets="pull-refresh">
       <div class="sec-head" v-mk-enter>
         <h2>04 / 下拉刷新</h2>
         <p>
@@ -587,7 +587,7 @@
     </section>
 
     <!-- ============ 05 吸顶 / 滚动阴影 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-sticky-title" data-mk-assets="sticky-title">
       <div class="sec-head" v-mk-enter>
         <h2>05 / 吸顶与滚动阴影</h2>
         <p>
@@ -643,7 +643,7 @@
     </section>
 
     <!-- ============ 07 拖动刻度 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-detent" data-mk-assets="detent">
       <div class="sec-head" v-mk-enter>
         <h2>07 / 拖动刻度</h2>
         <p>
@@ -732,7 +732,7 @@
     </section>
 
     <!-- ============ 10 玻璃层 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-glass" data-mk-assets="glass-base,refraction,glass-tap">
       <div class="sec-head" v-mk-enter>
         <h2>10 / 玻璃层</h2>
         <p>
@@ -788,7 +788,7 @@
     </section>
 
     <!-- ============ 11 边缘返回 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-edge-back" data-mk-assets="edge-back">
       <div class="sec-head" v-mk-enter>
         <h2>11 / 边缘返回</h2>
         <p>
@@ -820,7 +820,7 @@
 
     <div class="divider"></div>
 
-    <section class="sec">
+    <section class="sec" id="sec-snap-sheet" data-mk-assets="snap-sheet">
       <div class="sec-head" v-mk-enter>
         <h2>12 / 多档位弹层</h2>
         <p>
@@ -842,7 +842,7 @@
 
     <div class="divider"></div>
 
-    <section class="sec">
+    <section class="sec" id="sec-context-menu" data-mk-assets="context-menu">
       <div class="sec-head" v-mk-enter>
         <h2>13 / 长按上下文菜单</h2>
         <p>
@@ -874,7 +874,7 @@
     <div class="divider"></div>
 
     <!-- ============ 14 共享元素转场 ============ -->
-    <section class="sec">
+    <section class="sec" id="sec-shared-element" data-mk-assets="shared-element">
       <div class="sec-head" v-mk-enter>
         <h2>14 / 共享元素转场</h2>
         <p>
@@ -914,6 +914,7 @@
 
     <footer class="demo-foot" style="padding:28px 20px 40px;flex-direction:column;border:0">
       <span>Motion Kit · 移动端展示面</span>
+      <span style="margin-top:6px"><a href="./library.html" style="color:var(--accent)">→ 打开 AI 资产库（复制 Prompt / Skill）</a></span>
       <span style="margin-top:6px"><a href="./web.html">→ 切到 Web 端展示面</a></span>
     </footer>
 
@@ -1307,5 +1308,7 @@
   // 挂到 .device 上：弹层和标签栏都在 #screen 之外，必须在同一个根里才能共享状态
   app.mount('#app');
 </script>
+<script src="./registry.data.js"></script>
+<script src="./asset-inspector.js"></script>
 </body>
 </html>

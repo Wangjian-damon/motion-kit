@@ -6,6 +6,28 @@
 效果对齐当前主流动效库（Framer Motion / GSAP / Aceternity / Magic UI / Vaul / Material ripple）
 里最常用的那批手感，但全部用 CSS 变量 + 少量 rAF 实现，不引运行时。
 
+## 作为 AI 动效资产使用（任意技术栈，一行安装）
+
+**不需要引入本库代码，也不限技术栈（React / Vue / Tailwind / Taro / Flutter / SwiftUI）。**
+执行一次安装，本机所有项目里的 AI Agent（Antigravity / Claude Code / Cursor / Codex）即可在遇到动效、手势或液态玻璃需求时**自动识别并按 MotionKit 物理参数与避坑标准复现**：
+
+```bash
+# 方式 1：直接通过 GitHub 一行安装（无需克隆仓库，自动探测本机 Agent）
+npx github:wangjian-damon/motion-kit install
+
+# 方式 2：按团队项目维度安装（写入当前仓库 .agents/skills/，随 Git 共享）
+npx github:wangjian-damon/motion-kit install --project
+
+# 方式 3：使用开放 Skills 生态安装
+npx skills add wangjian-damon/motion-kit --skill motion-kit-apply
+
+# 终端速查全部资产 / 直接输出某张卡的去库化 Prompt
+npx github:wangjian-damon/motion-kit list
+npx github:wangjian-damon/motion-kit show bottom-sheet
+```
+
+也可以在在线演示页（`demo/mobile.html` / `demo/web.html`）边体验真实手感，边点击每个效果旁的 **`✦ 效果名 | 复制 Prompt`** 原地取用。
+
 ## 两个表面，两套词汇，外加三层可选的
 
 指针和手指不是一回事，所以词汇分两套。**token 是共用的，动作不是。**

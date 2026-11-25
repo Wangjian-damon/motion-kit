@@ -504,6 +504,7 @@
       <a href="./fun.html" class="nav-fun">好玩的</a>
       <a href="./3d.html" class="nav-3d">3D</a>
       <a href="./mobile.html">移动端</a>
+      <a href="./library.html" style="color:var(--accent)">AI 资产库</a>
     </nav>
     <a class="btn btn--ghost mk-press" href="./mobile.html" style="padding:9px 18px;font-size:14px">移动端 →</a>
   </div>
@@ -529,7 +530,7 @@
   </div>
 
   <!-- ============ 能力（stagger） ============ -->
-  <section id="capability">
+  <section id="capability" data-mk-assets="enter">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>01 / 原语</div>
       <h2 v-mk-enter>六种状态，覆盖 90% 的场景</h2>
@@ -600,7 +601,7 @@
   </section>
 
   <!-- ============ 数字 ============ -->
-  <section id="number">
+  <section id="number" data-mk-assets="count-up">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>03 / 数字</div>
       <h2 v-mk-enter>滚动到位才开始计数</h2>
@@ -642,7 +643,7 @@
   </section>
 
   <!-- ============ 表单 ============ -->
-  <section id="form">
+  <section id="form" data-mk-assets="ripple">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>04 / 表单</div>
       <h2 v-mk-enter>表单的手感，全在这些 200ms 里</h2>
@@ -689,7 +690,7 @@
   </section>
 
   <!-- ============ 弹层 ============ -->
-  <section>
+  <section id="pop" data-mk-assets="pop">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>05 / 进出场</div>
       <h2 v-mk-enter>纯 CSS 的弹层，不需要动画库</h2>
@@ -848,7 +849,7 @@
   </section>
 
   <!-- ============ 揭示 ============ -->
-  <section id="reveal">
+  <section id="reveal" data-mk-assets="split">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>08 / 揭示</div>
       <h2 v-mk-enter>入场不止是「往上滑 16px」</h2>
@@ -923,7 +924,7 @@
   </section>
 
   <!-- ============ 平面补遗 ============ -->
-  <section id="planar">
+  <section id="planar" data-mk-assets="dock,seg">
     <div class="wrap">
       <div class="eyebrow" v-mk-enter>10 / 平面补遗</div>
       <h2 v-mk-enter>四个仍然只在 2D 里的老招式</h2>
@@ -1153,5 +1154,7 @@
   app.use(MotionKit);
   app.mount('#app');
 </script>
+<script src="./registry.data.js"></script>
+<script src="./asset-inspector.js"></script>
 </body>
 </html>
