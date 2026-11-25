@@ -21,7 +21,7 @@
   const PREVIEWS = {
     /* ==================== 数据展示三件套 ==================== */
     'bar-grow'(stage) {
-      stage.innerHTML = `<div class="pv-col" style="width:100%;gap:8px">
+      stage.innerHTML = `<div class="pv-col" style="width:100%;gap:7px;padding-top:26px">
         <div class="pv-bar-row"><span>API</span><div class="mk-bar" style="flex:1;color:#b8ff3d"><span class="mk-bar__fill"></span></div><em class="mk-cell">78%</em></div>
         <div class="pv-bar-row"><span>CDN</span><div class="mk-bar" style="flex:1;color:#60a5fa"><span class="mk-bar__fill"></span></div><em class="mk-cell">52%</em></div>
         <div class="pv-bar-row"><span>DB</span><div class="mk-bar" style="flex:1;color:#c084fc"><span class="mk-bar__fill"></span></div><em class="mk-cell">34%</em></div>
