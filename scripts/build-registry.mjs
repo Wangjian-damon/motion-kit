@@ -359,6 +359,44 @@ export function renderSkillIndexMarkdown(registry) {
   return lines.join('\n');
 }
 
+/**
+ * 生成根目录 llms.txt（标准 AI 站点索引，供 Cursor @Docs / Claude / Windsurf 直接抓全库纯净规范）
+ */
+export function renderLlmsTxt(registry) {
+  const base = 'https://wangjian-damon.github.io/motion-kit';
+  const lines = [
+    '# MotionKit',
+    '',
+    '> Cross-platform AI motion & interaction asset library. Framework-agnostic physics constants, state machines, degradation contracts, and zero-hallucination prompts (React, Vue, Tailwind, Taro, Flutter, SwiftUI, or vanilla web).',
+    '',
+    '## Quick Install for AI Agents',
+    '',
+    '- CLI (no clone required): `npx github:wangjian-damon/motion-kit install`',
+    '- Project-level team install: `npx github:wangjian-damon/motion-kit install --project`',
+    '- Skills ecosystem: `npx skills add wangjian-damon/motion-kit --skill motion-kit-apply`',
+    `- Live Interactive AI Asset Library: ${base}/demo/library.html`,
+    `- Machine-Readable Registry JSON: ${base}/dist/registry.json`,
+    `- Skill Entry (SKILL.md): ${base}/.agents/skills/motion-kit-apply/SKILL.md`,
+    '',
+    `## Framework-Agnostic Effect Specs (${registry.count})`,
+    '',
+  ];
+
+  const order = ['反馈', '连续', '方向', '权重', '材质', '节奏'];
+  for (const nature of order) {
+    const items = registry.effects.filter((e) => e.nature === nature);
+    if (!items.length) continue;
+    lines.push(`### ${nature} (${items.length})`);
+    for (const e of items) {
+      const oneLine = e.summary.replace(/\r?\n+/g, ' ');
+      lines.push(`- [${e.name} (${e.id})](${base}/.agents/skills/motion-kit-apply/references/effects/${e.id}.md): ${oneLine}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 function main() {
   const { registry, errors } = buildRegistry(ROOT);
   if (errors.length > 0) {
@@ -407,7 +445,10 @@ function main() {
     );
   }
 
-  console.log(`✓ 已编译 ${registry.count} 张动效资产卡 → dist/registry.json & demo/registry.data.js & 纯净去库化 Skill 包`);
+  // 4. 生成根目录 llms.txt（供 Cursor @Docs / Claude / Windsurf 直接抓全库）
+  fs.writeFileSync(path.join(ROOT, 'llms.txt'), renderLlmsTxt(registry), 'utf8');
+
+  console.log(`✓ 已编译 ${registry.count} 张动效资产卡 → dist/registry.json & demo/registry.data.js & llms.txt & 纯净去库化 Skill 包`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

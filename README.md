@@ -1,10 +1,16 @@
 # Motion Kit
 
-一套跨三端（Web 表单 / 营销页 / Taro 小程序）的动效工具包。
-统一 token + 一组核心原语，各端各自适配。**核心不依赖任何框架，浏览器端 0 依赖。**
+**跨平台 AI 动效资产库 + 零依赖活体样本库。**
+30 张去库化交互动效规范（物理参数、状态机、降级契约、避坑清单与可观测验收标准），同时配套浏览器端 0 依赖的 Web / 移动端 / 3D / 液态玻璃活体演示。
 
-效果对齐当前主流动效库（Framer Motion / GSAP / Aceternity / Magic UI / Vaul / Material ripple）
-里最常用的那批手感，但全部用 CSS 变量 + 少量 rAF 实现，不引运行时。
+- **在线体验（推荐先玩再拿）**：[AI 动效资产库（30 张原地可交互）](https://wangjian-damon.github.io/motion-kit/demo/library.html) · [移动端展示面](https://wangjian-damon.github.io/motion-kit/demo/mobile.html) · [Web 端展示面](https://wangjian-damon.github.io/motion-kit/demo/web.html) · [3D 与趣味层](https://wangjian-damon.github.io/motion-kit/demo/3d.html)
+- **AI 直读索引**：[`llms.txt`](https://wangjian-damon.github.io/motion-kit/llms.txt)（可直接丢进 Cursor `@Docs` / Claude / Windsurf） · [`dist/registry.json`](https://wangjian-damon.github.io/motion-kit/dist/registry.json)
+
+| 传统动效组件库 | MotionKit |
+|---|---|
+| 绑定 React / Framer Motion / GSAP 运行时 | **去库化 AI 资产**：任意技术栈（React / Vue / Tailwind / Taro / Flutter / SwiftUI）零幻觉复现 |
+| 只有代码，不写参数依据与边界坑 | 每张卡标明**为什么是这个数**、**三套降级契约**、**`pointercancel` 等实测踩坑**与**验收标准** |
+| 看文档再跳去 Demo 找效果 | **所见即所得**：30 张卡顶部自带真实可交互微缩演示台 + 0.25× 慢放 + 场景一键打包复制 |
 
 ## 作为 AI 动效资产使用（任意技术栈，一行安装）
 

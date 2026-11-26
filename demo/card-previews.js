@@ -483,6 +483,40 @@
       stage.appendChild(box);
       return () => {};
     },
+
+    /* ==================== 桌面材质与 3D 折纸 ==================== */
+    'tilt'(stage) {
+      const card = document.createElement('div');
+      card.className = 'mk-tilt';
+      card.style.cssText = 'width:76%;padding:16px;border-radius:14px;background:linear-gradient(135deg,#151c29,#101520);border:1px solid rgba(255,255,255,0.14);text-align:center;font-size:12.5px;font-weight:600;color:#eef2f7';
+      card.textContent = '鼠标划过看 3D 倾斜与光泽';
+      stage.appendChild(card);
+      return MK.tilt(card, { max: 11, scale: 1.03 });
+    },
+
+    'spotlight'(stage) {
+      const card = document.createElement('div');
+      card.className = 'mk-spotlight mk-spotlight--border';
+      card.style.cssText = 'width:84%;padding:16px;border-radius:14px;background:#10151f;border:1px solid rgba(255,255,255,0.08);text-align:center;font-size:12.5px;font-weight:560;color:#cfd6e2';
+      card.textContent = '鼠标移入点亮柔光斑与 1px 描边';
+      stage.appendChild(card);
+      return MK.spotlight(card, { intensity: 0.95 });
+    },
+
+    'fold'(stage) {
+      const wrap = document.createElement('div');
+      wrap.className = 'mk-fold';
+      wrap.style.cssText = 'width:88%;font-size:12px';
+      wrap.innerHTML = `
+        <div class="mk-fold__head" style="padding:8px 12px;border-radius:10px;background:#141a24;border:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+          <span>点我 3D 折纸展开</span><i class="mk-fold__chev" style="font-style:normal">⌄</i>
+        </div>
+        <div class="mk-fold__panel" style="margin-top:6px;padding:10px 12px;border-radius:10px;background:rgba(184,255,61,0.08);border:1px solid rgba(184,255,61,0.25);color:#d9ff8f">
+          收起时自动加 inert，Tab 焦点不会误入
+        </div>`;
+      stage.appendChild(wrap);
+      return MK.fold(wrap);
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

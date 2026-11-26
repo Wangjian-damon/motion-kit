@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="../styles/motion.css" />
 <link rel="stylesheet" href="../styles/mobile.css" />
 <link rel="stylesheet" href="../styles/glass.css" />
+<link rel="stylesheet" href="../styles/3d.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
@@ -299,6 +300,54 @@
     grid-column: 1 / -1; text-align: center; padding: 64px 20px;
     color: var(--muted); border: 1px dashed var(--line); border-radius: 18px;
   }
+
+  /* 场景套件打包条 & 0.25x 慢放 / 降级模拟 */
+  .preset-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .preset-label { font-size: 12px; color: var(--muted); margin-right: 2px; }
+  .preset-btn {
+    appearance: none; border: 1px solid rgba(184,255,61,0.24);
+    background: rgba(184,255,61,0.06); color: #d9ff8f;
+    font: 520 12px/1 inherit; padding: 6px 11px; border-radius: 999px; cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .preset-btn:hover { background: rgba(184,255,61,0.16); border-color: rgba(184,255,61,0.55); color: #fff; }
+  .preset-btn.is-copied { background: #22c55e; color: #041309; border-color: #22c55e; }
+  .mode-group { display: inline-flex; gap: 6px; margin-left: auto; }
+  .mode-btn {
+    appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+    color: var(--muted); font: 540 12px/1 inherit; padding: 6px 11px; border-radius: 999px; cursor: pointer;
+  }
+  .mode-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.24); }
+  .mode-btn.is-on { background: #38bdf8; color: #04131d; border-color: #38bdf8; }
+
+  /* 0.25x 慢放：放大 token 时长便于肉眼观察曲线 */
+  html.is-slowmo {
+    --mk-dur-1: 320ms;
+    --mk-dur-2: 640ms;
+    --mk-dur-3: 960ms;
+    --mk-dur-4: 1520ms;
+    --mk-dur-5: 2240ms;
+  }
+  /* 模拟减弱动效：验证三套降级契约（motion 减 / 3d 归零 / glass 冻住） */
+  html.is-sim-reduce {
+    --mk-dur-1: 1ms;
+    --mk-dur-2: 1ms;
+    --mk-dur-3: 120ms;
+    --mk-dur-4: 120ms;
+    --mk-dur-5: 120ms;
+    --mk-dist-enter: 0px;
+    --mk-tilt-x: 0deg;
+    --mk-tilt-y: 0deg;
+    --mk-spot-o: 0;
+  }
+  html.is-sim-reduce .mk-fold__panel { transform: none !important; transition-duration: 1ms !important; }
+  html.is-sim-reduce .mk-bar__fill,
+  html.is-sim-reduce .mk-spark__line,
+  html.is-sim-reduce .mk-spark__area,
+  html.is-sim-reduce .mk-spark__dot { transition-duration: 1ms !important; transition-delay: 0ms !important; }
 </style>
 </head>
 <body>
@@ -339,6 +388,14 @@
     </div>
     <div class="controls-row" id="natureFilters"></div>
     <div class="controls-row" id="layerFilters"></div>
+    <div class="preset-bar">
+      <span class="preset-label">✦ 场景套件一键复制 Skill：</span>
+      <div id="presetBtns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div class="mode-group">
+        <button type="button" id="toggleSlow" class="mode-btn" title="4 倍慢放观察物理曲线与描线细节">0.25× 慢放</button>
+        <button type="button" id="toggleReduce" class="mode-btn" title="模拟 prefers-reduced-motion 验证降级契约">模拟减弱动效</button>
+      </div>
+    </div>
   </section>
 
   <section class="grid" id="grid" aria-live="polite"></section>
@@ -415,11 +472,61 @@
     'bar-grow': './web.html#data',
     'cell-flash': './web.html#data',
     'sparkline-draw': './web.html#data',
+    'tilt': './web.html#holo',
+    'spotlight': './web.html#holo',
+    'fold': './3d.html',
   };
+  const PRESETS = [
+    { name: 'SaaS 数据看板套件 (5)', ids: ['bar-grow', 'cell-flash', 'sparkline-draw', 'state-button', 'toast-stack'] },
+    { name: 'iOS 移动端手势套件 (5)', ids: ['tap', 'bottom-sheet', 'swipe', 'pull-refresh', 'rubber-band'] },
+    { name: 'Apple 液态玻璃套件 (3)', ids: ['glass-base', 'refraction', 'glass-tap'] },
+    { name: 'Web 材质与微交互 (5)', ids: ['tilt', 'spotlight', 'dock', 'seg', 'fold'] },
+  ];
   let activeNature = '全部';
   let activeLayer = '全部';
   let activeCard = null;
   let activeTeardowns = [];
+
+  // 场景套件一键打包复制合并 Skill Rules
+  const presetBox = document.getElementById('presetBtns');
+  const cardById = new Map(reg.effects.map((e) => [e.id, e]));
+  if (presetBox) {
+    for (const p of PRESETS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset-btn';
+      b.textContent = p.name;
+      b.onclick = () => {
+        const bundle = [
+          `# MotionKit · ${p.name}`,
+          '> 可直接粘贴进项目的 .cursorrules / AGENTS.md，按当前项目技术栈自动复现。',
+          '',
+          ...p.ids.map((id) => cardById.get(id)?.ai_assets.skill_rule).filter(Boolean),
+        ].join('\n\n---\n\n');
+        copyText(bundle, b, '✓ 已复制整套 Skill');
+      };
+      presetBox.appendChild(b);
+    }
+  }
+
+  // 0.25x 慢放 & 模拟减弱动效开关
+  const slowBtn = document.getElementById('toggleSlow');
+  const reduceBtn = document.getElementById('toggleReduce');
+  if (slowBtn) {
+    slowBtn.onclick = () => {
+      const on = document.documentElement.classList.toggle('is-slowmo');
+      slowBtn.classList.toggle('is-on', on);
+      if (document.getAnimations) {
+        document.getAnimations().forEach((a) => { try { a.playbackRate = on ? 0.25 : 1; } catch {} });
+      }
+    };
+  }
+  if (reduceBtn) {
+    reduceBtn.onclick = () => {
+      const on = document.documentElement.classList.toggle('is-sim-reduce');
+      reduceBtn.classList.toggle('is-on', on);
+    };
+  }
 
   const copyInstallBtn = document.getElementById('copyInstallCmd');
   if (copyInstallBtn) {

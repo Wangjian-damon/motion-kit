@@ -29,9 +29,9 @@
 |---|---|---|---|
 | 进场（位移/缩放/淡入/模糊/区块） | [`enter`](./enter.md) | 节奏 | ✅ |
 | 遮罩擦除 | `wipe` | 节奏 | — |
-| 3D 倾斜 + 高光 | `tilt` | 材质 | — |
+| 3D 倾斜 + 高光 | [`tilt`](./tilt.md) | 材质 | ✅ |
 | 磁吸按钮 | `magnetic` | 权重 | — |
-| 指针光斑 / 描边聚光 | `spotlight` | 材质 | — |
+| 指针光斑 / 描边聚光 | [`spotlight`](./spotlight.md) | 材质 | ✅ |
 | 点击涟漪 | [`ripple`](./ripple.md) | 反馈 | ✅ |
 | 视差 | `parallax` | 连续 | — |
 | 逐词 / 逐字入场 | [`split`](./split.md) | 节奏 | ✅ |
@@ -102,7 +102,7 @@
 折纸面板 `fold` · 透视地面 `grid-floor`
 
 这十个里值得单独写卡的只有两个：`sphere`（斐波那契等面积布点，有数学可测）
-和 `fold`（`inert` 的时机 —— 折叠过程里能不能点，是个交互问题不是一个视觉问题）。
+和 [`fold`](./fold.md)（✅ 已完成：`inert` 的时机与 3D 归零降级）。
 
 ### `glass.css` — 真材质
 
@@ -153,7 +153,7 @@
 
 空间隐喻。进和出必须是镜像。
 
-[`edge-back`](./edge-back.md) · [`swipe`](./swipe.md) · [`sticky-title`](./sticky-title.md) · [`pop`](./pop.md)
+[`edge-back`](./edge-back.md) · [`swipe`](./swipe.md) · [`sticky-title`](./sticky-title.md) · [`pop`](./pop.md) · [`fold`](./fold.md)
 
 ### 权重 — 这东西有多重
 
@@ -166,8 +166,8 @@
 
 光、折射、厚度。**静止画面里就成立**，所以它在 `prefers-reduced-motion` 下不需要降级。
 
-`tilt` · `spotlight` · `flip` · `group` · `aurora` · `gradient-text` · `glass-base` ·
-`refraction` · `glass-flow` · `glass-bar`
+[`tilt`](./tilt.md) · [`spotlight`](./spotlight.md) · `flip` · `group` · `aurora` · `gradient-text` · [`glass-base`](./glass-base.md) ·
+[`refraction`](./refraction.md) · `glass-flow` · `glass-bar`
 
 ### 节奏 — 一堆东西按什么顺序出场
 
@@ -182,7 +182,7 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| ✅ 有卡 | 27 | 手势八件套 + context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split / rubber-band / toast-stack / state-button / bar-grow / cell-flash / sparkline-draw |
+| ✅ 有卡 | 30 | 手势八件套 + context-menu / dock / enter / pop / count-up / sticky-title / ripple / refraction / glass-tap / shared-element / glass-base / seg / split / rubber-band / toast-stack / state-button / bar-grow / cell-flash / sparkline-draw / tilt / spotlight / fold |
 | ⬜ 待写 | ~20 | 按下面的优先级依次补 |
 | 🔲 不值得写 | 26 | 16 个 fun + 10 个 3d 里的多数，理由见各节说明 |
 

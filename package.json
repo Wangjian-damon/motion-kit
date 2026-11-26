@@ -24,7 +24,9 @@
     ".agents/skills/motion-kit-apply/",
     "src/",
     "styles/",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "llms.txt"
   ],
   "keywords": [
     "motion",
