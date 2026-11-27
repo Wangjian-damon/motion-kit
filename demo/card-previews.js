@@ -517,6 +517,93 @@
       stage.appendChild(wrap);
       return MK.fold(wrap);
     },
+
+    /* ==================== 炫酷视觉与 3D 阵营 ==================== */
+    'magnetic'(stage) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pv-cta mk-magnetic';
+      btn.textContent = '指针靠近我被磁吸';
+      stage.appendChild(btn);
+      return MK.magnetic(btn, { strength: 0.38, radius: 90, max: 14 });
+    },
+
+    'scramble'(stage) {
+      const txt = document.createElement('div');
+      txt.style.cssText = 'font:650 17px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;color:#b8ff3d';
+      txt.textContent = 'MOTION_KIT // 38';
+      stage.appendChild(txt);
+      const ctrl = MK.scrambleText(txt, { duration: 900 });
+      const btn = miniBtn('↻ 重播解码', 'pv-corner');
+      btn.onclick = () => ctrl.replay();
+      stage.appendChild(btn);
+      return () => ctrl.stop();
+    },
+
+    'confetti'(stage) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pv-cta';
+      btn.textContent = '🎉 点我炸一发礼炮';
+      btn.onclick = () => MK.confetti({ origin: btn, count: 65, spread: 0.9 });
+      stage.appendChild(btn);
+      return () => {};
+    },
+
+    'mgrid'(stage) {
+      stage.style.padding = '8px';
+      const box = document.createElement('div');
+      box.className = 'mk-mgrid';
+      box.style.cssText = 'width:100%;height:100%;display:grid;grid-template-columns:repeat(9,1fr);place-items:center';
+      stage.appendChild(box);
+      return MK.magneticGrid(box, { count: 36, radius: 74, max: 14 });
+    },
+
+    'border-run'(stage) {
+      const card = document.createElement('div');
+      card.className = 'mk-border-run';
+      card.style.cssText = 'padding:14px 20px;border-radius:14px;background:#0e141f;font-size:12.5px;font-weight:600;color:#eef2f7';
+      card.textContent = '纯 CSS @property 流光跑动边框';
+      stage.appendChild(card);
+      return () => {};
+    },
+
+    'sphere'(stage) {
+      const s = document.createElement('div');
+      s.className = 'mk-sphere-stage';
+      s.style.cssText = 'width:100%;height:100%;display:grid;place-items:center';
+      const sp = document.createElement('div');
+      sp.className = 'mk-sphere';
+      s.appendChild(sp);
+      stage.appendChild(s);
+      return MK.sphere(sp, { count: 78, radius: 44 });
+    },
+
+    'ring'(stage) {
+      const s = document.createElement('div');
+      s.className = 'mk-ring-stage';
+      s.style.cssText = 'width:100%;height:100%;display:grid;place-items:center;perspective:420px';
+      const r = document.createElement('div');
+      r.className = 'mk-ring';
+      r.style.cssText = 'width:46px;height:62px';
+      s.appendChild(r);
+      stage.appendChild(s);
+      return MK.ring(r, { count: 6, radius: 72, auto: 14 });
+    },
+
+    'depth'(stage) {
+      const scene = document.createElement('div');
+      scene.className = 'mk-3d-scene';
+      scene.style.cssText = 'width:76%;height:96px;perspective:680px';
+      const card = document.createElement('div');
+      card.className = 'mk-3d-depth';
+      card.style.cssText = 'width:100%;height:100%;border-radius:14px;background:linear-gradient(135deg,#151e2e,#0e1420);border:1px solid rgba(255,255,255,0.14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px';
+      card.innerHTML = `<span class="mk-3d-layer" style="--mk-z:36px;font-size:10.5px;color:#b8ff3d;letter-spacing:0.12em">TRUE Z-AXIS</span>
+        <b class="mk-3d-layer" style="--mk-z:20px;font-size:13.5px;color:#eef2f7">晃动鼠标看真景深</b>`;
+      scene.appendChild(card);
+      stage.appendChild(scene);
+      return MK.trackTilt(card, { max: 16, disabled: false });
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

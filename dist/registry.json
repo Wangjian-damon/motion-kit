@@ -1,19 +1,20 @@
 {
   "schemaVersion": 1,
-  "count": 30,
+  "count": 38,
   "byLayer": {
-    "motion": 16,
+    "motion": 18,
+    "fun": 3,
     "mobile": 10,
-    "3d": 1,
+    "3d": 4,
     "glass": 3
   },
   "byNature": {
-    "节奏": 5,
+    "节奏": 6,
+    "材质": 7,
     "连续": 5,
-    "反馈": 7,
-    "权重": 5,
-    "方向": 4,
-    "材质": 4
+    "反馈": 8,
+    "权重": 7,
+    "方向": 5
   },
   "effects": [
     {
@@ -37,6 +38,29 @@
         "prompt": "实现零重排的表格条形 / 柱状图数据生长动效（零图表库依赖）。\n\n原理一句话：填充条固定 100% 宽度，用 transform: scaleX(var(--bar-p))（竖柱用 scaleY）在合成器层生长，入场级联严格封顶 320ms，数据更新时原地伸缩不归零。\n\n做法：\n1. 纯函数：\n   - barRatio(value, max = 100)：非有限数或 max <= 0 返回 0，否则 clamp(value / max, 0, 1)。\n   - barStagger(index, step = 36, cap = 320)：index <= 0 返回 0，否则 Math.min(cap, Math.round(index * step))。\n2. 结构与 CSS：\n   - 轨道 .bar：position: relative; overflow: hidden; border-radius: 999px; height: 8px;\n   - 填充 .bar-fill：display: block; width: 100%; height: 100%; transform-origin: 0 50%; transform: scaleX(0); transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--bar-d, 0ms);\n   - 激活态 .bar.is-in .bar-fill：transform: scaleX(var(--bar-p, 0));\n   - 竖向柱状图变体 .bar--vertical：transform-origin: 50% 100%，用 scaleY(0) → scaleY(var(--bar-p, 0))。\n3. 触发与更新：\n   - 挂载时写入 --bar-p 与 --bar-d，用 IntersectionObserver（once: true）在进入视口时加 .is-in。\n   - 入场完成后（约 stagger + 520ms）立刻将 --bar-d 置为 0ms。\n   - 后续数据更新时直接覆写 --bar-p（不移除 .is-in），让条形从旧比例原地平滑伸缩到新比例。\n\n硬要求：\n- 严禁动画 width 或 height —— 必须用 transform: scaleX / scaleY 走合成器。\n- 表格行级联延迟必须封顶 <= 320ms，且入场后清零延迟，避免二次更新拖沓。\n- 数值展示列必须配 font-variant-numeric: tabular-nums 防止数字与条形对齐抖动。\n- prefers-reduced-motion: reduce 下将过渡时长压到 1ms、延迟清零，直接显示最终比例。\n\n验收：\n- 20 行表格进入视口时前 9 行呈平滑斜波生长，第 10–20 行在 320ms 封顶同步到位，整表 0.9s 内全部静止。\n- 切换数据周期时，所有条形无延迟、不归零，原地平滑伸缩到新值。\n- 传入负数、NaN 或 max=0 时条形安全停在 0，不抛错不溢出。\n- 减弱动效模式下条形立即可见且比例准确。",
         "dont_do": "- 别动画 `width` 或 `flex-basis` —— 表格里几十行同时触发重排会直接掉帧。\n- 别给长表格每一行无限累加 stagger —— 第 30 行等 1.5 秒才长出来会毁掉后台可读性。\n- 别在数据更新时把条形重置为 0 再重新生长 —— 那是视觉噪音，原地差值过渡才传达“变化量”。",
         "skill_rule": "# 条形数据生长 (bar-grow) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】填充条固定 100% 宽度，用 transform: scaleX(var(--bar-p))（竖柱用 scaleY）在合成器层生长，入场级联严格封顶 320ms，数据更新时原地伸缩不归零。\n\n【硬要求】\n- 严禁动画 width 或 height —— 必须用 transform: scaleX / scaleY 走合成器。\n- 表格行级联延迟必须封顶 <= 320ms，且入场后清零延迟，避免二次更新拖沓。\n- 数值展示列必须配 font-variant-numeric: tabular-nums 防止数字与条形对齐抖动。\n- prefers-reduced-motion: reduce 下将过渡时长压到 1ms、延迟清零，直接显示最终比例。\n\n【验收标准】\n- 20 行表格进入视口时前 9 行呈平滑斜波生长，第 10–20 行在 320ms 封顶同步到位，整表 0.9s 内全部静止。\n- 切换数据周期时，所有条形无延迟、不归零，原地平滑伸缩到新值。\n- 传入负数、NaN 或 max=0 时条形安全停在 0，不抛错不溢出。\n- 减弱动效模式下条形立即可见且比例准确。\n\n【禁止做法】\n- 别动画 `width` 或 `flex-basis` —— 表格里几十行同时触发重排会直接掉帧。\n- 别给长表格每一行无限累加 stagger —— 第 30 行等 1.5 秒才长出来会毁掉后台可读性。\n- 别在数据更新时把条形重置为 0 再重新生长 —— 那是视觉噪音，原地差值过渡才传达“变化量”。"
+      }
+    },
+    {
+      "id": "border-run",
+      "name": "流光跑动边框",
+      "layer": "fun",
+      "nature": "材质",
+      "platform": "both",
+      "status": "shipped",
+      "entry": ".mk-border-run（纯 CSS @property --mk-angle + conic-gradient）",
+      "source": "Linear / Magic UI / Vercel AI 卡片流光霓虹边框（零 JS、双 mask 掏空、@property 角度插值）",
+      "file": "effects/border-run.md",
+      "summary": "纯 CSS 用 `@property` 登记角度变量驱动 `conic-gradient` 旋转，再用双 `mask` 掏空中间，让一道柔和流光沿着卡片圆角外圈匀速流动，零 JS、不重排。",
+      "problem": "**重点推荐卡片、AI 正在生成中的状态框或定价主卡需要一道高级的视觉聚焦边，但传统做法是塞一个旋转的巨大 `div` 再靠 `overflow: hidden` 遮罩——不仅多两层 DOM、还容易在圆角抗锯齿处露白边。** `@property <angle>` + `conic-gradient` + 双 mask 掏空，单伪元素零 JS 即可完美沿着任意圆角流动。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| `@property` 登记 `<angle>` 让 `conic-gradient` 角度原生可动画 | 用一个 `width: 200%` 的子元素做 `rotate(360deg)` 旋转裁切 |\n| 双 `mask` + `mask-composite: exclude`（Safari `xor`）只留 1.5px 边框环 | 整张卡片盖着不透明底色挡住底层玻璃透明感 |\n| 整层可关：减弱动效直接 `animation: none` 停在静态高光角度 | 闪烁刺眼的彩虹全谱色带（克制到 1–2 个品牌色 + 大段暗灰） |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 旋转周期 | `4s linear infinite` | 低于 2s 显得焦躁抢视线，高于 8s 看不出在流；4s 是呼吸感最舒服的匀速节拍 |\n| 光带弧度 | 约 `25%–35%` 亮段 + 其余极低透明 | 整圈全亮就失去了“一道光在跑”的方向感，大段留暗才能凸显流光头尾 |\n| 边框厚度 | `1.5px`（`padding`） | 与液态玻璃亮棱一致，细到精致又不至于在高分屏断线 |\n| Safari 前缀 | `-webkit-mask-composite: xor` | 标准语法是 `exclude`，Safari 前缀版必须写 `xor`，否则整块卡片被锥形渐变糊死 |",
+      "implementation": "```\nstyles/fun.css    @property --mk-angle（syntax: '<angle>'）\nstyles/fun.css    .mk-border-run / .mk-border-run::before / @keyframes mk-border-run\n```",
+      "degradation": "**走 `fun` 层专属契约：整层关掉（停在静态光角，零动画）。**\n\n`prefers-reduced-motion: reduce` 与 `.mk-lite` 下 `animation: none`，流光停在一个静态高亮角度，保留边框轮廓但彻底静止。",
+      "pitfalls": "**① 忘了用 `@property` 登记角度变量。**\n未登记的 CSS 自定义属性是字符串，浏览器无法在 `0deg` 和 `360deg` 之间插值，结果边框纹丝不动。\n\n**② 忘了写 `-webkit-mask-composite: xor`。**\n只写 `mask-composite: exclude` 在 Safari 上不会镂空中间，整个按钮或卡片会变成一块实心旋转色盘。\n\n**③ 伪元素漏写 `pointer-events: none` 或 `border-radius: inherit`。**\n漏掉 `pointer-events: none` 会吞掉卡片点击；漏掉 `border-radius: inherit` 会让光圈变成直角框。\n\n---",
+      "ai_assets": {
+        "prompt": "实现纯 CSS（零 JS）的圆角流光跑动边框（Animated Conic Border Beam）。\n\n原理一句话：用 @property 将自定义角度登记为 <angle>，驱动 ::before 的 conic-gradient 旋转，再通过双 mask + mask-composite 掏空中间，只留 1.5px 圆角流光环。\n\n做法：\n1. 注册可插值角度变量：\n   @property --beam-angle {\n     syntax: '<angle>';\n     initial-value: 0deg;\n     inherits: false;\n   }\n   @keyframes beam-spin { to { --beam-angle: 360deg; } }\n2. 容器与流光伪元素：\n   - .border-beam { position: relative; border-radius: 16px; }\n   - .border-beam::before {\n       content: ''; position: absolute; inset: 0; border-radius: inherit;\n       padding: 1.5px; pointer-events: none;\n       background: conic-gradient(from var(--beam-angle), transparent 0deg, transparent 230deg, rgba(184,255,61,0.9) 300deg, rgba(96,165,250,0.85) 340deg, transparent 360deg);\n       -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);\n       mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);\n       -webkit-mask-composite: xor;\n       mask-composite: exclude;\n       animation: beam-spin 4s linear infinite;\n     }\n3. 降级：\n   - @media (prefers-reduced-motion: reduce) { .border-beam::before { animation: none; } }\n\n硬要求：\n- 必须使用 @property 声明 syntax: '<angle>'，严禁用 JS rAF 每帧改角度。\n- 必须同时写 -webkit-mask-composite: xor 与 mask-composite: exclude 以兼容 Safari 与 Chrome。\n- ::before 必须带 pointer-events: none 与 border-radius: inherit。\n- prefers-reduced-motion: reduce 下必须 animation: none 停止旋转。\n\n验收：\n- 一道约 1/3 周长的柔和渐变流光沿卡片圆角外圈匀速流动，周期 4s，中间内容区完全透明无遮挡。\n- 在 Chrome 与 Safari 下均精准镂空，不出现实心色盘。\n- 卡片内按钮点击畅通；开启减弱动效后流光立刻静止。",
+        "dont_do": "- 别用全彩虹 6 色渐变把整圈填满 —— 显得廉价刺眼，保持 65% 以上弧段为透明/极暗色。\n- 别在卡片里面套一个 `width: 200%; height: 200%` 的旋转 `div` 来裁切 —— 多余 DOM 且圆角处易露锯齿。\n- 别忘记 `@property` 声明 —— 否则角度无法做 CSS 插值，动画完全不动。",
+        "skill_rule": "# 流光跑动边框 (border-run) · 跨平台动效规范\n性质：材质 ｜ 平台：both\n\n【核心原理】用 @property 将自定义角度登记为 <angle>，驱动 ::before 的 conic-gradient 旋转，再通过双 mask + mask-composite 掏空中间，只留 1.5px 圆角流光环。\n\n【硬要求】\n- 必须使用 @property 声明 syntax: '<angle>'，严禁用 JS rAF 每帧改角度。\n- 必须同时写 -webkit-mask-composite: xor 与 mask-composite: exclude 以兼容 Safari 与 Chrome。\n- ::before 必须带 pointer-events: none 与 border-radius: inherit。\n- prefers-reduced-motion: reduce 下必须 animation: none 停止旋转。\n\n【验收标准】\n- 一道约 1/3 周长的柔和渐变流光沿卡片圆角外圈匀速流动，周期 4s，中间内容区完全透明无遮挡。\n- 在 Chrome 与 Safari 下均精准镂空，不出现实心色盘。\n- 卡片内按钮点击畅通；开启减弱动效后流光立刻静止。\n\n【禁止做法】\n- 别用全彩虹 6 色渐变把整圈填满 —— 显得廉价刺眼，保持 65% 以上弧段为透明/极暗色。\n- 别在卡片里面套一个 `width: 200%; height: 200%` 的旋转 `div` 来裁切 —— 多余 DOM 且圆角处易露锯齿。\n- 别忘记 `@property` 声明 —— 否则角度无法做 CSS 插值，动画完全不动。"
       }
     },
     {
@@ -86,6 +110,29 @@
       }
     },
     {
+      "id": "confetti",
+      "name": "物理撒花礼炮",
+      "layer": "fun",
+      "nature": "反馈",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.confetti({ origin, count, colors, spread }) + .mk-confetti",
+      "source": "物理抛射礼炮（WAAPI 零依赖批量起播 + 抛物线重力坠落 + 播完自毁 DOM）",
+      "file": "effects/confetti.md",
+      "summary": "在按钮或视口中心瞬间炸出一蓬彩色纸屑，按圆周抖动角向上抛射再受重力旋转飘落，全部走原生 WAAPI 并在播完后自动销毁节点不留残留。",
+      "problem": "**完成关键里程碑（首次发布、支付成功、通关打卡）时，一个冷冰冰的「成功」弹窗缺少情绪峰值；但为此引入 30KB 的 canvas-confetti 库又显得过重。** 用 60 行原生 Web Animations API 批量起播 + 播完自摘容器，零依赖就能给出极爽的庆祝瞬间。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 礼炮先向上抛（`dy - 90`）再受重力下坠（`+320px`）的两段抛物线感 | 整页常驻 `<canvas>` 粒子引擎 |\n| 角度按 `2π * i / count` 均匀铺开再加随机抖动，避免聚成一坨或排成车轮 | 纯 `Math.random() * 2π` 导致某些方向空一大块 |\n| 建完所有关键帧后统一 `animate()`，避免肉眼可见的先后起飞差 | 播完不清理 DOM 导致内存与节点泄漏 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 碎片数 `count` | 桌面 `90` / 触屏上限 `60` | 90 片足够热闹饱满；手机端自动压到 60 片省电防掉帧 |\n| 抛射峰值偏移 | `offset: 0.42`、`dy - 90` | 先在 42% 时长冲到最高点，后 58% 旋转下坠淡出，符合真实纸屑阻力感 |\n| 持续时长 `duration` | `1600ms`（× 0.7..1.2 随机） | 错开每片落地时间，不会像一块布同时消失 |\n| 清理兜底 | `Promise.all(finished)` + `setTimeout` | 切到后台标签页时 `finished` 可能挂起，兜底定时器保证容器必被摘除 |",
+      "implementation": "```\nsrc/core/fun.js:36    confetti({ count, origin, colors, spread, duration, seed })\nstyles/fun.css        .mk-confetti / .mk-confetti__bit\n```",
+      "degradation": "**走 `fun` 层专属契约：整层关掉。**\n\n`prefers-reduced-motion: reduce` 下 `confetti()` 第一行直接返回空清理函数，不创建任何节点、不启动任何动画——庆祝彩带是纯情绪装饰，在减弱动效下没有折中空间。",
+      "pitfalls": "**① 纸屑容器忘了设 `pointer-events: none` 与 `position: fixed; inset: 0`。**\n如果挡住点击，用户庆祝完点“下一步”会点在透明撒花层上没反应。\n\n**② 只靠 `animation.finished` 清理容器，没加 `setTimeout` 兜底。**\n用户点了按钮立刻切标签页，浏览器暂停动画导致 `finished` 迟迟不触发，DOM 节点挂着不释放。\n\n**③ 节点原点没设到点击按钮中心，全从屏幕左上角 `(0,0)` 炸出来。**\n若传入 `origin` DOM 元素，应读取 `getBoundingClientRect()` 算出按钮正中心 `(x, y)` 作为爆炸起点。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的物理撒花礼炮动效（Confetti Burst，原生 Web Animations API）。\n\n原理一句话：在触发点（按钮中心或视口中心）创建一个 pointer-events: none 的 fixed 容器，按均匀圆周+抖动角生成 60–90 片彩纸，统一用 WAAPI 播放「先上抛 → 旋转下坠淡出」三帧动画，播完后自动销毁容器。\n\n做法：\n1. 降级与节流：prefers-reduced-motion: reduce 直接返回不播；触屏粗指针将 count 上限压至 60。\n2. 起点计算：若传入 DOM 元素 origin，取其 getBoundingClientRect() 中心 (x, y)；否则取视口中心。\n3. 批量生成纸屑（默认 count = 90, duration = 1600ms）：\n   - 宿主容器：position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; aria-hidden=\"true\"。\n   - 每片纸屑定位在 (x, y)，宽 8px 高 5px 圆角 2px，从高对比色板随机取色。\n   - 角度 angle = (i / count) * Math.PI * 2 + random * 0.8（均匀铺开再加抖动，既不聚团也不像车轮）；\n     力度 power = 70 + random * 150；\n     dx = cos(angle) * power；dy = sin(angle) * power * 0.75 - 90（先向上抛）；\n     rot = (random - 0.5) * 900deg；单寿命 life = duration * (0.7 + random * 0.5)。\n   - 三帧关键帧：\n     0%: transform: translate3d(0,0,0) rotate(0deg), opacity: 1\n     42%: transform: translate3d(dx, dy, 0) rotate(rot), opacity: 1\n     100%: transform: translate3d(dx*1.32, dy+320px, 0) rotate(rot*1.6), opacity: 0\n   - 所有节点挂完后再统一调用 bit.animate(keyframes, { duration: life, easing: 'cubic-bezier(0.16, 0.8, 0.3, 1)', fill: 'both' })。\n4. 自动清理：Promise.all(anims.map(a => a.finished.catch(() => {}))) 与 setTimeout(cleanup, duration * 1.6 + 600) 双保险取消动画并 remove() 容器。\n\n硬要求：\n- 容器必须设 pointer-events: none 与 aria-hidden=\"true\"，绝不挡住页面点击。\n- 必须带双保险清理，播完后 DOM 中 0 残留节点。\n- prefers-reduced-motion: reduce 下彻底不播（整层关闭）。\n\n验收：\n- 点击按钮后，彩纸从该按钮正中心向四周先上抛再旋转飘落，约 2 秒内全部消失。\n- 播完后检查 document.body，撒花容器已被完整移除，无残留节点。\n- 撒花过程中页面其他按钮点击畅通无阻。\n- 开启减弱动效后点击不产生任何动画与节点。",
+        "dont_do": "- 别为了撒一次花引入几十 KB 的第三方粒子/Canvas 库。\n- 别用纯随机角度不均匀分布 —— 容易在一侧扎堆、另一侧留白。\n- 别在循环里边 appendChild 边 animate 读布局 —— 先批量建节点再统一起播。",
+        "skill_rule": "# 物理撒花礼炮 (confetti) · 跨平台动效规范\n性质：反馈 ｜ 平台：both\n\n【核心原理】在触发点（按钮中心或视口中心）创建一个 pointer-events: none 的 fixed 容器，按均匀圆周+抖动角生成 60–90 片彩纸，统一用 WAAPI 播放「先上抛 → 旋转下坠淡出」三帧动画，播完后自动销毁容器。\n\n【硬要求】\n- 容器必须设 pointer-events: none 与 aria-hidden=\"true\"，绝不挡住页面点击。\n- 必须带双保险清理，播完后 DOM 中 0 残留节点。\n- prefers-reduced-motion: reduce 下彻底不播（整层关闭）。\n\n【验收标准】\n- 点击按钮后，彩纸从该按钮正中心向四周先上抛再旋转飘落，约 2 秒内全部消失。\n- 播完后检查 document.body，撒花容器已被完整移除，无残留节点。\n- 撒花过程中页面其他按钮点击畅通无阻。\n- 开启减弱动效后点击不产生任何动画与节点。\n\n【禁止做法】\n- 别为了撒一次花引入几十 KB 的第三方粒子/Canvas 库。\n- 别用纯随机角度不均匀分布 —— 容易在一侧扎堆、另一侧留白。\n- 别在循环里边 appendChild 边 animate 读布局 —— 先批量建节点再统一起播。"
+      }
+    },
+    {
       "id": "context-menu",
       "name": "长按上下文菜单",
       "layer": "mobile",
@@ -129,6 +176,29 @@
         "prompt": "实现两条数字动画，同一文件里二选一。\n\n原理一句话：数值插值。两种做法二选一 —— 每帧算一个数并重绘文字，或只写一次 transform 让合成器补齐。前者通用，后者能扛几十个同时跳。\n\nA. countUp（逐帧计算，通用）：\n- easeOutCubic：v = from + (to-from) * (1 - Math.pow(1-t, 3))，t = 已过时长/总时长。\n- 时长 900ms，rAF 驱动。\n- 每帧回调 onUpdate(格式化后的字符串)；格式化交给调用方传 format。\n- 最后一帧必须直接写 format(to)（精确值），不许让浮点误差显示成 99.9987。\n- 返回 { cancel, promise }：cancel 停帧并 resolve；promise 在完成后 resolve，\n  调用方用来串后续动作。\n- prefers-reduced-motion：不启动 rAF，第一帧直接 onUpdate(最终值)，\n  promise 立即 resolve。\n\nB. odometer（翻牌列，高性能）：\n- 把值转成字符串，每个字符一列；数字位建一列 0-9 再补一个回绕的 0（共 11 格），\n  transform: translateY(-digit em)；小数点/逗号/负号是静态占位不滚动。\n- 只写一次 transform，滑动交给 CSS transition（560ms ease-out）。\n- 容器 height: 1em、line-height: 1、每个格子 flex-basis: 1em ——\n  em 单位要求整条内 font-size 统一。\n- 重建/挂载时先加 .static（transition: none），下一帧再摘 ——\n  否则新列会从 0 滑到目标位，看起来像在倒转。\n- update(next)：字符串长度不变 → 就地改各列 transform；\n  长度变了 → 整体重建（调用方应先用等长占位起步）。\n- prefers-reduced-motion：transition 恒为 none。\n\n格式化（两路共用）：\n- 千分位 + 小数位 + 前后缀；只接受 number 入参。\n- 所有数字展示必须 tabular-nums（font-variant-numeric），\n  否则变宽会把右边排版推来推去。\n\n硬要求：\n- 两条路都不做增减方向动画（+绿/-红）；那是调用方的展示层。\n- Web 端每帧回调；小程序/Taro 端的节流放在适配层，核心不感知平台。\n- reduced 下两条路都要立即呈现终值。\n\n验收：\n- countUp 到 100：最后一帧显示值恰好是 format(to)，无 99.9987。\n- odometer 从 9 滚到 0：该位向下顺滑回绕，不向上倒转。\n- 同屏 40 个 odometer 同时 update：无掉帧（rAF 期间无额外 DOM 写入）。\n- reduced：数字直接出现，无任何动画帧。\n- 金额 1234567.891，decimals 2 → \"1,234,567.89\"。",
         "dont_do": "- 别在 format 里做副作用（写 DOM、发请求）——它每帧被调，副作用会被放大 60 倍。\n- 别给 countUp 用弹簧/过冲——数字\"超过目标再回来\"读起来是显示错误，\n  过冲留给 `detent` 那类物理控件。\n- 别把 odometer 的列数做成响应式重建——位数变化才重建，\n  每次 update 都重建等于放弃了它\"只写一次 transform\"的全部优势。",
         "skill_rule": "# 数字滚动 / 里程表 (count-up) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】数值插值。两种做法二选一 —— 每帧算一个数并重绘文字，或只写一次 transform 让合成器补齐。前者通用，后者能扛几十个同时跳。\n\n【硬要求】\n- 两条路都不做增减方向动画（+绿/-红）；那是调用方的展示层。\n- Web 端每帧回调；小程序/Taro 端的节流放在适配层，核心不感知平台。\n- reduced 下两条路都要立即呈现终值。\n\n【验收标准】\n- countUp 到 100：最后一帧显示值恰好是 format(to)，无 99.9987。\n- odometer 从 9 滚到 0：该位向下顺滑回绕，不向上倒转。\n- 同屏 40 个 odometer 同时 update：无掉帧（rAF 期间无额外 DOM 写入）。\n- reduced：数字直接出现，无任何动画帧。\n- 金额 1234567.891，decimals 2 → \"1,234,567.89\"。\n\n【禁止做法】\n- 别在 format 里做副作用（写 DOM、发请求）——它每帧被调，副作用会被放大 60 倍。\n- 别给 countUp 用弹簧/过冲——数字\"超过目标再回来\"读起来是显示错误，\n  过冲留给 `detent` 那类物理控件。\n- 别把 odometer 的列数做成响应式重建——位数变化才重建，\n  每次 update 都重建等于放弃了它\"只写一次 transform\"的全部优势。"
+      }
+    },
+    {
+      "id": "depth",
+      "name": "真 Z 轴景深悬浮卡",
+      "layer": "3d",
+      "nature": "材质",
+      "platform": "web",
+      "status": "shipped",
+      "entry": "v-mk-3d + .mk-3d-scene / .mk-3d-depth / .mk-3d-layer / trackTilt()",
+      "source": "Apple TV / visionOS 真 Z 轴多层景深（translateZ 透视自然算视差，零手算偏移）",
+      "file": "effects/depth.md",
+      "summary": "把卡片里的背景、标题、徽章分别推到不同的 `translateZ` 高度上，指针一晃容器倾斜，各层由浏览器三维透视自然错开，不需要 JS 手算任何视差偏移。",
+      "problem": "**普通 2D 视差卡片要给每一层单独写 `dx * 0.1`、`dx * 0.3` 的 JS 偏移公式，层一多就难维护且缺少真实的立体厚重感。** 用 `transform-style: preserve-3d` 把层真正摆到 Z 轴上，JS 只需要写容器的 `--rx` / `--ry` 两个角度，调整卡片厚度只需改一个 `--z` 变量。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 真实三维透视投影：层站得越靠前（`--z` 越大），转同样角度自然错位越大 | JS 逐层手算 `translateX/Y` 伪视差 |\n| 两段手感：跟手时 `.is-tracking` 压到 60ms，松手回中放回 380ms 柔和过渡 | 跟手和回中用同一条 380ms 过渡（拖尾滞后） |\n| 触屏自动关闭 + 3D 归零降级 | 在手机上强行跟手歪斜遮挡视线 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 最大倾角 `max` | `14deg` | 比平面 `tilt` 的 10° 略大一档，才能让 Z 轴 20–46px 的分层错位一眼看清 |\n| 阻尼系数 `damp` | `0.12` / 帧 | 每帧逼近 12%，既跟手又有厚重景深感；误差 ≤0.01° 自动停帧 |\n| 分层高度 `--z` | `16px / 32px / 46px` | 超过 60px 在小卡片里边缘会明显飘出边框，16–46px 立体层次最克制 |\n| 停帧阈值 | `0.01deg` | 移开回中到位立刻停掉 rAF，静止零开销 |",
+      "implementation": "```\nsrc/core/scene3d.js:22   trackTilt(el, { max, damp, disabled })  只写 --mk-3d-rx / --mk-3d-ry\nstyles/3d.css            .mk-3d-scene / .mk-3d-depth（.is-tracking）/ .mk-3d-layer（--mk-z）\n```",
+      "degradation": "**走 `3d` 层专属契约：归零塌回平面。**\n\n`prefers-reduced-motion: reduce` 或触屏粗指针下不挂监听，所有层 `transform: none` 塌回纯平面卡片，文字与层级保持正常排布。",
+      "pitfalls": "**① 在 `.depth` 容器上写了 `overflow: hidden`。**\n规范里 `overflow: hidden` 会强制把 `transform-style: preserve-3d` 拍扁成 `flat`！所有 `translateZ` 分层会瞬间失效变成纯平面。\n\n**② 忘了 `pointer-events: none` 或给卡片整体 `perspective` 设得太小（如 `200px`）。**\n透视距离太小会产生夸张鱼眼畸变；800–1000px 最接近人眼看实体卡片的透视比例。\n\n**③ `rotateX` 符号写反。**\n指针在卡片上方（`ny < 0`）时上沿下压，`rotateX` 应为正（`-ny * max`）；指针在右侧（`nx > 0`）时右沿下压，`rotateY` 为正（`nx * max`）。\n\n---",
+      "ai_assets": {
+        "prompt": "实现真 Z 轴多层景深悬浮卡片（True Z-Axis Depth Card），零 3D 引擎依赖。\n\n原理一句话：外层设 perspective，卡片本体设 transform-style: preserve-3d，子层各自设不同 translateZ(16px~46px)；JS 只用 rAF 阻尼（0.12/帧）写入容器 --rx / --ry 两个角度，多层视差由浏览器三维投影自动算出。\n\n做法：\n1. 结构与 CSS：\n   - .depth-scene：perspective: 900px;\n   - .depth-card：transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));\n     （注意：绝对不能给 .depth-card 设 overflow: hidden，否则会拍扁 preserve-3d！）\n   - 内部各层 .depth-layer：transform: translateZ(var(--z, 0px));（如底层 0px、主标题 28px、徽章 44px）。\n2. 指针与到位即停 rAF（max = 14deg, damp = 0.12）：\n   - 能力门禁：prefers-reduced-motion: reduce 或粗指针设备直接跳过。\n   - pointermove：归一化 nx, ny 到 [-1, 1]，目标 ty = nx * max, tx = -ny * max，启动 rAF。\n   - pointerleave：目标 tx = 0, ty = 0，启动 rAF。\n   - loop：cx += (tx - cx) * 0.12; cy += (ty - cy) * 0.12; 写 --rx = cx deg, --ry = cy deg；仅当 |tx - cx| > 0.01 || |ty - cy| > 0.01 时继续下一帧，否则停帧。\n\n硬要求：\n- 严禁在 transform-style: preserve-3d 容器上写 overflow: hidden（会静默拍扁所有 Z 轴分层）。\n- 严禁由 JS 逐层手算 translateX/Y 偏移，只写容器的 --rx / --ry。\n- 指针离开回中后 rAF 必须彻底停止。\n- prefers-reduced-motion: reduce 下所有层 transform: none 归零塌回平面。\n\n验收：\n- 鼠标在卡片四周移动时，标题与徽章相对底板产生真实三维悬空错位；只改某层的 --z 即可改变浮起高度。\n- 鼠标移开后平滑回中并停止 rAF。\n- 减弱动效与触屏下卡片保持平面静止，不残歪。",
+        "dont_do": "- 别给 `preserve-3d` 容器加 `overflow: hidden` 或 `filter` —— 都会破坏 3D 渲染上下文把分层拍扁。\n- 别把 `perspective` 设到 `300px` 以下 —— 透视畸变会非常夸张失真。\n- 别用 JS 给 5 个子元素分别写 5 套视差偏移公式 —— 交给真 Z 轴透视最干净。",
+        "skill_rule": "# 真 Z 轴景深悬浮卡 (depth) · 跨平台动效规范\n性质：材质 ｜ 平台：web\n\n【核心原理】外层设 perspective，卡片本体设 transform-style: preserve-3d，子层各自设不同 translateZ(16px~46px)；JS 只用 rAF 阻尼（0.12/帧）写入容器 --rx / --ry 两个角度，多层视差由浏览器三维投影自动算出。\n\n【硬要求】\n- 严禁在 transform-style: preserve-3d 容器上写 overflow: hidden（会静默拍扁所有 Z 轴分层）。\n- 严禁由 JS 逐层手算 translateX/Y 偏移，只写容器的 --rx / --ry。\n- 指针离开回中后 rAF 必须彻底停止。\n- prefers-reduced-motion: reduce 下所有层 transform: none 归零塌回平面。\n\n【验收标准】\n- 鼠标在卡片四周移动时，标题与徽章相对底板产生真实三维悬空错位；只改某层的 --z 即可改变浮起高度。\n- 鼠标移开后平滑回中并停止 rAF。\n- 减弱动效与触屏下卡片保持平面静止，不残歪。\n\n【禁止做法】\n- 别给 `preserve-3d` 容器加 `overflow: hidden` 或 `filter` —— 都会破坏 3D 渲染上下文把分层拍扁。\n- 别把 `perspective` 设到 `300px` 以下 —— 透视畸变会非常夸张失真。\n- 别用 JS 给 5 个子元素分别写 5 套视差偏移公式 —— 交给真 Z 轴透视最干净。"
       }
     },
     {
@@ -316,6 +386,52 @@
       }
     },
     {
+      "id": "magnetic",
+      "name": "磁吸按钮",
+      "layer": "motion",
+      "nature": "权重",
+      "platform": "web",
+      "status": "shipped",
+      "entry": "v-mk-magnetic + .mk-magnetic / magnetic(el, { strength, radius, max })",
+      "source": "Rauno / Vercel / 苹果磁吸控件（90px 判定半径 + 0.18 lerp 追随 + 14px 钳制上限）",
+      "file": "effects/magnetic.md",
+      "summary": "指针靠近按钮周围 90px 判定区时，按钮被柔和拉向指针方向（最大偏移 14px），离开判定区后沿阻尼插值自然弹回原位。",
+      "problem": "**主 CTA 按钮如果只在 hover 时换个颜色，缺少“它正在等你点”的吸引力；但偏移太大又会让用户追着按钮点不到。** 用极克制的 0.35 跟随系数 + 14px 硬上限，既给出明显磁性吸附感，又保证指针永远轻松命中按钮。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 指针靠近判定区即启动吸引 + 0.18 lerp 顺滑回中 | 按钮跑出原位 40px 导致用户点空的过度磁吸 |\n| JS 只写 `--mk-mag-x` / `--mk-mag-y`，不覆写 inline `transform` | 在触屏设备上启用（无悬停，纯属误触发） |\n| 归位误差 ≤0.05px 自动停掉 rAF | 常驻 60fps 空转动画循环 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 判定半径 `radius` | `90px`（外扩） | 指针快到按钮前就能感受到微妙牵引；超过 160px 会干扰邻近元素 |\n| 跟随系数 `strength` | `0.35` | 手指/鼠标移动 10px 按钮跟 3.5px，有重量感又不抢跑 |\n| 最大偏移 `max` | `14px` | 保证按钮中心永远不跑出原本热区范围，绝不出现“追着点不到” |\n| lerp 系数 | `0.18` / 帧 | 比硬跟手更有磁性粘滞感，离开时平滑回弹，误差 ≤0.05px 停帧 |",
+      "implementation": "```\nsrc/core/tilt.js:98   magnetic(el, { strength, radius, max, reduced })  写 --mk-mag-x / --mk-mag-y\nstyles/motion.css     .mk-magnetic（transform: translate3d(var(--mk-mag-x), var(--mk-mag-y), 0)）\n```",
+      "degradation": "**走 `motion` 档：减，不关（减弱动效与触屏端直接不挂监听）。**\n\n`prefers-reduced-motion: reduce` 或 `(hover: none), (pointer: coarse)` 下直接返回空清理函数，按钮保持静止原位，点击功能不受任何影响。",
+      "pitfalls": "**① 偏移不设 `max` 上限导致鼠标在边缘时按钮“躲开点击”。**\n必须对 `dx * strength` 和 `dy * strength` 分别钳制在 `[-14px, 14px]`。\n\n**② 一屏给 10 个按钮都挂磁吸。**\n磁吸是强调手段，整屏最多给 1–3 个主 CTA 或核心导航项；满屏都在吸会让页面显得像在晃动。\n\n**③ 忘了停帧或卸载时未移除 `window` 上的 `pointermove`。**\n收敛到 `< 0.05px` 必须把 `raf = 0`，且 `destroy()` 里务必 `cancelAnimationFrame` 并摘除全局监听。\n\n---",
+      "ai_assets": {
+        "prompt": "实现桌面端磁吸按钮（Magnetic Button），零动画库依赖。\n\n原理一句话：监听指针距离按钮中心是否进入 radius（半宽 + 90px），进入时目标偏移 = clamp(差值 * 0.35, -14, 14)px，通过 rAF lerp（0.18/帧）写入 CSS 变量 --mag-x / --mag-y，收敛到 0.05px 内停帧。\n\n做法：\n1. 能力门禁：若 prefers-reduced-motion: reduce 或 matchMedia('(hover: none), (pointer: coarse)') 命中，直接不注册监听。\n2. 判定与插值（strength = 0.35, radius = 90, max = 14）：\n   - window 监听 pointermove（passive: true）：\n     计算按钮中心 (cx, cy) 与指针差值 (dx, dy) 及欧氏距离 dist = Math.hypot(dx, dy)。\n     若 dist > rect.width / 2 + radius，目标置 { x: 0, y: 0 }；\n     否则目标置 { x: clamp(dx * 0.35, -14, 14), y: clamp(dy * 0.35, -14, 14) }。\n   - rAF loop：cur.x += (target.x - cur.x) * 0.18；cur.y 同理；写入 --mag-x / --mag-y（px）。\n     仅当 |target.x - cur.x| > 0.05 || |target.y - cur.y| > 0.05 时继续预约下一帧，否则停帧。\n3. CSS：\n   - 按钮 transform: translate3d(var(--mag-x, 0px), var(--mag-y, 0px), 0);\n\n硬要求：\n- 位移必须硬钳制在 ±14px 内，绝不让按钮跑出原本点击热区。\n- JS 只写 CSS 变量，不直接覆盖 transform；且归位后 rAF 必须彻底停止。\n- 触屏与减弱动效下直接关闭。\n\n验收：\n- 指针进入按钮外 90px 范围时按钮柔和偏向指针，最大偏移不超过 14px。\n- 指针移开后按钮平滑弹回 (0, 0) 并停止 rAF。\n- 组件卸载后 window pointermove 监听被完整移除。",
+        "dont_do": "- 别把最大偏移设到 30px 以上 —— 会让用户追着按钮点不到。\n- 别给一整排普通列表按钮全部挂磁吸 —— 每屏克制在 1–3 个主操作即可。\n- 别让 rAF 在页面静止时持续空转。",
+        "skill_rule": "# 磁吸按钮 (magnetic) · 跨平台动效规范\n性质：权重 ｜ 平台：web\n\n【核心原理】监听指针距离按钮中心是否进入 radius（半宽 + 90px），进入时目标偏移 = clamp(差值 * 0.35, -14, 14)px，通过 rAF lerp（0.18/帧）写入 CSS 变量 --mag-x / --mag-y，收敛到 0.05px 内停帧。\n\n【硬要求】\n- 位移必须硬钳制在 ±14px 内，绝不让按钮跑出原本点击热区。\n- JS 只写 CSS 变量，不直接覆盖 transform；且归位后 rAF 必须彻底停止。\n- 触屏与减弱动效下直接关闭。\n\n【验收标准】\n- 指针进入按钮外 90px 范围时按钮柔和偏向指针，最大偏移不超过 14px。\n- 指针移开后按钮平滑弹回 (0, 0) 并停止 rAF。\n- 组件卸载后 window pointermove 监听被完整移除。\n\n【禁止做法】\n- 别把最大偏移设到 30px 以上 —— 会让用户追着按钮点不到。\n- 别给一整排普通列表按钮全部挂磁吸 —— 每屏克制在 1–3 个主操作即可。\n- 别让 rAF 在页面静止时持续空转。"
+      }
+    },
+    {
+      "id": "mgrid",
+      "name": "磁性斥力点阵",
+      "layer": "fun",
+      "nature": "权重",
+      "platform": "web",
+      "status": "shipped",
+      "entry": "v-mk-mgrid + .mk-mgrid / magneticGrid(el, { radius, max }) / repelOffset()",
+      "source": "物理斥力场点阵（二次衰减纯函数 repelOffset + 边缘连续归零 + 整层可关）",
+      "file": "effects/mgrid.md",
+      "summary": "桌面指针划过点阵区域时，半径 90px 内的圆点按二次衰减公式背离指针平滑推开，越近推得越远、边缘处连续归零不突兀。",
+      "problem": "**科技感产品官网的背景或卡片装饰区如果只是静态点阵太乏味，但盲目加线性斥力会在指针扫过半径边界时看到点群“啪”地弹一下。** 用二次衰减 `(1 - d/radius)²` 让位移在边界处导数为 0，形成如水面涟漪般丝滑的交互场。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 物理斥力场二次衰减 `strength = (1 - d / radius)²`，边界导数归零 | 整页 WebGL 粒子着色器（违反 0 运行时原则） |\n| 抽离纯函数 `repelOffset(dx, dy, radius, max)` 并覆盖 5 项单测 | 触屏端强开（无持续悬停指针） |\n| 仅更新单容器内圆点位移，指针移出容器自动归零停算 | 全局全屏铺几千个 DOM 节点拖垮主线程 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 影响半径 `radius` | `90px` | 足够在鼠标周围形成清晰的一圈“空洞波纹”，又不会把整个小卡片的点全推乱 |\n| 最大推开位移 `max` | `16px` | 刚好让相邻圆点产生张力而不互相撞叠成一团 |\n| 衰减曲线 | `(1 - d / radius)²` | 距离越近推力陡增、在 `d = radius` 处值和斜率同时为 0，边界绝不折角 |\n| 零距离保护 | `d === 0` 返回 `{0, 0}` | 防止指针恰好落在圆心时 `dx / d` 除零算出 `NaN` |",
+      "implementation": "```\nsrc/core/fun.js:231   repelOffset(dx, dy, radius, max)  纯函数，已覆盖 5 项单测\nsrc/core/fun.js:245   magneticGrid(el, { radius, max }) 自动铺点并驱动斥力位移\nstyles/fun.css        .mk-mgrid / .mk-mgrid__dot\n```",
+      "degradation": "**走 `fun` 层专属契约：整层关掉（保留静态点阵，关闭所有斥力计算与监听）。**\n\n`prefers-reduced-motion: reduce` 或触屏粗指针下不注册 `pointermove`，点阵保持干净静止装饰，零 CPU 占用。",
+      "pitfalls": "**① 忘了在 `d === 0` 时做除零防护。**\n指针正好压在某个圆点中心时 `Math.hypot(0, 0) === 0`，直接除以 `d` 会把该点坐标算成 `NaN` 消失。\n\n**② 在 `pointermove` 里每次都对 80 个点调用 `getBoundingClientRect()`。**\n每帧读 80 次布局会触发严重强制同步布局；应仅读一次容器的 `rect`，按网格行列坐标算出每个点的基准中心，或者在 resize 时缓存坐标。\n\n**③ 线性衰减 `1 - d / radius` 导致边界突兀。**\n线性公式在半径边缘斜率不为 0，圆点进入/离开影响圈时会明显“一顿”；平方衰减彻底消除折角。\n\n---",
+      "ai_assets": {
+        "prompt": "实现桌面端磁性斥力点阵（Magnetic Repel Dot Grid），零 WebGL/动画库依赖。\n\n原理一句话：用纯函数 repelOffset(dx, dy, radius=90, max=16) 按二次衰减 (1 - d/radius)² 计算每个圆点背离指针的推开位移，容器级单次测距驱动，边界连续归零。\n\n做法：\n1. 纯函数 repelOffset(dx, dy, radius = 90, max = 16)：\n   - d = Math.hypot(dx, dy)；若 d >= radius || d === 0 返回 { x: 0, y: 0 }（防除零）。\n   - strength = (1 - d / radius) ** 2；k = (strength * max) / d；\n   - 返回 { x: dx * k, y: dy * k }（方向严格背离指针，幅度 <= max）。\n2. 容器与铺点：\n   - 能力门禁：prefers-reduced-motion: reduce 或粗指针设备仅渲染静态点阵，不挂监听。\n   - 容器用 CSS Grid 均匀铺设 5×8 到 8×12 个圆点（每点 4–6px 圆，transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1)）。\n3. 指针交互：\n   - pointermove（用 rAF 合批，每帧最多算一次）：仅读容器 rect 或缓存各点基准中心 (bx, by)，对每个点算 dx = bx - pointerX, dy = by - pointerY，调 repelOffset 写入 transform: translate3d(x, y, 0)。\n   - pointerleave / pointercancel：所有圆点归零回到 translate3d(0, 0, 0)。\n\n硬要求：\n- 必须用二次衰减 (1 - d/radius)²，确保边界处位移与导数同时趋零。\n- d === 0 与 d >= radius 必须安全返回 { x: 0, y: 0 }，绝不产生 NaN。\n- 严禁在 pointermove 循环里对每个圆点逐个调用 getBoundingClientRect()。\n- prefers-reduced-motion: reduce 与触屏下保持静态点阵，不运行 JS 计算。\n\n验收：\n- 鼠标划过点阵，周围 90px 内的点平滑向四周让开形成圆形波纹，边缘过渡无折角；鼠标移开全部柔和归位。\n- repelOffset(0, 0) 返回 {0,0}；repelOffset(100, 0, 90, 16) 返回 {0,0}；推开幅度永远不超过 16px。\n- 减弱动效下点阵静止可读，控制台无报错。",
+        "dont_do": "- 别为了一个小区域点阵引入 Three.js 或 Canvas 物理引擎。\n- 别一屏铺 1000 个 DOM 圆点 —— 单个交互区块控制在 40–100 个点以内最流畅。\n- 别用线性衰减 `1 - d/r` —— 半径边缘会出现生硬顿挫。",
+        "skill_rule": "# 磁性斥力点阵 (mgrid) · 跨平台动效规范\n性质：权重 ｜ 平台：web\n\n【核心原理】用纯函数 repelOffset(dx, dy, radius=90, max=16) 按二次衰减 (1 - d/radius)² 计算每个圆点背离指针的推开位移，容器级单次测距驱动，边界连续归零。\n\n【硬要求】\n- 必须用二次衰减 (1 - d/radius)²，确保边界处位移与导数同时趋零。\n- d === 0 与 d >= radius 必须安全返回 { x: 0, y: 0 }，绝不产生 NaN。\n- 严禁在 pointermove 循环里对每个圆点逐个调用 getBoundingClientRect()。\n- prefers-reduced-motion: reduce 与触屏下保持静态点阵，不运行 JS 计算。\n\n【验收标准】\n- 鼠标划过点阵，周围 90px 内的点平滑向四周让开形成圆形波纹，边缘过渡无折角；鼠标移开全部柔和归位。\n- repelOffset(0, 0) 返回 {0,0}；repelOffset(100, 0, 90, 16) 返回 {0,0}；推开幅度永远不超过 16px。\n- 减弱动效下点阵静止可读，控制台无报错。\n\n【禁止做法】\n- 别为了一个小区域点阵引入 Three.js 或 Canvas 物理引擎。\n- 别一屏铺 1000 个 DOM 圆点 —— 单个交互区块控制在 40–100 个点以内最流畅。\n- 别用线性衰减 `1 - d/r` —— 半径边缘会出现生硬顿挫。"
+      }
+    },
+    {
       "id": "pop",
       "name": "弹层 / 轻提示",
       "layer": "motion",
@@ -385,6 +501,29 @@
       }
     },
     {
+      "id": "ring",
+      "name": "3D 环形画廊轮播",
+      "layer": "3d",
+      "nature": "方向",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "v-mk-ring + .mk-ring / ring(el, { count, radius, auto, drag })",
+      "source": "真三维环形卡廊（单角度真源 + 惯性 0.96 衰减平滑交还自动旋转）",
+      "file": "effects/ring.md",
+      "summary": "N 张卡片绕 Y 轴排成真三维圆环，自动缓慢公转；手指或鼠标可随时抓住拖拽甩动，松手后惯性滑行并无缝交还给自动旋转。",
+      "problem": "**作品集、模型展示或主题精选卡片用普通横向轮播略显平庸，而手写 3D 环形轮播最容易出“松手瞬间猛地加速或回弹跳角”的断裂感。** 把自动旋转、手动拖拽和惯性滑行全部写进同一个累计角度变量 `--ring-a`，三段状态切换就完全丝滑无缝。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 单一角度真源 `--ring-a`：拖拽、惯性与自动旋转共用一个量 | 拆成“自动角 + 拖拽角”两个动画叠加（松手必然出现二次加速） |\n| 惯性每帧 `vel *= 0.96` 衰减，低于 `0.02` 才交还给自动匀速旋转 | 拖拽松手后生硬截停或跳回 0° |\n| 3D 归零降级：减弱动效下 `transform: none` + `display: flex` 排成横行 | 卡片叠在同一个坐标里互相遮死 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 卡片步进角 | `360deg / n` | 第 `i` 张卡 `rotateY(i * step) translateZ(radius)` 严格等分圆周 |\n| 拖拽灵敏度 `drag` | `0.55 deg/px` | 拖过 180px 大约转 100°，既不费力又不会轻轻一碰转三圈 |\n| 惯性摩擦 | `vel *= 0.96` / 帧 | 类似物理转盘的阻尼滑行，约 1–1.5 秒优雅收速 |\n| 交还阈值 | `Math.abs(vel) < 0.02` | 等惯性几乎停稳再把控制权交回 `auto` 匀速旋转，肉眼看不到接缝 |",
+      "implementation": "```\nsrc/core/scene3d.js:83   ring(el, { count, radius, auto, drag })  单真源角度循环 + Pointer Capture 拖拽\nstyles/3d.css            .mk-ring-stage / .mk-ring / .mk-ring__item\n```",
+      "degradation": "**走 `3d` 层专属契约：归零塌回平面并切为横向 Flex 列表。**\n\n`prefers-reduced-motion: reduce` 下 `ring()` 不启动 rAF，CSS 将圆环与卡片 `transform: none` 并切为 `display: flex; gap: 12px` 横排展示，防止所有卡片塌在同一中心叠成一摞。",
+      "pitfalls": "**① 自动旋转用 CSS `@keyframes`、拖拽用 JS 写 `transform`，两者打架。**\n一旦拆成两套动画源，开始拖拽和松手恢复时必然出现跳帧或双重加速；必须由同一个 `angle` 变量统一驱动。\n\n**② 忘了给圆环设 `backface-visibility` 或恰当透视半径导致卡片互相穿插。**\n根据卡片宽度 `w` 和张数 `n`，半径应大于 `w / (2 * tan(π / n))` 才不会边缘穿模。\n\n**③ 减弱动效只写了 `transform: none` 却没把布局改成 `flex`。**\n绝对定位的 6 张卡片去掉 3D 变换后会全部叠在 `(0,0)` 互相遮住；必须配合改为 `display: flex` 排开。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零 Three.js 依赖的 3D 环形画廊轮播（Draggable 3D Ring Carousel）。\n\n原理一句话：N 张卡片按 rotateY(i * 360/N) translateZ(radius) 排成真 3D 圆环，拖拽、惯性滑行（0.96/帧衰减）与自动公转全部写入同一个累计角度变量 --ring-a，三段切换零跳变。\n\n做法：\n1. CSS 3D 结构：\n   - 外层舞台 .ring-stage：perspective: 900px; display: grid; place-items: center; touch-action: pan-y; user-select: none;\n   - 圆环容器 .ring：position: relative; transform-style: preserve-3d; transform: rotateY(var(--ring-a, 0deg)); cursor: grab;\n   - 每张卡片 .ring-item：position: absolute; transform: rotateY(calc(var(--i) * var(--step))) translateZ(var(--r));\n2. 单真源角度循环（auto = 12, drag = 0.55）：\n   - pointerdown：dragging = true, vel = 0, lastX = e.clientX，setPointerCapture。\n   - pointermove：d = (e.clientX - lastX) * drag; angle += d; vel = d; lastX = e.clientX。\n   - pointerup / pointercancel：dragging = false，释放 pointerCapture。\n   - rAF tick(t)：若 !dragging，则 vel *= 0.96; angle += vel; 当 |vel| < 0.02 时置 vel = 0 并改为 angle += auto * (dt / 1000) * 8（dt 钳制 <= 48ms 防切后台跳角）；写入 --ring-a。\n\n硬要求：\n- 自动公转与拖拽必须共用同一个 --ring-a 变量，严禁混用 CSS keyframes 旋转与 JS 拖拽。\n- dt 必须钳制上限（如 <= 48ms），防止切换浏览器标签页回来后瞬间狂转。\n- prefers-reduced-motion: reduce 下不启动 rAF，所有元素 transform: none 且容器改为 display: flex 横排，避免卡片全部叠在同一位置。\n\n验收：\n- 6 张卡片均匀排成 3D 圆环缓慢自转；横向拖拽跟手转动，快速一甩松手后惯性滑行并平滑过渡回自动旋转，无任何跳角。\n- 切到后台标签页 10 秒再切回来，圆环不出现瞬间暴冲。\n- 开启减弱动效后卡片自动展平排成一行，内容完整可读。",
+        "dont_do": "- 别把自动旋转写在 CSS `@keyframes` 里再叠加 JS 拖拽角度 —— 松手必跳。\n- 别在 `prefers-reduced-motion` 下只关 `transform` 不改 `display: flex` —— 所有卡片会叠死在一起。\n- 别给容器设 `touch-action: none` —— 留 `pan-y` 给页面竖向滚动。",
+        "skill_rule": "# 3D 环形画廊轮播 (ring) · 跨平台动效规范\n性质：方向 ｜ 平台：both\n\n【核心原理】N 张卡片按 rotateY(i * 360/N) translateZ(radius) 排成真 3D 圆环，拖拽、惯性滑行（0.96/帧衰减）与自动公转全部写入同一个累计角度变量 --ring-a，三段切换零跳变。\n\n【硬要求】\n- 自动公转与拖拽必须共用同一个 --ring-a 变量，严禁混用 CSS keyframes 旋转与 JS 拖拽。\n- dt 必须钳制上限（如 <= 48ms），防止切换浏览器标签页回来后瞬间狂转。\n- prefers-reduced-motion: reduce 下不启动 rAF，所有元素 transform: none 且容器改为 display: flex 横排，避免卡片全部叠在同一位置。\n\n【验收标准】\n- 6 张卡片均匀排成 3D 圆环缓慢自转；横向拖拽跟手转动，快速一甩松手后惯性滑行并平滑过渡回自动旋转，无任何跳角。\n- 切到后台标签页 10 秒再切回来，圆环不出现瞬间暴冲。\n- 开启减弱动效后卡片自动展平排成一行，内容完整可读。\n\n【禁止做法】\n- 别把自动旋转写在 CSS `@keyframes` 里再叠加 JS 拖拽角度 —— 松手必跳。\n- 别在 `prefers-reduced-motion` 下只关 `transform` 不改 `display: flex` —— 所有卡片会叠死在一起。\n- 别给容器设 `touch-action: none` —— 留 `pan-y` 给页面竖向滚动。"
+      }
+    },
+    {
       "id": "ripple",
       "name": "点击涟漪",
       "layer": "motion",
@@ -428,6 +567,29 @@
         "prompt": "实现 iOS 风格的越界橡胶阻尼（Rubber-banding / Elastic Overscroll），零动画库依赖。\n\n原理一句话：界内 1:1 跟手，界外用双曲阻尼公式 b(x, d, c) = (|x| * c * d) / (d + c * |x|) 把越界位移压成\"越拉越重、永远不超过容器尺寸 d\"，拖动中关过渡、松手开弹性回弹。\n\n做法：\n1. 纯函数（方便单测）：\n   - rubberBand(x, dim, c = 0.55)：\n     若 dim <= 0 或 !Number.isFinite(x) 或 x === 0 返回 0；\n     r = (Math.abs(x) * c * dim) / (dim + c * Math.abs(x))；\n     返回 x < 0 ? -r : r（奇函数，保留方向）。\n   - rubberClamp(v, min, max, dim, c = 0.55)：\n     hi = Math.max(min, max)；\n     v < min 返回 min - rubberBand(min - v, dim, c)；\n     v > hi  返回 hi + rubberBand(v - hi, dim, c)；\n     否则原样返回 v。\n2. 指针控制（横拖为例，纵拖对称）：\n   - 容器设 touch-action: pan-y; user-select: none;（竖滑留给页面滚动）。\n   - pointerdown：测量容器宽度 dim 与可拖区间 [min, max]（默认 [Math.min(0, dim - scrollWidth), 0]），记录起点 start = pos，加 .is-dragging（transition: none）。\n   - pointermove：计算 rubberClamp(start + delta, min, max, dim)，写入 CSS 变量 --rb（px），样式层用 transform: translate3d(var(--rb, 0px), 0, 0) 消费。\n   - pointerup / pointercancel：撤掉 .is-dragging（恢复 transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1)），若为 pointercancel 则 raw = start 否则 raw = start + delta，将 pos 钳回 [min, Math.max(min, max)] 并写入 --rb 触发回弹。\n\n硬要求：\n- 阻尼常数 c 固定 0.55，渐近上限必须取容器该轴真实尺寸 dim。\n- 拖动中必须关掉 transition，松手瞬间再恢复 —— 不能用 rAF 逐帧补间回弹。\n- pointercancel 必须回退到拖动前的位置，绝不能提交中途位移。\n- prefers-reduced-motion: reduce 下保留拖拽能力，仅把回弹缓动改为无过冲 ease-out 且压缩时长。\n\n验收：\n- rubberBand(0, 300) === 0；rubberBand(-x, 300) === -rubberBand(x, 300)。\n- 越界拉动 10px 时实际位移约 5.4px（斜率趋近 0.55）；拉动 10000px 时位移严格小于容器宽度 dim。\n- 界内拖动 1:1 跟手零延迟；松手后越界部分在 380ms 内平滑弹回边界。\n- 触发 pointercancel 时回到拖动前位置。",
         "dont_do": "- 别用 `x * 0.5` 线性折半 —— 没有上限，继续拖会把内容拖出屏幕且缺少阻力递增感。\n- 别用 `Math.sqrt(x)` —— 零点导数无穷大，刚过边界时会突然猛蹿一下。\n- 别给横向拖拽容器设 `touch-action: none` —— 会把移动端页面的正常上下滚动锁死。",
         "skill_rule": "# 橡胶越界阻尼 (rubber-band) · 跨平台动效规范\n性质：权重 ｜ 平台：both\n\n【核心原理】界内 1:1 跟手，界外用双曲阻尼公式 b(x, d, c) = (|x| * c * d) / (d + c * |x|) 把越界位移压成\"越拉越重、永远不超过容器尺寸 d\"，拖动中关过渡、松手开弹性回弹。\n\n【硬要求】\n- 阻尼常数 c 固定 0.55，渐近上限必须取容器该轴真实尺寸 dim。\n- 拖动中必须关掉 transition，松手瞬间再恢复 —— 不能用 rAF 逐帧补间回弹。\n- pointercancel 必须回退到拖动前的位置，绝不能提交中途位移。\n- prefers-reduced-motion: reduce 下保留拖拽能力，仅把回弹缓动改为无过冲 ease-out 且压缩时长。\n\n【验收标准】\n- rubberBand(0, 300) === 0；rubberBand(-x, 300) === -rubberBand(x, 300)。\n- 越界拉动 10px 时实际位移约 5.4px（斜率趋近 0.55）；拉动 10000px 时位移严格小于容器宽度 dim。\n- 界内拖动 1:1 跟手零延迟；松手后越界部分在 380ms 内平滑弹回边界。\n- 触发 pointercancel 时回到拖动前位置。\n\n【禁止做法】\n- 别用 `x * 0.5` 线性折半 —— 没有上限，继续拖会把内容拖出屏幕且缺少阻力递增感。\n- 别用 `Math.sqrt(x)` —— 零点导数无穷大，刚过边界时会突然猛蹿一下。\n- 别给横向拖拽容器设 `touch-action: none` —— 会把移动端页面的正常上下滚动锁死。"
+      }
+    },
+    {
+      "id": "scramble",
+      "name": "赛博乱序解码",
+      "layer": "motion",
+      "nature": "节奏",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "v-mk-scramble / scrambleText(el, { duration, glyphs }) / scrambleFrame()",
+      "source": "Aceternity / Vercel 赛博终端乱码解码（前 35% 全乱码 + 左到右定格 + 仅改 textContent 零重排）",
+      "file": "effects/scramble.md",
+      "summary": "标题或数字从一串跳动的随机符号里自左向右逐字解码定格成正文，每帧只写 `textContent` 不碰 DOM 结构，搭配等宽字体零宽度抖动。",
+      "problem": "**科技/开发工具类的 Hero 标题、状态标签或版本号需要一眼抓住注意力的“解码感”，但如果拆成几十个 DOM 节点逐帧动画又重又容易把整行文字推来推去。** 纯文本节点逐帧替换字符 + 等宽字，兼顾极高视觉辨识度与极低性能开销。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 经典终端解密节奏：前 35% 全乱码、后 65% 从左到右依次定格 | 逐字符创建几十个 `<span>` 触发布局计算 |\n| 确定性纯函数 `scrambleFrame(text, p, seed)`，每个字符错开相位 | 整行字符同步跳动像一块砖 |\n| 按 Unicode 码点 `[...text]` 切分，不劈开中文或 emoji | `text.split('')` 破坏代理对字符 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 前置乱码期 | `0 ~ 0.35` | 开头留 35% 全乱码才真的像“正在破译”；直接从 0 开始定格会显得第一帧没坏彻底 |\n| 总时长 `duration` | `900ms` | 短于 500ms 看不清字符跳动，长于 1400ms 会拖慢用户读懂标题 |\n| 空白保留 | `' '` / `'\\n'` 原样保留 | 保留单词边界与换行结构，防止整句解码期间突然折行跳动 |\n| 末帧兜底 | `p >= 1` 强制写回原文 | 防止最后一帧精度误差残留一个乱码字符 |",
+      "implementation": "```\nsrc/core/scramble.js:24  scrambleFrame(text, p, seed, glyphs)  纯函数，已覆盖 7 项单测\nsrc/core/scramble.js:70  scrambleText(el, { duration, glyphs }) rAF 驱动，原文存 WeakMap\n```",
+      "degradation": "**走 `motion` 档：减，不关（减弱动效直接显示原文）。**\n\n`prefers-reduced-motion: reduce` 下跳过所有乱码帧，直接将 `el.textContent` 写为最终原文，零闪烁、立即可读。",
+      "pitfalls": "**① 没用等宽字体（或没锁宽度）导致乱码跳动时整行左右狂抖。**\n`W` 和 `i` 在比例字体下宽度差一倍，每秒跳 24 次会把旁边元素推得像地震；必须配 `font-family: ui-monospace, ...` 或 `font-variant-numeric: tabular-nums`。\n\n**② 和框架模板双绑（如 Vue `{{ text }}`）抢写同一个节点的 `textContent`。**\nJS 每帧写 `textContent`、框架一更新又 patch 回去会互相覆盖；必须把文案管理权交由控制器 `setText()` 或独立指令。\n\n**③ 忘了按码点 `[...text]` 切分导致 emoji 裂成两个乱码。**\n必须用扩展运算符 `[...text]` 或 `Array.from(text)`，且空格与换行绝不替换成乱码。\n\n---",
+      "ai_assets": {
+        "prompt": "实现赛博终端风格的乱序解码文字动效（Scramble Text），零动画库依赖。\n\n原理一句话：纯函数按进度 p（0..1）将文本前 35% 保持全乱码、后 65% 从左到右依次定格，rAF 每帧仅改 textContent 不增删 DOM 节点，配合等宽字体零重排。\n\n做法：\n1. 纯函数 scrambleFrame(text, p, seed = 0, glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@*+=<>/\\\\|')：\n   - 按码点切分 chars = [...text]（禁止 split('') 劈开 emoji）。\n   - 每个字符的定格时刻 settle(i) = 0.35 + (i / Math.max(1, n - 1)) * 0.65。\n   - 遍历 chars：空格与换行原样保留；p >= settle(i) 输出原字符；否则按错相索引 k = (seed * 31 + i * 17 + Math.floor(p * 24) * 7) % glyphs.length 取乱码字符。\n2. 控制器 scrambleText(el, { duration = 900 })：\n   - 用 WeakMap 保存原始文本（不污染 DOM 属性）。\n   - replay()：若 prefers-reduced-motion: reduce 直接写原文返回；否则启动 rAF 计算 p = Math.min(1, (now - t0) / duration)，调用 scrambleFrame 写入 el.textContent；p >= 1 时强制写回原始文本并停帧。\n   - 提供 setText(next) 与 stop()（卸载时 cancelAnimationFrame 并还原原文）。\n\n硬要求：\n- 目标文本容器必须使用等宽字体（monospace）或固定宽度，防止字符宽度变化引起整行左右抖动。\n- 空格与换行必须原样保留，不得替换为乱码字符。\n- 末帧必须强制写回精确原文，不允许残留乱码。\n- prefers-reduced-motion: reduce 下跳过解码直接呈现原文。\n\n验收：\n- p = 0 时除空格外全为乱码且字符总长度与原文完全一致；p = 0.6 时左侧已定格、右侧仍在跳动；p = 1 时 100% 还原原文。\n- 中英混排与含 emoji 文本解码不出现半个乱码字符。\n- 动画全程无布局宽度跳动，结束后 rAF 停止。",
+        "dont_do": "- 别把每个字符拆成独立 `<span>` 用 CSS 动画替换 —— DOM 节点膨胀且没必要，单节点改 `textContent` 最轻。\n- 别让所有字符用同一个随机索引 —— 整行同步跳动看起来像一块闪烁的砖头。\n- 别在比例字体段落里直接套用而不锁宽 —— 会导致整行剧烈左右晃动。",
+        "skill_rule": "# 赛博乱序解码 (scramble) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】纯函数按进度 p（0..1）将文本前 35% 保持全乱码、后 65% 从左到右依次定格，rAF 每帧仅改 textContent 不增删 DOM 节点，配合等宽字体零重排。\n\n【硬要求】\n- 目标文本容器必须使用等宽字体（monospace）或固定宽度，防止字符宽度变化引起整行左右抖动。\n- 空格与换行必须原样保留，不得替换为乱码字符。\n- 末帧必须强制写回精确原文，不允许残留乱码。\n- prefers-reduced-motion: reduce 下跳过解码直接呈现原文。\n\n【验收标准】\n- p = 0 时除空格外全为乱码且字符总长度与原文完全一致；p = 0.6 时左侧已定格、右侧仍在跳动；p = 1 时 100% 还原原文。\n- 中英混排与含 emoji 文本解码不出现半个乱码字符。\n- 动画全程无布局宽度跳动，结束后 rAF 停止。\n\n【禁止做法】\n- 别把每个字符拆成独立 `<span>` 用 CSS 动画替换 —— DOM 节点膨胀且没必要，单节点改 `textContent` 最轻。\n- 别让所有字符用同一个随机索引 —— 整行同步跳动看起来像一块闪烁的砖头。\n- 别在比例字体段落里直接套用而不锁宽 —— 会导致整行剧烈左右晃动。"
       }
     },
     {
@@ -520,6 +682,29 @@
         "prompt": "实现零图表库依赖的迷你走势线生长动效（SVG Sparkline Draw）。\n\n原理一句话：纯函数将数字数组归一化为 SVG 折线与封闭面积路径，读取真实 path.getTotalLength() 写入 CSS 变量，通过 stroke-dashoffset 按「描线 → 面积淡入 → 末点落位」三拍完成生长。\n\n做法：\n1. 纯函数 sparklineGeometry(values, { width = 120, height = 36, pad = 4 })：\n   - 过滤非有限数；若为空返回空路径。\n   - 计算 min / max / span = max - min；innerW = width - pad * 2，innerH = height - pad * 2。\n   - 每个点：x = n === 1 ? width / 2 : pad + (i / (n - 1)) * innerW；y = span === 0 ? height / 2 : pad + (1 - (v - min) / span) * innerH（全平数据居中画线，绝不除零）。\n   - linePath = \"M x0 y0 L x1 y1 ...\"；areaPath = linePath + \" L xLast (height-pad) L x0 (height-pad) Z\"；trend = 末值与首值比较得 'up' | 'down' | 'same'。\n2. SVG 渲染（每条实例必须用唯一 linearGradient id）：\n   - 渐变填充从 currentColor 26% 透明到 0%；\n   - 折线：fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"；\n   - 末点：<circle cx={last.x} cy={last.y} r=\"2.6\" fill=\"currentColor\" />；\n   - 挂载后立刻测量 len = Math.ceil(line.getTotalLength()) 写入容器变量 --spark-len。\n3. 三拍 CSS 过渡（进入视口加 .is-in 触发）：\n   - 折线：stroke-dasharray: var(--spark-len); stroke-dashoffset: var(--spark-len) → 0（520ms cubic-bezier(0.22,1,0.36,1)）；\n   - 面积：opacity: 0 → 1（380ms ease-out，delay 120ms）；\n   - 末点：opacity: 0, scale(0.4) → opacity: 1, scale(1)（240ms cubic-bezier(0.34,1.56,0.64,1)，delay 380ms，注意 transform-box: fill-box; transform-origin: center）。\n\n硬要求：\n- 必须用 path.getTotalLength() 写精确路径长度，严禁写死 500 或 1000。\n- 全平数据（如 [5, 5, 5, 5]）与单点数据不得出现 NaN。\n- 每条走势线的 SVG linearGradient id 必须全局唯一，防止多行表格删行时连带销毁渐变。\n- prefers-reduced-motion: reduce 下将三拍时长压到 1ms、延迟清零，直接显示完整图形。\n\n验收：\n- 折线在 520ms 内从最左平滑描到最右，中途无停顿或末段加速；渐变面积随后浮现，末点在笔尖到达时轻弹亮起。\n- 传入 [10, 10, 10, 10] 输出水平中线且无 NaN；传入上涨/下跌数组自动切换对应趋势色。\n- 同一表格渲染 10 行走势线并删除第 1 行，其余 9 行渐变填充保持正常。",
         "dont_do": "- 别为了表格里一条 120×36 的走势线引入 ECharts / Chart.js / Recharts。\n- 别把 `stroke-dasharray` 写死成一个大数 —— 会导致曲线开头空等、结尾瞬闪。\n- 别忘了 `transform-box: fill-box` —— SVG `<circle>` 默认以整个 SVG `(0,0)` 为缩放原点，不写这行圆点会从左上角飞进来。",
         "skill_rule": "# 迷你走势线生长 (sparkline-draw) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】纯函数将数字数组归一化为 SVG 折线与封闭面积路径，读取真实 path.getTotalLength() 写入 CSS 变量，通过 stroke-dashoffset 按「描线 → 面积淡入 → 末点落位」三拍完成生长。\n\n【硬要求】\n- 必须用 path.getTotalLength() 写精确路径长度，严禁写死 500 或 1000。\n- 全平数据（如 [5, 5, 5, 5]）与单点数据不得出现 NaN。\n- 每条走势线的 SVG linearGradient id 必须全局唯一，防止多行表格删行时连带销毁渐变。\n- prefers-reduced-motion: reduce 下将三拍时长压到 1ms、延迟清零，直接显示完整图形。\n\n【验收标准】\n- 折线在 520ms 内从最左平滑描到最右，中途无停顿或末段加速；渐变面积随后浮现，末点在笔尖到达时轻弹亮起。\n- 传入 [10, 10, 10, 10] 输出水平中线且无 NaN；传入上涨/下跌数组自动切换对应趋势色。\n- 同一表格渲染 10 行走势线并删除第 1 行，其余 9 行渐变填充保持正常。\n\n【禁止做法】\n- 别为了表格里一条 120×36 的走势线引入 ECharts / Chart.js / Recharts。\n- 别把 `stroke-dasharray` 写死成一个大数 —— 会导致曲线开头空等、结尾瞬闪。\n- 别忘了 `transform-box: fill-box` —— SVG `<circle>` 默认以整个 SVG `(0,0)` 为缩放原点，不写这行圆点会从左上角飞进来。"
+      }
+    },
+    {
+      "id": "sphere",
+      "name": "3D 斐波那契点阵球",
+      "layer": "3d",
+      "nature": "材质",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "v-mk-sphere + .mk-sphere / sphere(el, { count, radius }) / spherePoint(i, count)",
+      "source": "斐波那契球面等面积布点（高度等分 + 黄金角 137.5° + 纯 CSS 3D 零 WebGL）",
+      "file": "effects/sphere.md",
+      "summary": "用 10 行斐波那契等面积数学公式把 120–150 个圆点均匀铺在真三维球面上，纯 CSS `preserve-3d` 缓慢自转，零 Three.js / WebGL 依赖。",
+      "problem": "**全球节点、AI 神经网络或抽象品牌视觉经常需要一颗旋转的 3D 点阵地球，但为此引入 600KB 的 Three.js 实在太重。** 而手写经纬度双层循环会把点全挤在南北两极、赤道空出一圈；用斐波那契高度等分 + 黄金角就能用纯 CSS 3D 渲染出几何完美的等面积光球。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 斐波那契格点：`y = 1 - 2i/(n-1)`（按高度等分即球面等面积）+ 黄金角 `π(3 - √5)` | Three.js / WebGL Canvas 运行时 |\n| 严格 CSS 变换顺序 `rotateY(lon) rotateX(lat) translateZ(r)`，并有单位球模长单测守护 | 按纬度角度等分导致两极堆成一团 |\n| 3D 归零降级：减弱动效下直接 `transform: none` 塌回平面 flex 排布 | 停在半路像一团歪斜乱点 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 黄金角 `golden` | `π * (3 - √5) ≈ 2.39996 rad (137.5°)` | 无理数步进确保相邻点永不排成竖直经线，视觉极其均匀 |\n| 高度等分 `y` | `1 - (i / (n - 1)) * 2` | 球带面积与高度差成正比（阿基米德帽箱定理），按 `y` 等分即全局等面积 |\n| 变换顺序 | `rotateY(lon) → rotateX(lat) → translateZ(r)` | 顺序一旦颠倒点就会偏离单位球面；该顺序有单测验证还原 xyz 后模长恒为 1 |\n| 点数 `count` | `80–150` | 低于 50 看不出球体感，高于 220 在低端移动浏览器里 CSS 3D 合成层压力陡增 |",
+      "implementation": "```\nsrc/core/scene3d.js:180  spherePoint(i, count)            纯函数，已覆盖 6 项几何单测\nsrc/core/scene3d.js:190  sphere(el, { count, radius })    生成圆点并写入经纬度变量\nstyles/3d.css            .mk-sphere-stage / .mk-sphere / .mk-sphere__dot\n```",
+      "degradation": "**走 `3d` 层专属契约：归零塌回平面。**\n\n`prefers-reduced-motion: reduce` 下停止旋转并将所有圆点 `transform: none` 塌回平面排列，不留半空散点。",
+      "pitfalls": "**① 写错 CSS `rotateY` / `rotateX` / `translateZ` 的顺序。**\n必须是 `rotateY(lon) rotateX(lat) translateZ(radius)`；如果把 `translateZ` 放最前面，所有点会先推出去再原地自转，球体直接崩掉。\n\n**② `count === 1` 时 `i / (count - 1)` 除零算出 `NaN`。**\n必须用 `Math.max(count - 1, 1)` 做分母兜底。\n\n**③ 忘了在容器上设 `transform-style: preserve-3d` 与外层 `perspective`。**\n漏掉 `preserve-3d` 会把所有点压扁成一个 2D 圆盘。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零 WebGL / Three.js 依赖的纯 CSS 3D 斐波那契点阵球体（Fibonacci Dot Sphere）。\n\n原理一句话：纯函数按阿基米德高度等分 y = 1 - 2i/(n-1) 与黄金角 π(3-√5) 算出每个点的经纬度，用严格顺序 rotateY(lon) rotateX(lat) translateZ(r) 铺在 preserve-3d 容器上匀速自转。\n\n做法：\n1. 纯函数 spherePoint(i, count)：\n   - golden = Math.PI * (3 - Math.sqrt(5))；n = Math.max(count - 1, 1)。\n   - y = 1 - (i / n) * 2；r = Math.sqrt(Math.max(0, 1 - y * y))；theta = i * golden。\n   - x = Math.cos(theta) * r；z = Math.sin(theta) * r。\n   - 返回纬度 lat = Math.asin(y) * 180 / Math.PI（度），经度 lon = Math.atan2(x, z) * 180 / Math.PI（度）。\n2. DOM 与 CSS 3D：\n   - 外层舞台 .sphere-stage：perspective: 680px; display: grid; place-items: center;\n   - 球体容器 .sphere：position: relative; width: 0; height: 0; transform-style: preserve-3d; animation: sphere-spin 18s linear infinite;\n   - 生成 count（建议 80–140）个点 .sphere-dot：position: absolute; width: 4px; height: 4px; border-radius: 50%; margin: -2px;\n     transform: rotateY(var(--lon)) rotateX(var(--lat)) translateZ(var(--r));\n   - @keyframes sphere-spin { from { transform: rotateX(-14deg) rotateY(0deg); } to { transform: rotateX(-14deg) rotateY(360deg); } }\n\n硬要求：\n- 必须用高度等分 + 黄金角，严禁双层经纬度循环（两极会堆成一团）。\n- CSS 变换顺序必须是 rotateY(lon) rotateX(lat) translateZ(r)，不可调换。\n- count === 1 时不得出现 NaN。\n- prefers-reduced-motion: reduce 下停止旋转并归零塌回平面。\n\n验收：\n- 球面各区域（南北极与赤道）圆点视觉密度完全均匀，无明显经线扎堆。\n- 还原任意点的 (lat, lon) 到三维笛卡尔坐标后模长均为 1（误差 < 1e-6）。\n- 全程零 Canvas / WebGL 上下文创建；开启减弱动效后彻底静止归零。",
+        "dont_do": "- 别引入 Three.js / WebGL 来画一颗 100 个点的装饰球。\n- 别按 `lat` 角度均匀循环 —— 会导致南北极挤成两团白点、赤道空荡荡。\n- 别在一颗球里塞 500 个以上 DOM 节点 —— 保持 80–150 个即可兼顾美观与 60fps。",
+        "skill_rule": "# 3D 斐波那契点阵球 (sphere) · 跨平台动效规范\n性质：材质 ｜ 平台：both\n\n【核心原理】纯函数按阿基米德高度等分 y = 1 - 2i/(n-1) 与黄金角 π(3-√5) 算出每个点的经纬度，用严格顺序 rotateY(lon) rotateX(lat) translateZ(r) 铺在 preserve-3d 容器上匀速自转。\n\n【硬要求】\n- 必须用高度等分 + 黄金角，严禁双层经纬度循环（两极会堆成一团）。\n- CSS 变换顺序必须是 rotateY(lon) rotateX(lat) translateZ(r)，不可调换。\n- count === 1 时不得出现 NaN。\n- prefers-reduced-motion: reduce 下停止旋转并归零塌回平面。\n\n【验收标准】\n- 球面各区域（南北极与赤道）圆点视觉密度完全均匀，无明显经线扎堆。\n- 还原任意点的 (lat, lon) 到三维笛卡尔坐标后模长均为 1（误差 < 1e-6）。\n- 全程零 Canvas / WebGL 上下文创建；开启减弱动效后彻底静止归零。\n\n【禁止做法】\n- 别引入 Three.js / WebGL 来画一颗 100 个点的装饰球。\n- 别按 `lat` 角度均匀循环 —— 会导致南北极挤成两团白点、赤道空荡荡。\n- 别在一颗球里塞 500 个以上 DOM 节点 —— 保持 80–150 个即可兼顾美观与 60fps。"
       }
     },
     {

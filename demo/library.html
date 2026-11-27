@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="../styles/mobile.css" />
 <link rel="stylesheet" href="../styles/glass.css" />
 <link rel="stylesheet" href="../styles/3d.css" />
+<link rel="stylesheet" href="../styles/fun.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
@@ -449,7 +450,7 @@
   }
 
   const NATURES = ['全部', '反馈', '连续', '方向', '权重', '材质', '节奏'];
-  const LAYERS = ['全部', 'motion', 'mobile', 'glass', '3d'];
+  const LAYERS = ['全部', 'motion', 'mobile', 'glass', '3d', 'fun'];
   const DEMO_LINKS = {
     'tap': './mobile.html#sec-tap',
     'long-press': './mobile.html#sec-tap',
@@ -481,12 +482,21 @@
     'tilt': './web.html#holo',
     'spotlight': './web.html#holo',
     'fold': './3d.html',
+    'magnetic': './web.html#pointer',
+    'scramble': './web.html#planar',
+    'confetti': './fun.html',
+    'mgrid': './fun.html',
+    'border-run': './fun.html',
+    'sphere': './3d.html',
+    'ring': './3d.html',
+    'depth': './3d.html',
   };
   const PRESETS = [
+    { name: '炫酷视觉与 3D 套件 (6)', ids: ['border-run', 'confetti', 'mgrid', 'scramble', 'sphere', 'depth'] },
     { name: 'SaaS 数据看板套件 (5)', ids: ['bar-grow', 'cell-flash', 'sparkline-draw', 'state-button', 'toast-stack'] },
     { name: 'iOS 移动端手势套件 (5)', ids: ['tap', 'bottom-sheet', 'swipe', 'pull-refresh', 'rubber-band'] },
     { name: 'Apple 液态玻璃套件 (3)', ids: ['glass-base', 'refraction', 'glass-tap'] },
-    { name: 'Web 材质与微交互 (5)', ids: ['tilt', 'spotlight', 'dock', 'seg', 'fold'] },
+    { name: 'Web 材质与微交互 (5)', ids: ['tilt', 'spotlight', 'magnetic', 'dock', 'fold'] },
   ];
   let activeNature = '全部';
   let activeLayer = '全部';
