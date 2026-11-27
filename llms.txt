@@ -11,7 +11,7 @@
 - Machine-Readable Registry JSON: https://wangjian-damon.github.io/motion-kit/dist/registry.json
 - Skill Entry (SKILL.md): https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/SKILL.md
 
-## Framework-Agnostic Effect Specs (38)
+## Framework-Agnostic Effect Specs (45)
 
 ### 反馈 (8)
 - [单元格涨跌脉冲 (cell-flash)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/cell-flash.md): 实时表格里某个数字变动时，按涨/跌方向在单元格背景打出一记「80ms 瞬时亮起 → 650ms 缓慢退去」的绿/红脉冲，并锁定等宽数字防止整列左右抖动。
@@ -30,12 +30,14 @@
 - [共享元素转场 (shared-element)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shared-element.md): 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。
 - [堆叠轻提示 (toast-stack)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/toast-stack.md): 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。
 
-### 方向 (5)
+### 方向 (7)
 - [边缘返回 (edge-back)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/edge-back.md): 从左边缘 20px 内起手往右拖，页面跟着走；拖过 1/3 屏宽或向右甩，松手返回。
+- [扇形手牌展开 (fan)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/fan.md): 多张卡片绕底部中心点叠成一把闭合扇子，悬停或点击时只需改一个 `--spread` 角度变量，整副卡片同步对称张开成优雅扇面。
 - [3D 折纸面板 (fold)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/fold.md): 面板像沿顶边铰链折起来的纸页一样通过 `rotateX(-92deg → 0deg)` 展开与收起，收起态自动加 `inert` 隔离键盘焦点与误触，减弱动效下彻底归零塌回平面。
 - [3D 环形画廊轮播 (ring)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/ring.md): N 张卡片绕 Y 轴排成真三维圆环，自动缓慢公转；手指或鼠标可随时抓住拖拽甩动，松手后惯性滑行并无缝交还给自动旋转。
 - [吸顶与滚动阴影 (sticky-title)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/sticky-title.md): 吸顶条滚过顶部后，底部那条发丝线自动淡入（0 → 48px 行程）—— `animation-timeline: scroll()` 驱动，零 JS、零监听。
 - [左滑操作 (swipe)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/swipe.md): 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。
+- [无限深渊隧道 (tunnel)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/tunnel.md): 10 道光环共用同一条从远端 `-900px` 冲向镜头 `+200px` 的 CSS 关键帧，靠**负 `animation-delay`** 在第 0 帧就把整条无限深渊隧道铺满，零 JS 动画循环。
 
 ### 权重 (7)
 - [拖动刻度 (detent)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/detent.md): 一个离散的滑块：拖动时**每跨过一格**就立刻提交并震一下，松手吸回刻度。
@@ -46,8 +48,10 @@
 - [橡胶越界阻尼 (rubber-band)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/rubber-band.md): 拖到内容边界外时不硬停（clamp），而是用双曲阻尼让内容越拉越重、永远拉不到头，松手后带轻微过冲弹回界内。
 - [多档位弹层 (snap-sheet)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/snap-sheet.md): 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。
 
-### 材质 (7)
+### 材质 (9)
+- [液态有机变形体 (blob)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/blob.md): 纯 CSS 用 8 值 `border-radius`（四个角的横纵半径分别错开）配合 `8s ease-in-out` 往返插值，让一块色块或头像容器像水滴一样持续有机呼吸变形，零 SVG、零 JS。
 - [流光跑动边框 (border-run)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/border-run.md): 纯 CSS 用 `@property` 登记角度变量驱动 `conic-gradient` 旋转，再用双 `mask` 掏空中间，让一道柔和流光沿着卡片圆角外圈匀速流动，零 JS、不重排。
+- [纯 CSS 3D 旋转魔方 (cube)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/cube.md): 纯 CSS 用六个面分别旋转并沿法线推出 `translateZ(半边长)` 拼合出真三维半透明魔方，单条 `@keyframes` 匀速空间自转，零 JS、零 WebGL。
 - [真 Z 轴景深悬浮卡 (depth)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/depth.md): 把卡片里的背景、标题、徽章分别推到不同的 `translateZ` 高度上，指针一晃容器倾斜，各层由浏览器三维透视自然错开，不需要 JS 手算任何视差偏移。
 - [玻璃基底材质 (glass-base)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/glass-base.md): 把导航栏、操作条、浮层卡片做成有厚度的实心玻璃：低模糊高饱和底材 + 沿圆角连续的 1.5px 斜向亮棱 + 镜面高光，且不挂 JS 也能静态成立。
 - [边缘折射 (refraction)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/refraction.md): 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。
@@ -55,10 +59,13 @@
 - [指针光斑与描边聚光 (spotlight)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/spotlight.md): 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。
 - [3D 倾斜与光泽 (tilt)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/tilt.md): 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。
 
-### 节奏 (6)
+### 节奏 (9)
 - [条形数据生长 (bar-grow)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/bar-grow.md): 表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。
+- [逐字波浪弹跳 (bounce-text)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/bounce-text.md): 初始化把标题按中文单字、英文整词拆成行内块并写入序号变量，悬停或触发时各片段按 `32ms` 间隔依次轻快弹起形成一道文字波浪。
 - [数字滚动 / 里程表 (count-up)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/count-up.md): 两条路：`countUp` 用 rAF 逐帧算值（通用、可格式化）；`odometer` 给每位数 建一列 0–9，只写一次 transform、由 CSS 过渡滑到位（几十个数字同屏也不掉帧）。
 - [进场 (enter)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/enter.md): 元素滚到视口内才入场：上移 16px + 淡入，一组元素按 70ms 级联，全程零滚动监听。
+- [赛博故障字 (glitch)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/glitch.md): 纯 CSS 用 `::before`/`::after` 克隆文字叠加青/品红双色错位与切片裁切，绝大部分时间完全静止可读，只在每 3.4 秒周期末尾用 `steps(1)` 瞬爆一下故障感。
+- [3D 轨道卫星 (orbit)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/orbit.md): 多个图标或徽章沿倾斜三维轨道绕核心匀速公转，通过 `rotateY(a) → translateZ(r) → rotateY(-a)` 反向抵消自转，让卫星始终正面朝向观众，全程零 JS。
 - [赛博乱序解码 (scramble)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/scramble.md): 标题或数字从一串跳动的随机符号里自左向右逐字解码定格成正文，每帧只写 `textContent` 不碰 DOM 结构，搭配等宽字体零宽度抖动。
 - [迷你走势线生长 (sparkline-draw)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/sparkline-draw.md): 纯函数把一串数字映射成轻量 SVG 迷你折线与渐变面积，进入视口时线条从左向右 520ms 平滑描绘，面积晚 120ms 淡入，末端数据点最后轻弹落位。
 - [逐词逐字入场 (split)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/split.md): 初始化时一次性把标题拆成词/字片段并写入递增索引，入场时纯靠 CSS `transition-delay` 按节奏逐个浮现，滚动与缩放零计算。

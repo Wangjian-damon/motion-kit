@@ -604,6 +604,90 @@
       stage.appendChild(scene);
       return MK.trackTilt(card, { max: 16, disabled: false });
     },
+
+    /* ==================== 好玩的 7 件套 ==================== */
+    'glitch'(stage) {
+      const el = document.createElement('div');
+      el.className = 'mk-glitch';
+      el.dataset.text = 'SIGNAL // 45';
+      el.style.cssText = 'font:700 20px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.06em;color:#eef2f7';
+      el.textContent = 'SIGNAL // 45';
+      stage.appendChild(el);
+      return () => {};
+    },
+
+    'blob'(stage) {
+      const b = document.createElement('div');
+      b.className = 'mk-blob';
+      b.style.cssText = 'width:82px;height:82px;background:radial-gradient(circle at 30% 30%,#b8ff3d,#3b82f6);box-shadow:0 12px 30px rgba(96,165,250,0.28)';
+      stage.appendChild(b);
+      return () => {};
+    },
+
+    'bounce-text'(stage) {
+      const el = document.createElement('div');
+      el.style.cssText = 'font-size:18px;font-weight:680;color:#eef2f7;cursor:pointer';
+      el.textContent = '鼠标划过起波浪';
+      stage.appendChild(el);
+      return MK.bounceText(el);
+    },
+
+    'cube'(stage) {
+      const s = document.createElement('div');
+      s.className = 'mk-cube-stage';
+      s.style.cssText = 'width:100%;height:100%;display:grid;place-items:center;perspective:420px';
+      s.innerHTML = `<div class="mk-cube" style="--mk-cube-size:52px;--mk-h:26px">
+        <i class="mk-cube__face mk-cube__face--front">M</i>
+        <i class="mk-cube__face mk-cube__face--back">K</i>
+        <i class="mk-cube__face mk-cube__face--right">3</i>
+        <i class="mk-cube__face mk-cube__face--left">D</i>
+        <i class="mk-cube__face mk-cube__face--top">✦</i>
+        <i class="mk-cube__face mk-cube__face--bottom">◎</i>
+      </div>`;
+      stage.appendChild(s);
+      return () => {};
+    },
+
+    'tunnel'(stage) {
+      const s = document.createElement('div');
+      s.className = 'mk-tunnel-stage';
+      s.style.cssText = 'width:100%;height:100%;display:grid;place-items:center;perspective:300px;overflow:hidden';
+      const t = document.createElement('div');
+      t.className = 'mk-tunnel';
+      s.appendChild(t);
+      stage.appendChild(s);
+      return MK.tunnel(t, { count: 8 });
+    },
+
+    'fan'(stage) {
+      const f = document.createElement('div');
+      f.className = 'mk-fan';
+      f.style.cssText = 'height:92px;width:100%;display:grid;place-items:center;cursor:pointer';
+      ['A', 'B', 'C', 'D', 'E'].forEach((ch) => {
+        const c = document.createElement('div');
+        c.className = 'mk-fan__card';
+        c.style.cssText = 'width:48px;height:68px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:13px';
+        c.textContent = ch;
+        f.appendChild(c);
+      });
+      stage.appendChild(f);
+      return MK.fan(f);
+    },
+
+    'orbit'(stage) {
+      const s = document.createElement('div');
+      s.className = 'mk-orbit-stage';
+      s.style.cssText = 'width:100%;height:100%;display:grid;place-items:center';
+      s.innerHTML = `<div class="mk-orbit" style="--mk-orbit-r:52px">
+        <span class="mk-orbit__core" style="width:24px;height:24px;font-size:11px">✦</span>
+        <span class="mk-orbit__sat">⌘</span>
+        <span class="mk-orbit__sat">⚡</span>
+        <span class="mk-orbit__sat">◈</span>
+        <span class="mk-orbit__sat">◎</span>
+      </div>`;
+      stage.appendChild(s);
+      return () => {};
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

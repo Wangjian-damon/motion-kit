@@ -3,7 +3,7 @@
 # Motion Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-b8ff3d.svg)](./LICENSE)
-[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-38-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
+[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-45-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
 [![Zero Runtime](https://img.shields.io/badge/Runtime%20Deps-0-22c55e.svg)](#use-as-zero-dependency-primitives)
 [![Tests](https://img.shields.io/badge/Tests-129%20passing-22c55e.svg)](#development--verification)
 
