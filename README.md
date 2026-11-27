@@ -1,9 +1,17 @@
+<p align="right"><strong>中文</strong> · <a href="./README.en.md">English</a></p>
+
 # Motion Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-b8ff3d.svg)](./LICENSE)
 [![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-30-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
-[![Zero Runtime](https://img.shields.io/badge/Runtime%20Deps-0-22c55e.svg)](#作为零依赖前端原语引入)
+[![Zero Runtime](https://img.shields.io/badge/Runtime%20Deps-0-22c55e.svg)](#方式-2作为零依赖前端原语引入vue-3--taro--原生-web)
 [![Tests](https://img.shields.io/badge/Tests-129%20passing-22c55e.svg)](#开发与校验)
+
+<p align="center">
+  <a href="https://wangjian-damon.github.io/motion-kit/demo/">
+    <img src="./demo/og-cover.png" alt="MotionKit — 跨平台 AI 动效资产库" width="100%" />
+  </a>
+</p>
 
 **面向 AI 时代的跨平台动效资产库 + 零依赖活体样本库。**
 30 张去库化交互动效规范（物理常量、状态机、三套降级契约、实测踩坑与验收标准），同时配套浏览器端 0 依赖的 Web / 移动端 / 3D / 液态玻璃真实演示。

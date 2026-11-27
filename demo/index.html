@@ -3,184 +3,394 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Motion Kit · 选择展示面</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237dd3fc'/%3E%3C/svg%3E" />
+<title>Motion Kit · 跨平台 AI 动效资产库</title>
+<meta name="description" content="30 张去库化跨平台动效规范与零依赖活体样本库。一次安装，让 AI Agent 在任意技术栈里写出有物理直觉的微交互、手势、数据生长与液态玻璃。" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Motion Kit · Framework-Agnostic AI Motion Asset Library" />
+<meta property="og:description" content="30 battle-tested UI motion specs, physics constants, and zero-dependency live previews. Install once, auto-applied by AI Agents." />
+<meta property="og:url" content="https://wangjian-damon.github.io/motion-kit/demo/" />
+<meta property="og:image" content="https://wangjian-damon.github.io/motion-kit/demo/og-cover.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Motion Kit · Framework-Agnostic AI Motion Asset Library" />
+<meta name="twitter:description" content="30 live interactive UI motion specs, physics constants & 0 runtime deps." />
+<meta name="twitter:image" content="https://wangjian-damon.github.io/motion-kit/demo/og-cover.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090d'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23b8ff3d'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="../styles/motion.css" />
+<link rel="stylesheet" href="../styles/mobile.css" />
+<link rel="stylesheet" href="../styles/glass.css" />
+<link rel="stylesheet" href="../styles/3d.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
     min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 40px 24px;
+    background: var(--bg);
+    position: relative;
+  }
+
+  /* 极细建筑网格底纹 + 顶部柔光氛围（Linear / Vercel 质感） */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(900px 500px at 78% -8%, rgba(184, 255, 61, 0.10), transparent 60%),
-      radial-gradient(700px 420px at 8% 12%, rgba(80, 140, 255, 0.10), transparent 62%),
-      var(--bg);
+      radial-gradient(900px 480px at 50% -12%, rgba(184, 255, 61, 0.11), transparent 62%),
+      radial-gradient(640px 400px at 88% 18%, rgba(96, 165, 250, 0.09), transparent 60%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    mask-image: radial-gradient(ellipse 85% 70% at 50% 20%, #000 35%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 20%, #000 35%, transparent 100%);
   }
 
-  .gate { width: min(920px, 100%); }
-
-  .gate h1 {
-    font-size: clamp(28px, 5vw, 48px);
-    letter-spacing: -0.04em;
-    line-height: 1.08;
-    font-weight: 650;
-    margin: 0 0 14px;
+  .top {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    background: rgba(7, 9, 13, 0.72);
+    border-bottom: 1px solid var(--line);
   }
-  .gate h1 em { font-style: normal; color: var(--accent); }
+  .top-in {
+    width: min(1100px, calc(100% - 40px));
+    margin: 0 auto; height: 58px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    color: var(--fg); text-decoration: none; font-weight: 640; font-size: 14.5px;
+    letter-spacing: -0.015em;
+  }
+  .brand-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 12px rgba(184, 255, 61, 0.7);
+  }
+  .nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .nav a {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 6px 11px; border-radius: 999px;
+    transition: color 140ms ease, background 140ms ease;
+  }
+  .nav a:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .nav a.gh-star {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--fg); border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.04); font-weight: 540; margin-left: 4px;
+  }
+  .nav a.gh-star:hover { border-color: rgba(184,255,61,0.55); background: rgba(184,255,61,0.1); color: var(--accent); }
 
-  .gate > p { color: var(--muted); max-width: 52ch; margin: 0 0 40px; }
+  .wrap { width: min(1100px, calc(100% - 40px)); margin: 0 auto; }
 
-  .faces { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  @media (max-width: 700px) { .faces { grid-template-columns: 1fr; } }
+  /* ---------------- Hero ---------------- */
+  .hero {
+    padding: 68px 0 44px;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .pill-meta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 13px; border-radius: 999px;
+    border: 1px solid rgba(184, 255, 61, 0.28);
+    background: rgba(184, 255, 61, 0.06);
+    color: #d9ff8f; font-size: 12px; font-weight: 540; margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5.4vw, 56px);
+    letter-spacing: -0.04em; line-height: 1.06; font-weight: 680;
+    margin: 0 0 18px; max-width: 18ch;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(110deg, #b8ff3d 15%, #7dd3fc 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero-sub {
+    color: var(--muted); max-width: 58ch; font-size: 15.5px; line-height: 1.66;
+    margin: 0 0 28px;
+  }
 
-  .face {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    border: 1px solid var(--line);
-    border-radius: 20px;
+  .cmd-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 6px 6px 16px; border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(12, 16, 23, 0.9);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    margin-bottom: 22px; max-width: 100%;
+  }
+  .cmd-pill code {
+    font: 400 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cmd-pill code span { color: var(--accent); margin-right: 6px; user-select: none; }
+  .cmd-copy {
+    appearance: none; border: 0; border-radius: 999px; cursor: pointer;
+    background: rgba(255,255,255,0.09); color: var(--fg);
+    font: 560 12px/1 inherit; padding: 8px 14px;
+    transition: all 140ms ease;
+  }
+  .cmd-copy:hover { background: var(--accent); color: #07090d; }
+  .cmd-copy.is-copied { background: #22c55e; color: #041309; }
+
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+  /* ---------------- 首屏精选 4 合 1 互动台 ---------------- */
+  .sec-title {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+    margin: 26px 0 16px; flex-wrap: wrap;
+  }
+  .sec-title h2 { margin: 0; font-size: 20px; font-weight: 630; letter-spacing: -0.02em; }
+  .sec-title a { color: var(--accent); text-decoration: none; font-size: 13.5px; }
+
+  .play-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  }
+  @media (max-width: 760px) { .play-grid { grid-template-columns: 1fr; } }
+
+  .play-card {
+    border: 1px solid var(--line); border-radius: 20px;
+    background: rgba(12, 16, 23, 0.85); padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .asset-stage {
+    position: relative; height: 140px; border-radius: 13px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: radial-gradient(240px 100px at 50% 0%, rgba(184,255,61,0.06), transparent 70%), #080c12;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px; overflow: hidden;
+  }
+  .play-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .play-foot b { font-size: 15px; display: block; }
+  .play-foot small { font-size: 12px; color: var(--muted); }
+  .mini-copy {
+    appearance: none; border: 1px solid rgba(184,255,61,0.3);
+    background: rgba(184,255,61,0.08); color: #d9ff8f;
+    font: 550 12px/1 inherit; padding: 8px 12px; border-radius: 10px; cursor: pointer; flex: none;
+  }
+  .mini-copy:hover { background: var(--accent); color: #07090d; }
+  .mini-copy.is-copied { background: #22c55e; color: #041309; border-color: #22c55e; }
+
+  /* card-previews.js 复用样式 */
+  .pv-col { display: flex; flex-direction: column; }
+  .pv-row { display: flex; align-items: center; }
+  .pv-bar-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+  .pv-bar-row span:first-child { width: 32px; }
+  .pv-bar-row em { font-style: normal; width: 32px; text-align: right; color: var(--fg); }
+  .pv-btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06); color: var(--fg);
+    font: 520 11px/1 inherit; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .pv-btn:hover { border-color: rgba(184,255,61,0.45); color: var(--accent); }
+  .pv-corner { position: absolute; right: 8px; top: 8px; z-index: 4; }
+  .pv-cta {
+    appearance: none; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--accent); color: #07090d; font: 600 13px/1 inherit; padding: 11px 22px;
+  }
+  .pv-toast-card {
+    padding: 9px 12px; border-radius: 11px; font-size: 12px; color: var(--fg);
+    background: #141b26; border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  }
+  .pv-glass-bg {
+    background:
+      radial-gradient(circle at 22% 30%, #3b82f6 0%, transparent 45%),
+      radial-gradient(circle at 78% 72%, #b8ff3d 0%, transparent 45%),
+      #0b101a;
+  }
+  .pv-glass-stripes {
+    background: repeating-linear-gradient(125deg, rgba(184,255,61,0.35) 0 10px, rgba(59,130,246,0.35) 10px 20px, #0b101a 20px 30px);
+  }
+
+  /* ---------------- Before vs After ---------------- */
+  .compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 44px 0;
+  }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+  .cmp-box {
+    border: 1px solid var(--line); border-radius: 18px; padding: 22px;
     background: var(--card);
-    padding: 26px;
-    transition: border-color var(--mk-dur-2) var(--mk-ease-out),
-                transform var(--mk-dur-2) var(--mk-ease-out);
   }
-  @media (hover: hover) { .face:hover { border-color: rgba(255,255,255,0.22); } }
+  .cmp-box--good {
+    border-color: rgba(184, 255, 61, 0.28);
+    background: radial-gradient(420px 160px at 0% 0%, rgba(184, 255, 61, 0.08), transparent 70%), var(--card);
+  }
+  .cmp-kicker { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 10px; }
+  .cmp-box--good .cmp-kicker { color: var(--accent); }
+  .cmp-box h3 { margin: 0 0 12px; font-size: 17px; }
+  .cmp-list { margin: 0; padding-left: 18px; color: #cfd6e2; font-size: 13.5px; line-height: 1.72; }
+  .cmp-list li { margin-bottom: 4px; }
 
-  .face-kicker {
-    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 12px; display: block;
+  /* ---------------- 四端展厅入口 ---------------- */
+  .faces { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 52px; }
+  @media (max-width: 860px) { .faces { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .faces { grid-template-columns: 1fr; } }
+  .face {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid var(--line); border-radius: 16px;
+    background: var(--card); padding: 18px;
+    transition: border-color 160ms ease, transform 160ms ease;
   }
-  .face h2 { font-size: 21px; margin: 0 0 8px; letter-spacing: -0.02em; }
-  .face p { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  @media (hover: hover) { .face:hover { border-color: rgba(255,255,255,0.24); transform: translateY(-2px); } }
+  .face span { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 6px; }
+  .face h3 { margin: 0 0 6px; font-size: 16px; }
+  .face p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
 
-  .face-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .face-tags span {
-    font-size: 11.5px; padding: 3px 9px; border-radius: 999px;
-    border: 1px solid var(--line); color: var(--muted);
+  .site-foot {
+    border-top: 1px solid var(--line); padding: 24px 0 48px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+    font-size: 12.5px; color: var(--muted);
   }
-
-  /* 第三、四张不是第三种"面"，是两层：不分指针，只负责好玩和立体。
-     横跨两栏、各用一种强调色，就是为了让人一眼看出它们不是二选一里的一个。 */
-  .face--stack {
-    grid-column: 1 / -1;
-    --tone: 255, 120, 220;
-    border-color: rgba(var(--tone), 0.22);
-    background:
-      radial-gradient(560px 180px at 10% 0%, rgba(var(--tone), 0.10), transparent 70%),
-      var(--card);
-  }
-  @media (hover: hover) { .face--stack:hover { border-color: rgba(var(--tone), 0.46); } }
-  .face--stack .face-kicker { color: rgb(var(--tone)); }
-  .face--stack .face-tags span { border-color: rgba(var(--tone), 0.24); }
-  .face--fun { --tone: 255, 120, 220; }
-  .face--3d { --tone: 110, 168, 255; }
-  .face--lib { --tone: 184, 255, 61; }
-
-  .foot { margin-top: 34px; font-size: 12.5px; color: var(--muted); }
-  .gate-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-  .gh-star {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 7px 14px; border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 540;
-    transition: border-color var(--mk-dur-1) var(--mk-ease-out), color var(--mk-dur-1) var(--mk-ease-out), background var(--mk-dur-1) var(--mk-ease-out);
-  }
-  .gh-star:hover { border-color: rgba(184, 255, 61, 0.55); background: rgba(184, 255, 61, 0.1); color: var(--accent); }
+  .site-foot a { color: var(--fg); text-decoration: none; }
+  .site-foot a:hover { color: var(--accent); }
 </style>
 </head>
 <body>
+<div class="bg-grid" aria-hidden="true"></div>
 
-<div class="gate">
-  <div class="gate-top">
-    <span class="eyebrow" style="margin:0;">Motion Kit · Open Source</span>
-    <a class="gh-star" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>★ Star on GitHub</a>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="./index.html"><span class="brand-dot"></span>Motion Kit</a>
+    <nav class="nav">
+      <a href="./library.html" style="color:var(--accent);font-weight:560;">AI 资产库 (30)</a>
+      <a href="./mobile.html">移动端</a>
+      <a href="./web.html">Web 端</a>
+      <a href="./3d.html">3D</a>
+      <a href="../llms.txt">llms.txt</a>
+      <a class="gh-star" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>★ Star</a>
+    </nav>
   </div>
-  <h1>两种展示形式，<br />两套动效词汇，<em>外加两层好玩。</em></h1>
-  <p>
-    指针和手指不是一回事。Web 端有悬停、有光斑、有磁吸；移动端只有按下去的那一下、
-    拖拽的跟手、和一块必须省电的电池。共用 token，但词汇分开。
-    再往上还有两层：一层在平面上表演，一层真的把元素推到 Z 轴上。
-  </p>
+</header>
 
-  <div class="faces">
-    <a class="face face--stack face--lib" href="./library.html">
-      <span class="face-kicker">AI Assets · 跨平台 Prompt &amp; Skill 工作台</span>
-      <h2>AI 动效资产库</h2>
-      <p>
-        剥离框架与样板代码，按六大性质（反馈 / 连续 / 方向 / 权重 / 材质 / 节奏）检索所有动效卡片。
-        一键复制去库化的 AI 复现提示词（Prompt）、Skill 约束规则，以及实测参数依据与避坑记录。
-      </p>
-      <div class="face-tags">
-        <span>一键 Copy Prompt</span><span>一键 Copy Skill Rule</span>
-        <span>六大性质筛选</span><span>跨技术栈复现</span><span>唯一真源自动编译</span>
-      </div>
-    </a>
+<main class="wrap">
+  <section class="hero">
+    <span class="pill-meta">✦ Open Source MIT · 30 张去库化动效规范 · 0 运行时依赖 · 129 项单测</span>
+    <h1>给 AI 装上有<em>物理直觉</em>的动效资产。</h1>
+    <p class="hero-sub">
+      框架会迭代，代码会腐烂，但物理规律、状态机、降级契约与踩坑边界不会过期。
+      一次安装，让你的 AI Agent 在 React / Vue / Tailwind / Taro / Flutter / SwiftUI 里直接写出原生级手感。
+    </p>
+    <div class="cmd-pill">
+      <code><span>$</span>npx github:wangjian-damon/motion-kit install</code>
+      <button type="button" class="cmd-copy" id="copyNpx">复制</button>
+    </div>
+    <div class="hero-ctas">
+      <a class="btn btn--accent mk-press" href="./library.html">浏览全部 30 个可交互资产 →</a>
+      <a class="btn btn--ghost mk-press" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">★ Star on GitHub</a>
+    </div>
+  </section>
 
-    <a class="face" href="./web.html">
-      <span class="face-kicker">Desktop · pointer: fine</span>
-      <h2>Web 端</h2>
-      <p>
-        宽幅栅格、多处并置。悬停是主交互，所以倾斜、光斑、磁吸、组内变暗都在这里。
-        编排间隔 70ms，位移 16/32px，让信息在宽屏上"一片片"到位。
-      </p>
-      <div class="face-tags">
-        <span>倾斜与光斑</span><span>磁吸</span><span>视差</span><span>跑马灯</span><span>极光</span>
-      </div>
-    </a>
+  <!-- 首屏即玩 4 合 1 精选互动台 -->
+  <div class="sec-title">
+    <h2>先别看文档，直接动手试四个代表作</h2>
+    <a href="./library.html">查看全部 30 张卡（含 0.25× 慢放与场景打包） →</a>
+  </div>
+  <section class="play-grid" id="playGrid"></section>
 
+  <!-- Before vs After -->
+  <section class="compare">
+    <div class="cmp-box">
+      <span class="cmp-kicker">Without MotionKit Skill</span>
+      <h3>普通 AI 凭空写动效时常踩的坑</h3>
+      <ul class="cmp-list">
+        <li>直接动画 <code>width</code> / <code>height</code> / <code>bottom</code>，整张表格或抽屉每帧重排掉帧</li>
+        <li>漏掉 <code>pointercancel</code>，系统边缘手势抢走事件后弹窗自己误关</li>
+        <li>实时数字不加 <code>tabular-nums</code>，接口秒回时转圈闪一帧像抽风</li>
+        <li>要么完全不写 <code>prefers-reduced-motion</code>，要么一刀切把玻璃导航栏删没</li>
+      </ul>
+    </div>
+    <div class="cmp-box cmp-box--good">
+      <span class="cmp-kicker">With MotionKit Skill · Auto-Applied</span>
+      <h3>装上 MotionKit 后 AI 一次交付的标准</h3>
+      <ul class="cmp-list">
+        <li>全程 <code>transform</code> / <code>clip-path</code> / <code>CSS 变量</code> 合成器运动，零动画库依赖</li>
+        <li>自带经过单测的物理常量（<code>c=0.55</code> 橡胶阻尼、<code>28% / 0.55px/ms</code> 速度投影）</li>
+        <li><code>grid-area: 1/1</code> 零宽跳 + <code>400ms</code> 防闪 + <code>320ms</code> 封顶级联，不拖慢扫读</li>
+        <li>三套分级降级契约（Motion 减 / 3D 归零 / 玻璃冻住）与可观测验收清单</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 四端完整展厅 -->
+  <div class="sec-title">
+    <h2>按展示面沉浸式体验</h2>
+    <a href="../llms.txt">给 Cursor @Docs 投喂 llms.txt →</a>
+  </div>
+  <section class="faces">
     <a class="face" href="./mobile.html">
-      <span class="face-kicker">Mobile · pointer: coarse</span>
-      <h2>移动端</h2>
-      <p>
-        单列、全宽、拇指区优先。没有悬停，所以一切反馈都发生在按下那一刻：
-        深按压、长按、底部弹层拖拽、左滑、下拉刷新。位移收到 12px，编排收到 45ms。
-      </p>
-      <div class="face-tags">
-        <span>按下即反馈</span><span>底部弹层</span><span>左滑</span><span>下拉刷新</span><span>省电降级</span>
-      </div>
+      <span>Mobile · pointer: coarse</span>
+      <h3>移动端展示面</h3>
+      <p>390×844 设备框：按压、长按菜单、多档位弹层、左滑、下拉刷新、橡胶阻尼与液态玻璃。</p>
     </a>
-
-    <a class="face face--stack face--fun" href="./fun.html">
-      <span class="face-kicker">Playground · 不承载信息</span>
-      <h2>好玩的</h2>
-      <p>
-        十六个纯装饰效果：故障字、霓虹、描边填充、逐字弹跳、摇摆、抖动、脉冲、变形、
-        扫描线、跑动边框、3D 立方、堆叠卡、漂浮、撒花、磁性点阵、光标跟随。
-        可以慢放到 0.1 倍速，看清每一帧；也可以整页暂停、单卡重播。
-      </p>
-      <div class="face-tags">
-        <span>16 个可交互卡片</span><span>1× / 0.5× / 0.25× / 0.1× 慢放</span>
-        <span>全局暂停</span><span>单卡重播</span><span>无依赖 · 纯 CSS + WAAPI</span>
-      </div>
+    <a class="face" href="./web.html">
+      <span>Desktop · pointer: fine</span>
+      <h3>Web 端展示面</h3>
+      <p>倾斜光斑、停靠栏、Sonner 堆叠提示、四态按钮与零图表库实时数据表格看板。</p>
     </a>
-
-    <a class="face face--stack face--3d" href="./3d.html">
-      <span class="face-kicker">Depth · 真的有 Z 轴</span>
-      <h2>3D</h2>
-      <p>
-        十个真三维场景：景深卡片按指针倾斜，层与层自己错开；环形轮播可拖拽甩动；
-        无限隧道、点阵球体、扇形卡组、轨道卫星、跟手立方体、折纸面板、透视网格地面。
-        这一层降级的方式不是"停住"，而是"归零"——塌回平面，不留一堆歪掉的方块。
-      </p>
-      <div class="face-tags">
-        <span>10 个三维场景</span><span>透视算视差</span><span>斐波那契球面</span>
-        <span>拖拽惯性</span><span>归零降级</span>
-      </div>
+    <a class="face" href="./3d.html">
+      <span style="color:#6ea8ff;">Depth · True Z-Axis</span>
+      <h3>3D 空间层</h3>
+      <p>透视景深、斐波那契球面、环形轮播与折纸面板，减弱动效一律归零塌回平面。</p>
     </a>
-  </div>
+    <a class="face" href="./fun.html">
+      <span style="color:#ff78dc;">Playground · 0.1× Slow-Mo</span>
+      <h3>趣味装饰层</h3>
+      <p>16 张纯装饰实验卡片，支持 0.1× 慢放、全局暂停与单卡重播。</p>
+    </a>
+  </section>
 
-  <div class="foot">
-    原地跳转：<a href="./library.html" style="color:var(--accent)">library.html (AI 资产库)</a> ·
-    <a href="./web.html" style="color:var(--accent)">web.html</a> ·
-    <a href="./mobile.html" style="color:var(--accent)">mobile.html</a> ·
-    <a href="./fun.html" style="color:#ff78dc">fun.html</a> ·
-    <a href="./3d.html" style="color:#6ea8ff">3d.html</a>
-    &nbsp;·&nbsp; 移动端页在桌面上会给一个 390×844 的设备框，真机上就是全屏。
-  </div>
-</div>
+  <footer class="site-foot">
+    <span>Motion Kit · MIT License © 2025–2026 Wangjian-damon</span>
+    <span>
+      <a href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">GitHub</a> ·
+      <a href="./library.html">AI 资产库</a> ·
+      <a href="../llms.txt">llms.txt</a> ·
+      <a href="../dist/registry.json">registry.json</a>
+    </span>
+  </footer>
+</main>
 
+<script src="./motion-kit.global.js"></script>
+<script src="./registry.data.js"></script>
+<script src="./card-previews.js"></script>
+<script>
+(() => {
+  const copy = async (text, btn, done = '已复制') => {
+    try { await navigator.clipboard.writeText(text); } catch {
+      const ta = document.createElement('textarea'); ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    const orig = btn.textContent;
+    btn.textContent = done; btn.classList.add('is-copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('is-copied'); }, 1300);
+  };
+
+  const npxBtn = document.getElementById('copyNpx');
+  npxBtn.onclick = () => copy('npx github:wangjian-damon/motion-kit install', npxBtn, '✓ 已复制');
+
+  const reg = window.__MK_REGISTRY__;
+  const byId = new Map((reg?.effects || []).map((e) => [e.id, e]));
+  const grid = document.getElementById('playGrid');
+  const FEATURED = [
+    { id: 'refraction', sub: 'SDF 法线位移图 · 真实折弯背景光带' },
+    { id: 'state-button', sub: '四态同格零宽跳 · 400ms 防闪 · 失败重试' },
+    { id: 'toast-stack', sub: 'Sonner 三层微缩露边 · 悬停展开 · 横甩消除' },
+    { id: 'bar-grow', sub: 'scaleX 合成器生长 · 320ms 封顶级联 · 原地刷新' },
+  ];
+
+  for (const item of FEATURED) {
+    const card = byId.get(item.id);
+    if (!card) continue;
+    const box = document.createElement('article');
+    box.className = 'play-card';
+    box.innerHTML = `
+      <div class="asset-stage"></div>
+      <div class="play-foot">
+        <div><b>${card.name}</b><small>${item.sub}</small></div>
+        <button type="button" class="mini-copy">Copy Prompt</button>
+      </div>`;
+    const prompt = card.ai_assets.prompt + (card.ai_assets.dont_do ? `\n\n别让它做的：\n${card.ai_assets.dont_do}` : '');
+    box.querySelector('.mini-copy').onclick = (e) => copy(prompt, e.currentTarget, '✓ 已复制');
+    grid.appendChild(box);
+    window.mountCardPreview?.(item.id, box.querySelector('.asset-stage'));
+  }
+})();
+</script>
 </body>
 </html>
