@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-export const VALID_LAYERS = new Set(['motion', 'mobile', 'fun', '3d', 'glass']);
+export const VALID_LAYERS = new Set(['motion', 'mobile', 'fun', '3d', 'glass', 'webgl']);
 export const VALID_NATURES = new Set(['反馈', '连续', '方向', '权重', '材质', '节奏']);
 export const VALID_PLATFORMS = new Set(['web', 'touch', 'both']);
 export const VALID_STATUSES = new Set(['shipped', 'planned', 'rejected']);

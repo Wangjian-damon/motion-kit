@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="../styles/glass.css" />
 <link rel="stylesheet" href="../styles/3d.css" />
 <link rel="stylesheet" href="../styles/fun.css" />
+<link rel="stylesheet" href="../styles/webgl.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
@@ -450,7 +451,7 @@
   }
 
   const NATURES = ['全部', '反馈', '连续', '方向', '权重', '材质', '节奏'];
-  const LAYERS = ['全部', 'motion', 'mobile', 'glass', '3d', 'fun'];
+  const LAYERS = ['全部', 'motion', 'mobile', 'glass', '3d', 'fun', 'webgl'];
   const DEMO_LINKS = {
     'tap': './mobile.html#sec-tap',
     'long-press': './mobile.html#sec-tap',
@@ -499,6 +500,7 @@
     'orbit': './3d.html',
   };
   const PRESETS = [
+    { name: '原生 WebGL Shader 套件 (3)', ids: ['shader-aurora', 'shader-orb', 'shader-ripple'] },
     { name: '炫酷视觉与 3D 套件 (8)', ids: ['border-run', 'confetti', 'mgrid', 'scramble', 'sphere', 'depth', 'tunnel', 'fan'] },
     { name: '好玩的纯 CSS 彩蛋 (5)', ids: ['glitch', 'blob', 'bounce-text', 'cube', 'orbit'] },
     { name: 'SaaS 数据看板套件 (5)', ids: ['bar-grow', 'cell-flash', 'sparkline-draw', 'state-button', 'toast-stack'] },

@@ -1,0 +1,63 @@
+/* ============================================================
+   webgl.css — 原生 WebGL Shader 层的容器与降级底色。
+
+   第五套降级契约：「退回渐变」。
+     · 不支持 WebGL / shader 编译失败 / context lost → .is-fallback，
+       canvas 不渲染，容器自身的 CSS 渐变就是最终画面，版面不塌、不黑屏；
+     · 画布第一帧画好之前（.is-ready 之前）同样显示这层渐变，
+       所以首屏不会闪一下黑块再出画面；
+     · prefers-reduced-motion 由 JS 处理：只画一帧静态画面，不起 rAF。
+   ============================================================ */
+
+.mk-shader {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--mk-shader-fallback, #07090d);
+}
+
+.mk-shader > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 600ms var(--mk-ease-out, ease-out);
+  pointer-events: none;
+}
+
+.mk-shader.is-ready > canvas { opacity: 1; }
+.mk-shader.is-fallback > canvas { display: none; }
+
+.mk-shader--aurora {
+  --mk-shader-fallback:
+    radial-gradient(60% 70% at 30% 55%, rgba(96, 165, 250, 0.42), transparent 70%),
+    radial-gradient(50% 60% at 70% 50%, rgba(184, 255, 61, 0.30), transparent 70%),
+    radial-gradient(40% 50% at 55% 30%, rgba(139, 92, 246, 0.32), transparent 70%),
+    #07090d;
+}
+
+.mk-shader--orb {
+  background: transparent;
+  --mk-shader-fallback: transparent;
+}
+.mk-shader--orb::before {
+  content: '';
+  position: absolute;
+  inset: 21%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, rgba(255, 255, 255, 0.35), transparent 30%),
+              radial-gradient(circle at 50% 50%, #8b5cf6, #60a5fa 55%, #b8ff3d 100%);
+  box-shadow: 0 0 40px rgba(184, 255, 61, 0.35);
+  transition: opacity 600ms ease-out;
+  z-index: -1;
+}
+.mk-shader--orb.is-ready::before { opacity: 0; }
+
+.mk-shader--ripple {
+  cursor: crosshair;
+  --mk-shader-fallback:
+    repeating-linear-gradient(125deg, rgba(184, 255, 61, 0.14) 0 9px, rgba(96, 165, 250, 0.14) 9px 18px),
+    linear-gradient(180deg, #0f1626, #090d17);
+}

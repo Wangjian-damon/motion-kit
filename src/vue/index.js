@@ -38,6 +38,7 @@ import { rubber, rubberBand, rubberClamp } from '../core/rubber.js';
 import { toastStack, stackLayout, stackHeight, shouldSwipeToast } from '../core/toast-stack.js';
 import { stateButton, nextButtonState, loadingRemaining } from '../core/state-button.js';
 import { barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline } from '../core/data.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, shaderCanvas, shaderAurora, shaderOrb, shaderRipple } from '../core/shader.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -802,6 +803,7 @@ export {
   toastStack, stackLayout, stackHeight, shouldSwipeToast,
   stateButton, nextButtonState, loadingRemaining,
   barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline,
+  cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, shaderCanvas, shaderAurora, shaderOrb, shaderRipple,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

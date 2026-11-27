@@ -1,9 +1,9 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**45** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**48** 张纯净去库化跨平台动效资产卡。
 
-## 反馈（8）
+## 反馈（9）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -13,6 +13,7 @@
 | `glass-tap` | 点击高光 | touch | 玻璃上的光不跟着手指走 —— 点一下，光聚到触点、形状压扁回弹、光晕炸开，然后自己散回去。 | `./effects/glass-tap.md` |
 | `long-press` | 长按 | touch | 按住不动 480ms，元素轻微下沉、震一下，并触发回调；提前松手或手指滑走即取消。 | `./effects/long-press.md` |
 | `ripple` | 点击涟漪 | both | 在点击点插一个绝对定位的圆，从 0 放大到覆盖全元素同时淡出，动画结束自动摘节点。 | `./effects/ripple.md` |
+| `shader-ripple` | WebGL 光学水波纹折射 | both | 点击或触碰表面时，片元着色器从触点向外扩散一圈带高斯包络的物理水波，实时折弯底层纹理并叠加波峰高光与轻微色散；支持 6 道波纹并发叠加与自动过期复用。 | `./effects/shader-ripple.md` |
 | `state-button` | 态变按钮 | both | 把提交按钮的 `idle → loading → success / error → idle` 压进同一个不跳宽的网格格子里，旧文案上移微糊退场、新文案下移弹入，且自带 400ms 最低加载时长与防连点锁。 | `./effects/state-button.md` |
 | `tap` | 按下即反馈 | touch | `pointerdown` 那一帧就按下（`scale(0.955)` + 提亮），松手/滑走撤掉 —— 把"按了"的确认从 `:active` 的 100ms 之后拉回第 0ms。 | `./effects/tap.md` |
 
@@ -50,7 +51,7 @@
 | `rubber-band` | 橡胶越界阻尼 | both | 拖到内容边界外时不硬停（clamp），而是用双曲阻尼让内容越拉越重、永远拉不到头，松手后带轻微过冲弹回界内。 | `./effects/rubber-band.md` |
 | `snap-sheet` | 多档位弹层 | touch | 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。 | `./effects/snap-sheet.md` |
 
-## 材质（9）
+## 材质（11）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -60,6 +61,8 @@
 | `depth` | 真 Z 轴景深悬浮卡 | web | 把卡片里的背景、标题、徽章分别推到不同的 `translateZ` 高度上，指针一晃容器倾斜，各层由浏览器三维透视自然错开，不需要 JS 手算任何视差偏移。 | `./effects/depth.md` |
 | `glass-base` | 玻璃基底材质 | both | 把导航栏、操作条、浮层卡片做成有厚度的实心玻璃：低模糊高饱和底材 + 沿圆角连续的 1.5px 斜向亮棱 + 镜面高光，且不挂 JS 也能静态成立。 | `./effects/glass-base.md` |
 | `refraction` | 边缘折射 | both | 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。 | `./effects/refraction.md` |
+| `shader-aurora` | WebGL 流体丝绸极光 | both | 原生 WebGL 全屏三角形 + 2D Simplex Noise 域扭曲（Domain Warping FBM）渲染多色丝绸极光，指针划过产生柔和流体扰动；零 Three.js 依赖，不支持或切后台时自动停帧或退回 CSS 渐变。 | `./effects/shader-aurora.md` |
+| `shader-orb` | WebGL AI 液态能量光球 | both | 原生 WebGL 用噪声扰动的圆 SDF + Fresnel 边缘亮环 + 外辉光渲染一颗漂浮的 AI 能量光球，支持 `idle` / `listening` / `thinking` 三态指数平滑切换呼吸速度与光晕强度。 | `./effects/shader-orb.md` |
 | `sphere` | 3D 斐波那契点阵球 | both | 用 10 行斐波那契等面积数学公式把 120–150 个圆点均匀铺在真三维球面上，纯 CSS `preserve-3d` 缓慢自转，零 Three.js / WebGL 依赖。 | `./effects/sphere.md` |
 | `spotlight` | 指针光斑与描边聚光 | web | 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。 | `./effects/spotlight.md` |
 | `tilt` | 3D 倾斜与光泽 | web | 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。 | `./effects/tilt.md` |

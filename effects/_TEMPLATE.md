@@ -7,7 +7,7 @@
 ---
 id: 短横线小写，等于文件名
 name: 中文名
-layer: motion | mobile | fun | 3d | glass
+layer: motion | mobile | fun | 3d | glass | webgl
 nature: 反馈 | 连续 | 方向 | 权重 | 材质 | 节奏
 platform: web | touch | both
 status: shipped | planned | rejected

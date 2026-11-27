@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="../styles/mobile.css" />
 <link rel="stylesheet" href="../styles/glass.css" />
 <link rel="stylesheet" href="../styles/3d.css" />
+<link rel="stylesheet" href="../styles/webgl.css" />
 <link rel="stylesheet" href="./demo.css" />
 <style>
   body {
@@ -247,7 +248,7 @@
   <div class="top-in">
     <a class="brand" href="./index.html"><span class="brand-dot"></span>Motion Kit</a>
     <nav class="nav">
-      <a href="./library.html" style="color:var(--accent);font-weight:560;">AI 资产库 (45)</a>
+      <a href="./library.html" style="color:var(--accent);font-weight:560;">AI 资产库 (48)</a>
       <a href="./mobile.html">移动端</a>
       <a href="./web.html">Web 端</a>
       <a href="./3d.html">3D</a>
@@ -259,7 +260,7 @@
 
 <main class="wrap">
   <section class="hero">
-    <span class="pill-meta">✦ Open Source MIT · 45 张去库化动效规范 · 0 运行时依赖 · 129 项单测</span>
+    <span class="pill-meta">✦ Open Source MIT · 48 张去库化动效规范（含原生 WebGL Shader）· 0 运行时依赖 · 134 项单测</span>
     <h1>给 AI 装上有<em>物理直觉</em>的动效资产。</h1>
     <p class="hero-sub">
       框架会迭代，代码会腐烂，但物理规律、状态机、降级契约与踩坑边界不会过期。
@@ -270,15 +271,15 @@
       <button type="button" class="cmd-copy" id="copyNpx">复制</button>
     </div>
     <div class="hero-ctas">
-      <a class="btn btn--accent mk-press" href="./library.html">浏览全部 45 个可交互资产 →</a>
+      <a class="btn btn--accent mk-press" href="./library.html">浏览全部 48 个可交互资产 →</a>
       <a class="btn btn--ghost mk-press" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">★ Star on GitHub</a>
     </div>
   </section>
 
-  <!-- 首屏即玩 4 合 1 精选互动台 -->
+  <!-- 首屏即玩 6 合 1 精选互动台 -->
   <div class="sec-title">
-    <h2>先别看文档，直接动手试四个代表作</h2>
-    <a href="./library.html">查看全部 30 张卡（含 0.25× 慢放与场景打包） →</a>
+    <h2>先别看文档，直接动手试六个代表作</h2>
+    <a href="./library.html">查看全部 48 张卡（含 0.25× 慢放与场景打包） →</a>
   </div>
   <section class="play-grid" id="playGrid"></section>
 
@@ -368,10 +369,12 @@
   const byId = new Map((reg?.effects || []).map((e) => [e.id, e]));
   const grid = document.getElementById('playGrid');
   const FEATURED = [
+    { id: 'shader-aurora', sub: '原生 WebGL 域扭曲 FBM · 零 Three.js · 离屏停帧' },
+    { id: 'shader-orb', sub: 'SDF + Fresnel AI 光球 · idle / listening / thinking' },
+    { id: 'shader-ripple', sub: '点击任意处荡开 6 槽并发光学水波与轻微色散' },
     { id: 'refraction', sub: 'SDF 法线位移图 · 真实折弯背景光带' },
     { id: 'state-button', sub: '四态同格零宽跳 · 400ms 防闪 · 失败重试' },
     { id: 'toast-stack', sub: 'Sonner 三层微缩露边 · 悬停展开 · 横甩消除' },
-    { id: 'bar-grow', sub: 'scaleX 合成器生长 · 320ms 封顶级联 · 原地刷新' },
   ];
 
   for (const item of FEATURED) {

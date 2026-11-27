@@ -19,6 +19,7 @@ import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
 import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot } from '../src/core/shader.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -999,12 +1000,60 @@ t('sparklineGeometry：坐标归一化、全平不除零、空数组安全', () 
   assert.equal(empty.linePath, '');
 });
 
+console.log('\n原生 WebGL Shader 层');
+
+t('cappedDpr：封顶 1.5，非法值回退 1，低分屏保留原值', () => {
+  assert.equal(cappedDpr(3, 1.5), 1.5);
+  assert.equal(cappedDpr(1, 1.5), 1);
+  assert.equal(cappedDpr(0.75, 1.5), 0.75);
+  assert.equal(cappedDpr(NaN, 1.5), 1);
+  assert.equal(cappedDpr(-2, 1.5), 1);
+});
+
+t('canvasSize：DPR 封顶 + 总像素上限双保护，零尺寸至少 1×1', () => {
+  const normal = canvasSize(300, 150, 3, 1.5, 1200000);
+  assert.equal(normal.width, 450);
+  assert.equal(normal.height, 225);
+
+  const huge = canvasSize(2560, 1440, 2, 1.5, 1200000);
+  assert.ok(huge.width * huge.height <= 1200000, `总像素应 <= 1.2M，实际 ${huge.width * huge.height}`);
+
+  const zero = canvasSize(0, 0, 2);
+  assert.equal(zero.width, 1);
+  assert.equal(zero.height, 1);
+});
+
+t('orbEnergy：三态映射准确，数字输入钳制在 0..1', () => {
+  assert.equal(orbEnergy('idle'), 0.25);
+  assert.equal(orbEnergy('listening'), 0.6);
+  assert.equal(orbEnergy('thinking'), 1);
+  assert.equal(orbEnergy('unknown'), 0.25);
+  assert.equal(orbEnergy(0.8), 0.8);
+  assert.equal(orbEnergy(2.5), 1);
+  assert.equal(orbEnergy(-0.5), 0);
+});
+
+t('rippleEnvelope：起点 1、单调平方衰减、越界归 0', () => {
+  assert.equal(rippleEnvelope(0, 2.2), 1);
+  assert.ok(Math.abs(rippleEnvelope(1.1, 2.2) - 0.25) < 1e-9);
+  assert.equal(rippleEnvelope(2.2, 2.2), 0);
+  assert.equal(rippleEnvelope(-0.1, 2.2), 0);
+  assert.equal(rippleEnvelope(NaN, 2.2), 0);
+});
+
+t('rippleSlot：优先空槽与过期槽，全忙时覆盖最老槽', () => {
+  assert.equal(rippleSlot([-1, -1, -1], 1.0, 2.2), 0);
+  assert.equal(rippleSlot([1.0, -1, 1.2], 1.5, 2.2), 1);
+  assert.equal(rippleSlot([0.1, 2.0, 2.2], 2.5, 2.2), 0); // 0.1 已过期
+  assert.equal(rippleSlot([2.0, 1.5, 2.2], 2.5, 2.2), 1); // 全忙，1.5 最老
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 45, `应至少包含 45 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 48, `应至少包含 48 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

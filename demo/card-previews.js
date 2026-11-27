@@ -688,6 +688,55 @@
       stage.appendChild(s);
       return () => {};
     },
+
+    /* ==================== 原生 WebGL Shader 3 件套 ==================== */
+    'shader-aurora'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%;display:grid;place-items:center';
+      const label = document.createElement('span');
+      label.style.cssText = 'position:relative;z-index:2;font-size:12px;font-weight:600;color:rgba(255,255,255,0.88);text-shadow:0 2px 10px rgba(0,0,0,0.6);pointer-events:none';
+      label.textContent = '划过看 WebGL 丝绸流体扰动';
+      host.appendChild(label);
+      stage.appendChild(host);
+      const ctrl = MK.shaderAurora(host);
+      return () => ctrl.destroy();
+    },
+
+    'shader-orb'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderOrb(host, { state: 'listening' });
+      const bar = document.createElement('div');
+      bar.style.cssText = 'position:absolute;right:8px;top:8px;z-index:4;display:flex;gap:4px';
+      ['idle', 'listening', 'thinking'].forEach((st) => {
+        const b = miniBtn(st);
+        if (st === 'listening') b.style.borderColor = 'rgba(184,255,61,0.65)';
+        b.onclick = () => {
+          ctrl.setState(st);
+          [...bar.children].forEach((c) => { c.style.borderColor = ''; });
+          b.style.borderColor = 'rgba(184,255,61,0.65)';
+        };
+        bar.appendChild(b);
+      });
+      stage.appendChild(bar);
+      return () => ctrl.destroy();
+    },
+
+    'shader-ripple'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%;display:grid;place-items:center';
+      const label = document.createElement('span');
+      label.style.cssText = 'position:relative;z-index:2;font-size:12px;font-weight:600;color:rgba(255,255,255,0.88);text-shadow:0 2px 10px rgba(0,0,0,0.65);pointer-events:none';
+      label.textContent = '点击任意位置荡开光学水波';
+      host.appendChild(label);
+      stage.appendChild(host);
+      const ctrl = MK.shaderRipple(host);
+      return () => ctrl.destroy();
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {
