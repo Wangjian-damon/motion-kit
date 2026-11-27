@@ -11,7 +11,7 @@
 - Machine-Readable Registry JSON: https://wangjian-damon.github.io/motion-kit/dist/registry.json
 - Skill Entry (SKILL.md): https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/SKILL.md
 
-## Framework-Agnostic Effect Specs (48)
+## Framework-Agnostic Effect Specs (52)
 
 ### 反馈 (9)
 - [单元格涨跌脉冲 (cell-flash)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/cell-flash.md): 实时表格里某个数字变动时，按涨/跌方向在单元格背景打出一记「80ms 瞬时亮起 → 650ms 缓慢退去」的绿/红脉冲，并锁定等宽数字防止整列左右抖动。
@@ -31,7 +31,8 @@
 - [共享元素转场 (shared-element)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shared-element.md): 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。
 - [堆叠轻提示 (toast-stack)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/toast-stack.md): 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。
 
-### 方向 (7)
+### 方向 (8)
+- [3D 封面流画廊 (coverflow)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/coverflow.md): 居中封面正对观众且沿 Z 轴微向前凸出，左右两侧封面以对称 `±42°` 斜切退后叠排；点任意侧卡、左右滑或按方向键，整排封面丝滑滑切并自动更新层次。
 - [边缘返回 (edge-back)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/edge-back.md): 从左边缘 20px 内起手往右拖，页面跟着走；拖过 1/3 屏宽或向右甩，松手返回。
 - [扇形手牌展开 (fan)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/fan.md): 多张卡片绕底部中心点叠成一把闭合扇子，悬停或点击时只需改一个 `--spread` 角度变量，整副卡片同步对称张开成优雅扇面。
 - [3D 折纸面板 (fold)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/fold.md): 面板像沿顶边铰链折起来的纸页一样通过 `rotateX(-92deg → 0deg)` 展开与收起，收起态自动加 `inert` 隔离键盘焦点与误触，减弱动效下彻底归零塌回平面。
@@ -40,16 +41,17 @@
 - [左滑操作 (swipe)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/swipe.md): 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。
 - [无限深渊隧道 (tunnel)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/tunnel.md): 10 道光环共用同一条从远端 `-900px` 冲向镜头 `+200px` 的 CSS 关键帧，靠**负 `animation-delay`** 在第 0 帧就把整条无限深渊隧道铺满，零 JS 动画循环。
 
-### 权重 (7)
+### 权重 (8)
 - [拖动刻度 (detent)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/detent.md): 一个离散的滑块：拖动时**每跨过一格**就立刻提交并震一下，松手吸回刻度。
 - [停靠栏放大 (dock)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/dock.md): 一排图标里，指针指哪个哪个最大、左右邻居依次变小——放大曲线是一条平方衰减。
 - [磁吸按钮 (magnetic)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/magnetic.md): 指针靠近按钮周围 90px 判定区时，按钮被柔和拉向指针方向（最大偏移 14px），离开判定区后沿阻尼插值自然弹回原位。
 - [磁性斥力点阵 (mgrid)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/mgrid.md): 桌面指针划过点阵区域时，半径 90px 内的圆点按二次衰减公式背离指针平滑推开，越近推得越远、边缘处连续归零不突兀。
 - [下拉刷新 (pull-refresh)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/pull-refresh.md): 列表滚到顶后继续往下拉，指示器跟着长出来（带阻尼），拉过阈值松手就刷新。
 - [橡胶越界阻尼 (rubber-band)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/rubber-band.md): 拖到内容边界外时不硬停（clamp），而是用双曲阻尼让内容越拉越重、永远拉不到头，松手后带轻微过冲弹回界内。
+- [WebGL 3D GPU 星尘粒子星云 (shader-particles)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shader-particles.md): 单次 `gl.drawArrays(gl.POINTS, 0, 1500)` 在 GPU 上同时投影并渲染 1,500 颗三旋臂 3D 螺旋星云粒子，近大远小带景深光晕，随指针平滑转动整个星系视角。
 - [多档位弹层 (snap-sheet)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/snap-sheet.md): 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。
 
-### 材质 (11)
+### 材质 (12)
 - [液态有机变形体 (blob)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/blob.md): 纯 CSS 用 8 值 `border-radius`（四个角的横纵半径分别错开）配合 `8s ease-in-out` 往返插值，让一块色块或头像容器像水滴一样持续有机呼吸变形，零 SVG、零 JS。
 - [流光跑动边框 (border-run)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/border-run.md): 纯 CSS 用 `@property` 登记角度变量驱动 `conic-gradient` 旋转，再用双 `mask` 掏空中间，让一道柔和流光沿着卡片圆角外圈匀速流动，零 JS、不重排。
 - [纯 CSS 3D 旋转魔方 (cube)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/cube.md): 纯 CSS 用六个面分别旋转并沿法线推出 `translateZ(半边长)` 拼合出真三维半透明魔方，单条 `@keyframes` 匀速空间自转，零 JS、零 WebGL。
@@ -58,11 +60,13 @@
 - [边缘折射 (refraction)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/refraction.md): 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。
 - [WebGL 流体丝绸极光 (shader-aurora)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shader-aurora.md): 原生 WebGL 全屏三角形 + 2D Simplex Noise 域扭曲（Domain Warping FBM）渲染多色丝绸极光，指针划过产生柔和流体扰动；零 Three.js 依赖，不支持或切后台时自动停帧或退回 CSS 渐变。
 - [WebGL AI 液态能量光球 (shader-orb)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shader-orb.md): 原生 WebGL 用噪声扰动的圆 SDF + Fresnel 边缘亮环 + 外辉光渲染一颗漂浮的 AI 能量光球，支持 `idle` / `listening` / `thinking` 三态指数平滑切换呼吸速度与光晕强度。
+- [WebGL 3D 液态扭环射线步进 (shader-torus)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/shader-torus.md): 零 Three.js、零网格顶点，只用一个全屏三角形在片元着色器里跑 44 步 3D 射线步进（Raymarching），实时雕塑出一枚随指针旋转、表面流动虹彩金属高光的 3D 液态扭环。
 - [3D 斐波那契点阵球 (sphere)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/sphere.md): 用 10 行斐波那契等面积数学公式把 120–150 个圆点均匀铺在真三维球面上，纯 CSS `preserve-3d` 缓慢自转，零 Three.js / WebGL 依赖。
 - [指针光斑与描边聚光 (spotlight)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/spotlight.md): 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。
 - [3D 倾斜与光泽 (tilt)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/tilt.md): 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。
 
-### 节奏 (9)
+### 节奏 (10)
+- [3D 等轴立体数据柱图 (bar-3d)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/bar-3d.md): 每根数据柱用前、右、顶三个真实 `preserve-3d` 平面在等轴视角下拼成实心立方体，首屏按 320ms 封顶级联拔地而起，数据刷新时只需改一个高度变量即可原地平滑升降。
 - [条形数据生长 (bar-grow)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/bar-grow.md): 表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。
 - [逐字波浪弹跳 (bounce-text)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/bounce-text.md): 初始化把标题按中文单字、英文整词拆成行内块并写入序号变量，悬停或触发时各片段按 `32ms` 间隔依次轻快弹起形成一道文字波浪。
 - [数字滚动 / 里程表 (count-up)](https://wangjian-damon.github.io/motion-kit/.agents/skills/motion-kit-apply/references/effects/count-up.md): 两条路：`countUp` 用 rAF 逐帧算值（通用、可格式化）；`odometer` 给每位数 建一列 0–9，只写一次 transform、由 CSS 过渡滑到位（几十个数字同屏也不掉帧）。

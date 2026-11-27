@@ -61,3 +61,15 @@
     repeating-linear-gradient(125deg, rgba(184, 255, 61, 0.14) 0 9px, rgba(96, 165, 250, 0.14) 9px 18px),
     linear-gradient(180deg, #0f1626, #090d17);
 }
+
+.mk-shader--torus {
+  background: transparent;
+  --mk-shader-fallback:
+    radial-gradient(circle at 50% 50%, rgba(184, 255, 61, 0.25) 0 28%, transparent 56%),
+    radial-gradient(circle at 42% 42%, rgba(96, 165, 250, 0.35), transparent 62%);
+}
+
+.mk-shader--particles {
+  --mk-shader-fallback:
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.25), rgba(7, 9, 13, 0.96) 72%);
+}

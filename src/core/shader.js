@@ -56,6 +56,39 @@ export function rippleSlot(starts, now, life = 2.2) {
   return oldest;
 }
 
+/**
+ * 纯函数：生成 3D 螺旋星云粒子的初始坐标 (x, y, z, phase)。
+ * 确定性伪随机，方便单测且无闪烁。
+ */
+export function nebulaPositions(count = 1400, seed = 1337) {
+  const n = Math.max(0, Math.floor(Number(count) || 0));
+  const out = new Float32Array(n * 4);
+  let s = (seed | 0) || 1337;
+  const rnd = () => {
+    s ^= s << 13; s |= 0;
+    s ^= s >>> 17;
+    s ^= s << 5; s |= 0;
+    return ((s >>> 0) % 100000) / 100000;
+  };
+  const arms = 3;
+  for (let i = 0; i < n; i++) {
+    const arm = i % arms;
+    const t = Math.pow(rnd(), 0.72); // 0..1 径向分布，中心稍密
+    const r = 0.14 + t * 1.45;
+    const angle = (arm / arms) * Math.PI * 2 + r * 2.35 + (rnd() - 0.5) * 0.65;
+    const spread = 0.12 + t * 0.28;
+    const x = Math.cos(angle) * r + (rnd() - 0.5) * spread;
+    const z = Math.sin(angle) * r + (rnd() - 0.5) * spread;
+    const y = (rnd() - 0.5) * (0.45 * (1 - t * 0.55));
+    const o = i * 4;
+    out[o] = x;
+    out[o + 1] = y;
+    out[o + 2] = z;
+    out[o + 3] = rnd(); // 相位/颜色权重
+  }
+  return out;
+}
+
 /* ---------------- GLSL ---------------- */
 
 const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
@@ -175,6 +208,63 @@ void main(){
   float ca = length(disp) * 9.0;
   col += vec3(ca * 0.6, 0.0, ca) * 0.5;
   col += hi * vec3(0.85, 1.0, 0.9) * 0.55;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+/** 真 3D 射线步进液态扭环（Twisted Torus Raymarching）：44 步 SDF + 解析法线 + 虹彩 Fresnel 高光。 */
+export const TORUS_FRAG = `
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+float mapTorus(vec3 p, float t){
+  p.xz *= rot2(t * 0.45 + (u_mouse.x - 0.5) * 2.4);
+  p.xy *= rot2(0.45 + (u_mouse.y - 0.5) * 1.6);
+  // 沿环角叠加 3 瓣螺旋波纹，让表面像流动液态金属
+  float a = atan(p.z, p.x);
+  vec2 q = vec2(length(p.xz) - 0.68, p.y);
+  q *= rot2(a * 1.5 + t * 0.9);
+  float wave = 0.032 * sin(a * 6.0 - t * 1.8);
+  return length(q) - (0.24 + wave);
+}
+vec3 calcNormal(vec3 p, float t){
+  vec2 e = vec2(0.0025, 0.0);
+  return normalize(vec3(
+    mapTorus(p + e.xyy, t) - mapTorus(p - e.xyy, t),
+    mapTorus(p + e.yxy, t) - mapTorus(p - e.yxy, t),
+    mapTorus(p + e.yyx, t) - mapTorus(p - e.yyx, t)
+  ));
+}
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);
+  vec3 ro = vec3(0.0, 0.0, 2.35);
+  vec3 rd = normalize(vec3(uv, -1.65));
+  float t = u_time;
+  float dist = 0.0;
+  bool hit = false;
+  for (int i = 0; i < 44; i++) {
+    vec3 p = ro + rd * dist;
+    float d = mapTorus(p, t);
+    if (d < 0.0018) { hit = true; break; }
+    dist += d;
+    if (dist > 5.0) break;
+  }
+  if (!hit) {
+    float bg = exp(-dot(uv, uv) * 3.8) * 0.14;
+    gl_FragColor = vec4(mix(C_BLUE, C_LIME, 0.35) * bg, bg * 1.2);
+    return;
+  }
+  vec3 p = ro + rd * dist;
+  vec3 n = calcNormal(p, t);
+  vec3 v = -rd;
+  vec3 l1 = normalize(vec3(0.8, 1.0, 1.2));
+  vec3 l2 = normalize(vec3(-1.0, -0.6, 0.5));
+  float diff1 = max(dot(n, l1), 0.0);
+  float diff2 = max(dot(n, l2), 0.0);
+  float spec = pow(max(dot(reflect(-l1, n), v), 0.0), 36.0);
+  float fres = pow(1.0 - max(dot(n, v), 0.0), 3.2);
+  // 按法线朝向混合蓝/紫/荧光绿液态金属虹彩
+  vec3 irid = mix(C_VIOLET, C_BLUE, 0.5 + 0.5 * n.y);
+  irid = mix(irid, C_LIME, smoothstep(0.15, 0.9, fres + n.x * 0.35));
+  vec3 col = C_BG * 0.6 + irid * (0.28 + diff1 * 0.72) + C_BLUE * diff2 * 0.32;
+  col += vec3(0.95, 1.0, 0.92) * spec * 0.9 + C_LIME * fres * 0.65;
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -420,5 +510,186 @@ export function shaderRipple(host, opts = {}) {
   return {
     ...c,
     ripple(x = 0.5, y = 0.5) { lastUser = now; add(x, y, now); },
+  };
+}
+
+/** 真 3D 射线步进液态扭环（原生 WebGL，零 Three.js）。 */
+export function shaderTorus(host, opts = {}) {
+  return shaderCanvas(host, { ...opts, frag: TORUS_FRAG, variant: 'torus' });
+}
+
+const PARTICLE_VERT = `
+attribute vec4 a_pos;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform float u_dpr;
+varying float v_phase;
+varying float v_depth;
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+void main(){
+  vec3 p = a_pos.xyz;
+  float t = u_time * 0.22;
+  p.xz *= rot2(t + (u_mouse.x - 0.5) * 1.4);
+  p.yz *= rot2(0.42 + (u_mouse.y - 0.5) * 0.9);
+  p.y += sin(t * 2.0 + a_pos.w * 6.2831) * 0.05;
+  float z = p.z + 3.2;
+  float asp = u_res.x / max(u_res.y, 1.0);
+  vec2 proj = vec2(p.x / asp, p.y) * (1.75 / max(z, 0.2));
+  gl_Position = vec4(proj, 0.0, 1.0);
+  gl_PointSize = clamp((13.0 * u_dpr) / max(z, 0.4), 1.4, 9.0);
+  v_phase = a_pos.w;
+  v_depth = clamp(1.0 - (z - 1.5) / 3.4, 0.15, 1.0);
+}`;
+
+const PARTICLE_FRAG = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying float v_phase;
+varying float v_depth;
+void main(){
+  vec2 c = gl_PointCoord - 0.5;
+  float r = dot(c, c);
+  if (r > 0.25) discard;
+  float a = smoothstep(0.25, 0.0, r) * v_depth;
+  vec3 cLime = vec3(0.722, 1.0, 0.239);
+  vec3 cBlue = vec3(0.376, 0.647, 0.980);
+  vec3 cViolet = vec3(0.545, 0.361, 0.965);
+  vec3 col = mix(cBlue, cViolet, smoothstep(0.0, 0.6, v_phase));
+  col = mix(col, cLime, smoothstep(0.65, 1.0, v_phase));
+  gl_FragColor = vec4(col * a, a * 0.92);
+}`;
+
+/**
+ * 原生 WebGL 3D GPU 星尘粒子星云（gl.POINTS，零 Three.js）。
+ * 1,400–1,800 颗 3D 螺旋星云粒子，支持指针 3D 视角旋转、近大远小透视与全套工程停帧红线。
+ */
+export function shaderParticles(host, { count = 1500, seed = 1337, reduced, dprCap = 1.5, maxPixels = 1200000 } = {}) {
+  if (!host || typeof document === 'undefined') return NOOP;
+  host.classList.add('mk-shader', 'mk-shader--particles');
+
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  let gl = null;
+  try {
+    gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, powerPreference: 'low-power' });
+  } catch { gl = null; }
+  if (!gl) { host.classList.add('is-fallback'); return NOOP; }
+
+  let prog;
+  try {
+    const vs = compile(gl, gl.VERTEX_SHADER, PARTICLE_VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, PARTICLE_FRAG);
+    prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || 'link failed');
+  } catch {
+    host.classList.add('is-fallback');
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return NOOP;
+  }
+
+  host.appendChild(canvas);
+  gl.useProgram(prog);
+  const data = nebulaPositions(count, seed);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 4, gl.FLOAT, false, 0, 0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.clearColor(0, 0, 0, 0);
+
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const uDpr = gl.getUniformLocation(prog, 'u_dpr');
+  const isReduced = resolveReduced(reduced);
+  const t0 = performance.now();
+  const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  let curScale = 1;
+  let raf = 0;
+  let visible = true;
+  let hidden = document.visibilityState === 'hidden';
+  let lost = false;
+
+  const draw = () => {
+    if (lost) return;
+    const t = isReduced ? 4 : (performance.now() - t0) / 1000;
+    mouse.x += (mouse.tx - mouse.x) * 0.08;
+    mouse.y += (mouse.ty - mouse.y) * 0.08;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uDpr, curScale);
+    gl.drawArrays(gl.POINTS, 0, count);
+    host.classList.add('is-ready');
+  };
+  const loop = () => { raf = 0; if (!visible || hidden || lost || isReduced) return; draw(); raf = requestAnimationFrame(loop); };
+  const kick = () => { if (!raf && visible && !hidden && !lost && !isReduced) raf = requestAnimationFrame(loop); };
+  const halt = () => { if (raf) cancelAnimationFrame(raf); raf = 0; };
+
+  const resize = () => {
+    const r = host.getBoundingClientRect();
+    const s = canvasSize(r.width, r.height, window.devicePixelRatio || 1, dprCap, maxPixels);
+    curScale = s.scale;
+    if (canvas.width !== s.width || canvas.height !== s.height) { canvas.width = s.width; canvas.height = s.height; }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (!raf) draw();
+  };
+
+  const onMove = (e) => {
+    const r = host.getBoundingClientRect();
+    mouse.tx = (e.clientX - r.left) / (r.width || 1);
+    mouse.ty = 1 - (e.clientY - r.top) / (r.height || 1);
+  };
+  const onLeave = () => { mouse.tx = 0.5; mouse.ty = 0.5; };
+  const onVis = () => { hidden = document.visibilityState === 'hidden'; hidden ? halt() : kick(); };
+  const onLost = (e) => { e.preventDefault(); lost = true; halt(); host.classList.remove('is-ready'); host.classList.add('is-fallback'); };
+
+  if (!isReduced) {
+    host.addEventListener('pointermove', onMove, { passive: true });
+    host.addEventListener('pointerleave', onLeave);
+  }
+  document.addEventListener('visibilitychange', onVis);
+  canvas.addEventListener('webglcontextlost', onLost);
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+  ro?.observe(host);
+  const io = typeof IntersectionObserver !== 'undefined'
+    ? new IntersectionObserver(([en]) => { visible = !!en?.isIntersecting; visible ? kick() : halt(); })
+    : null;
+  io?.observe(host);
+
+  resize();
+  kick();
+
+  return {
+    ok: true,
+    redraw() { if (!raf) draw(); },
+    destroy() {
+      halt();
+      ro?.disconnect();
+      io?.disconnect();
+      host.removeEventListener('pointermove', onMove);
+      host.removeEventListener('pointerleave', onLeave);
+      document.removeEventListener('visibilitychange', onVis);
+      canvas.removeEventListener('webglcontextlost', onLost);
+      if (!lost) {
+        gl.deleteBuffer(buf);
+        gl.deleteProgram(prog);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }
+      canvas.remove();
+      host.classList.remove('is-ready');
+    },
   };
 }

@@ -7,7 +7,7 @@ import { splitTokens } from '../src/core/text-reveal.js';
 import { parallaxProgress } from '../src/core/parallax.js';
 import { shouldDismiss, shouldGoBack, snapIndexAt, snapShouldClose, offsetForSnap, sheet } from '../src/core/gesture.js';
 import { repelOffset } from '../src/core/fun.js';
-import { spherePoint } from '../src/core/scene3d.js';
+import { spherePoint, coverflowPose, bar3dHeight } from '../src/core/scene3d.js';
 import { dockScale } from '../src/core/dock.js';
 import { segIndexAt } from '../src/core/seg.js';
 import { scrambleFrame } from '../src/core/scramble.js';
@@ -19,7 +19,7 @@ import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
 import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
-import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot } from '../src/core/shader.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions } from '../src/core/shader.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -1048,12 +1048,43 @@ t('rippleSlot：优先空槽与过期槽，全忙时覆盖最老槽', () => {
   assert.equal(rippleSlot([2.0, 1.5, 2.2], 2.5, 2.2), 1); // 全忙，1.5 最老
 });
 
+t('nebulaPositions：确定性三旋臂 3D 粒子数组，长度准确且全有限值', () => {
+  const a = nebulaPositions(120, 42);
+  const b = nebulaPositions(120, 42);
+  assert.equal(a.length, 480);
+  assert.deepEqual(a, b);
+  for (let i = 0; i < a.length; i++) assert.ok(Number.isFinite(a[i]), `第 ${i} 项非有限数`);
+  assert.equal(nebulaPositions(0).length, 0);
+  assert.equal(nebulaPositions(-5).length, 0);
+});
+
+t('coverflowPose：中心正对突前，左右严格对称且越远越小越暗', () => {
+  const c = coverflowPose(0);
+  assert.deepEqual(c, { x: 0, z: 54, ry: 0, scale: 1, opacity: 1, zIndex: 100 });
+  const l1 = coverflowPose(-1);
+  const r1 = coverflowPose(1);
+  assert.equal(l1.x, -r1.x);
+  assert.equal(l1.ry, -r1.ry);
+  assert.ok(l1.ry > 0 && r1.ry < 0); // 面向中心内扣
+  assert.equal(l1.z, r1.z);
+  const r2 = coverflowPose(2);
+  assert.ok(r2.scale < r1.scale && r2.opacity < r1.opacity && r2.zIndex < r1.zIndex);
+});
+
+t('bar3dHeight：安全归一化到 0..maxPx，非法 max 返回 0', () => {
+  assert.equal(bar3dHeight(50, 100, 100), 50);
+  assert.equal(bar3dHeight(150, 100, 100), 100);
+  assert.equal(bar3dHeight(-20, 100, 100), 0);
+  assert.equal(bar3dHeight(50, 0, 100), 0);
+  assert.equal(bar3dHeight(NaN, 100, 100), 0);
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 48, `应至少包含 48 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 52, `应至少包含 52 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

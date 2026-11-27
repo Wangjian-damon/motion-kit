@@ -1,7 +1,7 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**48** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**52** 张纯净去库化跨平台动效资产卡。
 
 ## 反馈（9）
 
@@ -27,10 +27,11 @@
 | `shared-element` | 共享元素转场 | both | 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。 | `./effects/shared-element.md` |
 | `toast-stack` | 堆叠轻提示 | both | 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。 | `./effects/toast-stack.md` |
 
-## 方向（7）
+## 方向（8）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `coverflow` | 3D 封面流画廊 | both | 居中封面正对观众且沿 Z 轴微向前凸出，左右两侧封面以对称 `±42°` 斜切退后叠排；点任意侧卡、左右滑或按方向键，整排封面丝滑滑切并自动更新层次。 | `./effects/coverflow.md` |
 | `edge-back` | 边缘返回 | touch | 从左边缘 20px 内起手往右拖，页面跟着走；拖过 1/3 屏宽或向右甩，松手返回。 | `./effects/edge-back.md` |
 | `fan` | 扇形手牌展开 | both | 多张卡片绕底部中心点叠成一把闭合扇子，悬停或点击时只需改一个 `--spread` 角度变量，整副卡片同步对称张开成优雅扇面。 | `./effects/fan.md` |
 | `fold` | 3D 折纸面板 | both | 面板像沿顶边铰链折起来的纸页一样通过 `rotateX(-92deg → 0deg)` 展开与收起，收起态自动加 `inert` 隔离键盘焦点与误触，减弱动效下彻底归零塌回平面。 | `./effects/fold.md` |
@@ -39,7 +40,7 @@
 | `swipe` | 左滑操作 | touch | 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。 | `./effects/swipe.md` |
 | `tunnel` | 无限深渊隧道 | both | 10 道光环共用同一条从远端 `-900px` 冲向镜头 `+200px` 的 CSS 关键帧，靠**负 `animation-delay`** 在第 0 帧就把整条无限深渊隧道铺满，零 JS 动画循环。 | `./effects/tunnel.md` |
 
-## 权重（7）
+## 权重（8）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -49,9 +50,10 @@
 | `mgrid` | 磁性斥力点阵 | web | 桌面指针划过点阵区域时，半径 90px 内的圆点按二次衰减公式背离指针平滑推开，越近推得越远、边缘处连续归零不突兀。 | `./effects/mgrid.md` |
 | `pull-refresh` | 下拉刷新 | touch | 列表滚到顶后继续往下拉，指示器跟着长出来（带阻尼），拉过阈值松手就刷新。 | `./effects/pull-refresh.md` |
 | `rubber-band` | 橡胶越界阻尼 | both | 拖到内容边界外时不硬停（clamp），而是用双曲阻尼让内容越拉越重、永远拉不到头，松手后带轻微过冲弹回界内。 | `./effects/rubber-band.md` |
+| `shader-particles` | WebGL 3D GPU 星尘粒子星云 | both | 单次 `gl.drawArrays(gl.POINTS, 0, 1500)` 在 GPU 上同时投影并渲染 1,500 颗三旋臂 3D 螺旋星云粒子，近大远小带景深光晕，随指针平滑转动整个星系视角。 | `./effects/shader-particles.md` |
 | `snap-sheet` | 多档位弹层 | touch | 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。 | `./effects/snap-sheet.md` |
 
-## 材质（11）
+## 材质（12）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -63,14 +65,16 @@
 | `refraction` | 边缘折射 | both | 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。 | `./effects/refraction.md` |
 | `shader-aurora` | WebGL 流体丝绸极光 | both | 原生 WebGL 全屏三角形 + 2D Simplex Noise 域扭曲（Domain Warping FBM）渲染多色丝绸极光，指针划过产生柔和流体扰动；零 Three.js 依赖，不支持或切后台时自动停帧或退回 CSS 渐变。 | `./effects/shader-aurora.md` |
 | `shader-orb` | WebGL AI 液态能量光球 | both | 原生 WebGL 用噪声扰动的圆 SDF + Fresnel 边缘亮环 + 外辉光渲染一颗漂浮的 AI 能量光球，支持 `idle` / `listening` / `thinking` 三态指数平滑切换呼吸速度与光晕强度。 | `./effects/shader-orb.md` |
+| `shader-torus` | WebGL 3D 液态扭环射线步进 | both | 零 Three.js、零网格顶点，只用一个全屏三角形在片元着色器里跑 44 步 3D 射线步进（Raymarching），实时雕塑出一枚随指针旋转、表面流动虹彩金属高光的 3D 液态扭环。 | `./effects/shader-torus.md` |
 | `sphere` | 3D 斐波那契点阵球 | both | 用 10 行斐波那契等面积数学公式把 120–150 个圆点均匀铺在真三维球面上，纯 CSS `preserve-3d` 缓慢自转，零 Three.js / WebGL 依赖。 | `./effects/sphere.md` |
 | `spotlight` | 指针光斑与描边聚光 | web | 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。 | `./effects/spotlight.md` |
 | `tilt` | 3D 倾斜与光泽 | web | 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。 | `./effects/tilt.md` |
 
-## 节奏（9）
+## 节奏（10）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `bar-3d` | 3D 等轴立体数据柱图 | both | 每根数据柱用前、右、顶三个真实 `preserve-3d` 平面在等轴视角下拼成实心立方体，首屏按 320ms 封顶级联拔地而起，数据刷新时只需改一个高度变量即可原地平滑升降。 | `./effects/bar-3d.md` |
 | `bar-grow` | 条形数据生长 | both | 表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。 | `./effects/bar-grow.md` |
 | `bounce-text` | 逐字波浪弹跳 | both | 初始化把标题按中文单字、英文整词拆成行内块并写入序号变量，悬停或触发时各片段按 `32ms` 间隔依次轻快弹起形成一道文字波浪。 | `./effects/bounce-text.md` |
 | `count-up` | 数字滚动 / 里程表 | both | 两条路：`countUp` 用 rAF 逐帧算值（通用、可格式化）；`odometer` 给每位数 建一列 0–9，只写一次 transform、由 CSS 过渡滑到位（几十个数字同屏也不掉帧）。 | `./effects/count-up.md` |

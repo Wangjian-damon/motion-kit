@@ -284,3 +284,141 @@ export function fan(el, { cards } = {}) {
   items.forEach((it, i) => it.style.setProperty('--mk-i', String(i - mid)));
   return () => {};
 }
+
+/**
+ * Cover Flow 3D 姿态纯函数。给定相对中心下标的偏移量 offset = i - active，
+ * 返回卡片的 X 位移、Z 纵深、Y 旋转角、缩放与透明度。
+ */
+export function coverflowPose(offset) {
+  if (!Number.isFinite(offset) || offset === 0) {
+    return { x: 0, z: 54, ry: 0, scale: 1, opacity: 1, zIndex: 100 };
+  }
+  const s = offset < 0 ? -1 : 1;
+  const a = Math.abs(offset);
+  return {
+    x: s * (76 + (a - 1) * 44),
+    z: -(38 + a * 34),
+    ry: -s * 42,
+    scale: Math.max(0.68, Number((0.86 - (a - 1) * 0.08).toFixed(3))),
+    opacity: Math.max(0, Number((1 - a * 0.24).toFixed(3))),
+    zIndex: Math.max(1, 100 - Math.round(a * 10)),
+  };
+}
+
+/**
+ * 3D 封面流画廊控制器：点侧卡滑到正中，支持横向拖拽与键盘左右切换。
+ * 只写 CSS 变量 --mk-cf-x / -z / -ry / -s / -o。
+ */
+export function coverflow(el, { active = 2, onChange } = {}) {
+  if (!el) return { select() {}, next() {}, prev() {}, destroy() {} };
+  const items = [...el.querySelectorAll('.mk-coverflow__item')];
+  if (!items.length) return { select() {}, next() {}, prev() {}, destroy() {} };
+  let cur = Math.min(items.length - 1, Math.max(0, active | 0));
+  let startX = 0;
+  let down = false;
+
+  el.classList.add('mk-coverflow');
+
+  const paint = () => {
+    items.forEach((it, i) => {
+      const p = coverflowPose(i - cur);
+      it.style.setProperty('--mk-cf-x', `${p.x}px`);
+      it.style.setProperty('--mk-cf-z', `${p.z}px`);
+      it.style.setProperty('--mk-cf-ry', `${p.ry}deg`);
+      it.style.setProperty('--mk-cf-s', String(p.scale));
+      it.style.setProperty('--mk-cf-o', String(p.opacity));
+      it.style.zIndex = String(p.zIndex);
+      it.classList.toggle('is-active', i === cur);
+    });
+  };
+
+  const select = (idx) => {
+    const next = Math.min(items.length - 1, Math.max(0, idx | 0));
+    if (next === cur) return;
+    cur = next;
+    paint();
+    onChange?.(cur);
+  };
+
+  const handlers = items.map((it, i) => {
+    const h = () => select(i);
+    it.addEventListener('click', h);
+    return [it, h];
+  });
+
+  const onDown = (e) => { down = true; startX = e.clientX; };
+  const onUp = (e) => {
+    if (!down) return;
+    down = false;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 36) select(cur + (dx < 0 ? 1 : -1));
+  };
+  const onKey = (e) => {
+    if (e.key === 'ArrowRight') select(cur + 1);
+    else if (e.key === 'ArrowLeft') select(cur - 1);
+  };
+
+  el.setAttribute('tabindex', '0');
+  el.addEventListener('pointerdown', onDown);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', () => { down = false; });
+  el.addEventListener('keydown', onKey);
+  paint();
+
+  return {
+    select,
+    next: () => select(cur + 1),
+    prev: () => select(cur - 1),
+    destroy() {
+      handlers.forEach(([it, h]) => it.removeEventListener('click', h));
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('keydown', onKey);
+    },
+  };
+}
+
+/** 纯函数：计算 3D 数据立柱像素高度（安全钳制 0..maxPx）。 */
+export function bar3dHeight(value, max = 100, maxPx = 110) {
+  if (!Number.isFinite(value) || !Number.isFinite(max) || !(max > 0) || !(maxPx > 0)) return 0;
+  const r = Math.min(1, Math.max(0, value / max));
+  return Math.round(r * maxPx);
+}
+
+/**
+ * 真 3D 等轴立体数据柱图控制器：每根柱子由前/顶/右三面 preserve-3d 拼成，
+ * 更新数据时仅写 --mk-b3d-h，原地平滑升降。
+ */
+export function bar3d(el, { values = [42, 76, 94, 60, 82], max = 100, maxPx = 92 } = {}) {
+  if (!el || typeof document === 'undefined') return { update() {}, destroy() {} };
+  el.classList.add('mk-bar3d');
+  el.innerHTML = '';
+  const cols = values.map((v, i) => {
+    const col = document.createElement('div');
+    col.className = 'mk-bar3d__col';
+    col.style.setProperty('--mk-b3d-d', `${Math.min(280, i * 55)}ms`);
+    col.innerHTML = `<i class="mk-bar3d__top"></i><i class="mk-bar3d__front"></i><i class="mk-bar3d__side"></i><span class="mk-bar3d__val">${v}</span>`;
+    el.appendChild(col);
+    return col;
+  });
+
+  const apply = (vals, immediate = false) => {
+    cols.forEach((col, i) => {
+      const v = vals[i] ?? 0;
+      if (immediate) col.style.setProperty('--mk-b3d-d', '0ms');
+      col.style.setProperty('--mk-b3d-h', `${bar3dHeight(v, max, maxPx)}px`);
+      const tag = col.querySelector('.mk-bar3d__val');
+      if (tag) tag.textContent = String(v);
+    });
+  };
+
+  requestAnimationFrame(() => apply(values, false));
+
+  return {
+    update(nextVals, nextMax = max) {
+      max = nextMax;
+      apply(nextVals, true);
+    },
+    destroy() { el.innerHTML = ''; },
+  };
+}

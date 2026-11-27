@@ -737,6 +737,51 @@
       const ctrl = MK.shaderRipple(host);
       return () => ctrl.destroy();
     },
+
+    'shader-torus'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderTorus(host);
+      return () => ctrl.destroy();
+    },
+
+    'shader-particles'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderParticles(host, { count: 900 });
+      return () => ctrl.destroy();
+    },
+
+    'coverflow'(stage) {
+      const cf = document.createElement('div');
+      cf.className = 'mk-coverflow';
+      cf.style.cssText = 'width:100%;height:126px';
+      ['01', '02', '03', '04', '05'].forEach((n) => {
+        const it = document.createElement('div');
+        it.className = 'mk-coverflow__item';
+        it.style.cssText = 'width:68px;height:82px;border-radius:11px;font:700 14px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#e2f5b5';
+        it.textContent = n;
+        cf.appendChild(it);
+      });
+      stage.appendChild(cf);
+      const ctrl = MK.coverflow(cf, { active: 2 });
+      return () => ctrl.destroy();
+    },
+
+    'bar-3d'(stage) {
+      const box = document.createElement('div');
+      box.style.cssText = 'width:100%;height:110px;display:flex;align-items:flex-end;justify-content:center';
+      stage.appendChild(box);
+      const ctrl = MK.bar3d(box, { values: [38, 72, 92, 58, 84], max: 100, maxPx: 72 });
+      const btn = miniBtn('↻ 换一组', 'pv-corner');
+      btn.onclick = () => ctrl.update([0, 0, 0, 0, 0].map(() => 25 + Math.floor(Math.random() * 72)));
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {
