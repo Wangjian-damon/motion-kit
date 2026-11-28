@@ -7,7 +7,7 @@ import { splitTokens } from '../src/core/text-reveal.js';
 import { parallaxProgress } from '../src/core/parallax.js';
 import { shouldDismiss, shouldGoBack, snapIndexAt, snapShouldClose, offsetForSnap, sheet } from '../src/core/gesture.js';
 import { repelOffset } from '../src/core/fun.js';
-import { spherePoint, coverflowPose, bar3dHeight } from '../src/core/scene3d.js';
+import { spherePoint, coverflowPose, bar3dHeight, splitFlapDigits, bookCoverAngle } from '../src/core/scene3d.js';
 import { dockScale } from '../src/core/dock.js';
 import { segIndexAt } from '../src/core/seg.js';
 import { scrambleFrame } from '../src/core/scramble.js';
@@ -19,7 +19,7 @@ import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
 import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
-import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions } from '../src/core/shader.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid } from '../src/core/shader.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -1079,12 +1079,50 @@ t('bar3dHeight：安全归一化到 0..maxPx，非法 max 返回 0', () => {
   assert.equal(bar3dHeight(NaN, 100, 100), 0);
 });
 
+t('globeCoords：经纬度映射到单位球面且极点与非法值安全', () => {
+  const eq = globeCoords(0, 0);
+  assert.deepEqual(eq, { x: 0, y: 0, z: 1 });
+  const np = globeCoords(90, 45);
+  assert.equal(np.y, 1);
+  assert.ok(Math.abs(np.x) < 1e-6 && Math.abs(np.z) < 1e-6);
+  const p = globeCoords(31.2, 121.5);
+  assert.ok(Math.abs(Math.hypot(p.x, p.y, p.z) - 1) < 1e-5);
+  assert.deepEqual(globeCoords(NaN, 0), { x: 0, y: 0, z: 1 });
+});
+
+t('terrainGrid：生成确定性线框网格顶点，越界行列安全钳制', () => {
+  const g = terrainGrid(4, 3);
+  // 3 行×3 段 + 4 列×2 段 = 17 段 = 34 顶点 = 68 float
+  assert.equal(g.count, 34);
+  assert.equal(g.vertices.length, 68);
+  for (let i = 0; i < g.vertices.length; i++) {
+    assert.ok(g.vertices[i] >= 0 && g.vertices[i] <= 1);
+  }
+  const minG = terrainGrid(0, -5); // 钳制为 2×2 → 4 段 = 8 顶点
+  assert.equal(minG.count, 8);
+});
+
+t('splitFlapDigits：定长规范化数字与字符，防负数/NaN 抖动', () => {
+  assert.deepEqual(splitFlapDigits(7, 2), ['0', '7']);
+  assert.deepEqual(splitFlapDigits(1234, 3), ['2', '3', '4']);
+  assert.deepEqual(splitFlapDigits(-9, 2), ['0', '0']);
+  assert.deepEqual(splitFlapDigits(NaN, 2), ['0', '0']);
+  assert.deepEqual(splitFlapDigits('mk-9', 4), ['0', 'M', 'K', '9']);
+});
+
+t('bookCoverAngle：静置/悬停微启/展读三态角度明确', () => {
+  assert.equal(bookCoverAngle(false, false), 0);
+  assert.equal(bookCoverAngle(false, true), -28);
+  assert.equal(bookCoverAngle(true, false), -132);
+  assert.equal(bookCoverAngle(true, true), -132);
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 52, `应至少包含 52 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 56, `应至少包含 56 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

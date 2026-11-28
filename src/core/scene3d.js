@@ -422,3 +422,134 @@ export function bar3d(el, { values = [42, 76, 94, 60, 82], max = 100, maxPx = 92
     destroy() { el.innerHTML = ''; },
   };
 }
+
+/**
+ * 纯函数：把数字或字符串规范化为定长翻页位数组，防 NaN/负数/长度抖动。
+ */
+export function splitFlapDigits(value, pad = 2) {
+  const len = Math.max(1, Math.min(8, Math.floor(Number(pad) || 2)));
+  if (typeof value === 'number') {
+    const n = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    return String(n).padStart(len, '0').slice(-len).split('');
+  }
+  const s = String(value ?? '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  return s.padStart(len, '0').slice(-len).split('');
+}
+
+/**
+ * 3D 机械翻页器 / 翻牌时钟控制器（Split-Flap 3D）：
+ * 仅变更的位触发 3D 上半翻折 + 下半承接动画，未变位保持静止。
+ */
+export function flipClock(el, { value = 42, pad = 2 } = {}) {
+  if (!el || typeof document === 'undefined') return { set() {}, destroy() {} };
+  el.classList.add('mk-flap');
+  let cur = splitFlapDigits(value, pad);
+  el.innerHTML = '';
+
+  const slots = cur.map((ch) => {
+    const unit = document.createElement('div');
+    unit.className = 'mk-flap__unit';
+    unit.innerHTML = `
+      <span class="mk-flap__half mk-flap__top"><i>${ch}</i></span>
+      <span class="mk-flap__half mk-flap__bot"><i>${ch}</i></span>
+      <span class="mk-flap__leaf mk-flap__leaf-top"><i>${ch}</i></span>
+      <span class="mk-flap__leaf mk-flap__leaf-bot"><i>${ch}</i></span>
+    `;
+    el.appendChild(unit);
+    return unit;
+  });
+
+  const timers = new Set();
+
+  const set = (nextVal) => {
+    const next = splitFlapDigits(nextVal, pad);
+    next.forEach((ch, i) => {
+      const prev = cur[i];
+      if (ch === prev) return;
+      const unit = slots[i];
+      if (!unit) return;
+      const top = unit.querySelector('.mk-flap__top i');
+      const bot = unit.querySelector('.mk-flap__bot i');
+      const leafTop = unit.querySelector('.mk-flap__leaf-top i');
+      const leafBot = unit.querySelector('.mk-flap__leaf-bot i');
+
+      // 上静页先显示新字，下静页保持旧字；翻页叶上折旧字、下接新字
+      top.textContent = ch;
+      bot.textContent = prev;
+      leafTop.textContent = prev;
+      leafBot.textContent = ch;
+
+      unit.classList.remove('is-flipping');
+      void unit.offsetWidth;
+      unit.classList.add('is-flipping');
+
+      const tid = setTimeout(() => {
+        timers.delete(tid);
+        bot.textContent = ch;
+        leafTop.textContent = ch;
+        unit.classList.remove('is-flipping');
+      }, 460);
+      timers.add(tid);
+    });
+    cur = next;
+  };
+
+  return {
+    set,
+    destroy() {
+      timers.forEach((tid) => clearTimeout(tid));
+      timers.clear();
+      el.innerHTML = '';
+    },
+  };
+}
+
+/**
+ * 纯函数：计算 3D 精装立书封面的目标翻开角度（度）。
+ */
+export function bookCoverAngle(open, hover = false) {
+  if (open) return -132;
+  if (hover) return -28;
+  return 0;
+}
+
+/**
+ * 3D 精装立书控制器：点击或按 Enter/Space 翻开/合上硬壳封面，展示内页内容。
+ */
+export function book3d(el, { open = false, onChange } = {}) {
+  if (!el) return { setOpen() {}, toggle() {}, destroy() {} };
+  let isOpen = Boolean(open);
+  el.classList.add('mk-book');
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+
+  const sync = () => {
+    el.classList.toggle('is-open', isOpen);
+    el.setAttribute('aria-expanded', String(isOpen));
+    el.style.setProperty('--mk-book-a', `${bookCoverAngle(isOpen)}deg`);
+  };
+  const setOpen = (next) => {
+    const v = Boolean(next);
+    if (v === isOpen) return;
+    isOpen = v;
+    sync();
+    onChange?.(isOpen);
+  };
+  const toggle = () => setOpen(!isOpen);
+  const onKey = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  };
+
+  el.addEventListener('click', toggle);
+  el.addEventListener('keydown', onKey);
+  sync();
+
+  return {
+    setOpen,
+    toggle,
+    destroy() {
+      el.removeEventListener('click', toggle);
+      el.removeEventListener('keydown', onKey);
+    },
+  };
+}

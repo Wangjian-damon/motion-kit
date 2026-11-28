@@ -28,7 +28,7 @@ import { tap, longPress, pullToRefresh, pauseAmbientWhenHidden, applyMotionBudge
 import { sheet, swipe, edgeSwipeBack, shouldGoBack, shouldDismiss, snapIndexAt, offsetForSnap } from '../core/gesture.js';
 import { contextMenu, openMenu, placeMenu } from '../core/context-menu.js';
 import { confetti, shake, bounceText, cursorFollower, magneticGrid, repelOffset } from '../core/fun.js';
-import { trackTilt, ring, sphere, tunnel, fold, fan, spherePoint, coverflowPose, coverflow, bar3dHeight, bar3d } from '../core/scene3d.js';
+import { trackTilt, ring, sphere, tunnel, fold, fan, spherePoint, coverflowPose, coverflow, bar3dHeight, bar3d, splitFlapDigits, flipClock, bookCoverAngle, book3d } from '../core/scene3d.js';
 import { dock, dockScale } from '../core/dock.js';
 import { segmented, detent, segIndexAt } from '../core/seg.js';
 import { scrambleText, scrambleFrame } from '../core/scramble.js';
@@ -38,7 +38,7 @@ import { rubber, rubberBand, rubberClamp } from '../core/rubber.js';
 import { toastStack, stackLayout, stackHeight, shouldSwipeToast } from '../core/toast-stack.js';
 import { stateButton, nextButtonState, loadingRemaining } from '../core/state-button.js';
 import { barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline } from '../core/data.js';
-import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles } from '../core/shader.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles, shaderGlobe, shaderTerrain } from '../core/shader.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -794,7 +794,7 @@ export {
   tap, longPress, swipe, pullToRefresh, sheet, contextMenu, openMenu, placeMenu,
   pauseAmbientWhenHidden, applyMotionBudget, isLowEndDevice, buzz,
   confetti, shake, bounceText, cursorFollower, magneticGrid, repelOffset,
-  trackTilt, ring, sphere, tunnel, fold, fan, spherePoint, coverflowPose, coverflow, bar3dHeight, bar3d,
+  trackTilt, ring, sphere, tunnel, fold, fan, spherePoint, coverflowPose, coverflow, bar3dHeight, bar3d, splitFlapDigits, flipClock, bookCoverAngle, book3d,
   dock, dockScale, segmented, detent, segIndexAt, scrambleText, scrambleFrame,
   glass, glassPoint, lingerRemaining, edgeWeight, refract, lensField, edgeSwipeBack, shouldGoBack,
   snapIndexAt, offsetForSnap, shouldDismiss,
@@ -803,7 +803,7 @@ export {
   toastStack, stackLayout, stackHeight, shouldSwipeToast,
   stateButton, nextButtonState, loadingRemaining,
   barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline,
-  cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles,
+  cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles, shaderGlobe, shaderTerrain,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

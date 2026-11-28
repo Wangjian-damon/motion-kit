@@ -782,6 +782,54 @@
       stage.appendChild(btn);
       return () => ctrl.destroy();
     },
+
+    'shader-globe'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderGlobe(host);
+      return () => ctrl.destroy();
+    },
+
+    'shader-terrain'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderTerrain(host, { cols: 22, rows: 22 });
+      return () => ctrl.destroy();
+    },
+
+    'flip-clock'(stage) {
+      const box = document.createElement('div');
+      box.style.cssText = '--mk-flap-w:44px;--mk-flap-h:60px;--mk-flap-fs:28px';
+      stage.appendChild(box);
+      let n = 56;
+      const ctrl = MK.flipClock(box, { value: n, pad: 2 });
+      const btn = miniBtn('+1 翻牌', 'pv-corner');
+      btn.onclick = () => { n = (n + 1) % 100; ctrl.set(n); };
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
+
+    'book-3d'(stage) {
+      const wrap = document.createElement('div');
+      wrap.className = 'mk-book-stage';
+      wrap.innerHTML = `<div class="mk-book" style="--mk-book-w:76px;--mk-book-h:102px;--mk-book-t:16px">
+        <div class="mk-book__spine"></div>
+        <div class="mk-book__pages-edge"></div>
+        <div class="mk-book__back"></div>
+        <div class="mk-book__page" style="padding:8px;font-size:9.5px"><strong style="color:#0f172a">Motion</strong><span>点封面合上</span></div>
+        <div class="mk-book__cover" style="padding:9px 8px">
+          <span style="font:600 8px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8ff3d">3D</span>
+          <b style="font-size:11px;line-height:1.15;color:#eef2f7">点我翻开</b>
+        </div>
+      </div>`;
+      stage.appendChild(wrap);
+      const ctrl = MK.book3d(wrap.querySelector('.mk-book'));
+      return () => ctrl.destroy();
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

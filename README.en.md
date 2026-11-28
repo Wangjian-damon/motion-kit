@@ -3,9 +3,9 @@
 # Motion Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-b8ff3d.svg)](./LICENSE)
-[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-52-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
+[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-56-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
 [![Zero Runtime](https://img.shields.io/badge/Runtime%20Deps-0-22c55e.svg)](#use-as-zero-dependency-primitives)
-[![Tests](https://img.shields.io/badge/Tests-137%20passing-22c55e.svg)](#development--verification)
+[![Tests](https://img.shields.io/badge/Tests-141%20passing-22c55e.svg)](#development--verification)
 
 <p align="center">
   <a href="https://wangjian-damon.github.io/motion-kit/demo/">
@@ -14,9 +14,9 @@
 </p>
 
 **Framework-agnostic AI motion & interaction asset library + zero-dependency live showcase.**
-52 battle-tested UI motion specs — including native WebGL 3D shaders, true Z-axis 3D scenes, Liquid Glass, physics gestures, and data displays — with exact constants, state machines, `prefers-reduced-motion` degradation contracts, real browser pitfalls, and acceptance criteria.
+56 battle-tested UI motion specs — including native WebGL 3D shaders, true Z-axis 3D scenes, Liquid Glass, physics gestures, and data displays — with exact constants, state machines, `prefers-reduced-motion` degradation contracts, real browser pitfalls, and acceptance criteria.
 
-- **Try Live First**: [**Interactive Landing Page**](https://wangjian-damon.github.io/motion-kit/demo/) · [**AI Asset Library (52 Live Mini-Stages)**](https://wangjian-damon.github.io/motion-kit/demo/library.html) · [3D & WebGL Showcase (14 Scenes)](https://wangjian-damon.github.io/motion-kit/demo/3d.html) · [Mobile Showcase](https://wangjian-damon.github.io/motion-kit/demo/mobile.html) · [Web Showcase](https://wangjian-damon.github.io/motion-kit/demo/web.html)
+- **Try Live First**: [**Interactive Landing Page**](https://wangjian-damon.github.io/motion-kit/demo/) · [**AI Asset Library (56 Live Mini-Stages)**](https://wangjian-damon.github.io/motion-kit/demo/library.html) · [3D & WebGL Showcase (18 Scenes)](https://wangjian-damon.github.io/motion-kit/demo/3d.html) · [Mobile Showcase](https://wangjian-damon.github.io/motion-kit/demo/mobile.html) · [Web Showcase](https://wangjian-damon.github.io/motion-kit/demo/web.html)
 - **AI-Native Indexes**: [`llms.txt`](https://wangjian-damon.github.io/motion-kit/llms.txt) (drop directly into Cursor `@Docs` / Claude / Windsurf) · [`dist/registry.json`](https://wangjian-damon.github.io/motion-kit/dist/registry.json)
 
 ---
@@ -27,7 +27,7 @@
 |---|---|
 | Locked to React, Framer Motion, or GSAP runtimes | **Framework-agnostic AI specs**: reproduce cleanly in React, Vue, Tailwind, Taro, Flutter, SwiftUI, or vanilla web |
 | Ships code without explaining why constants exist | Every card documents **why each constant**, **degradation contracts**, **`pointercancel` & browser pitfalls**, and **acceptance tests** |
-| Read docs in one tab, hunt demos in another | **WYSIWYG**: all 52 cards include live interactive mini-stages, `0.25×` slow-mo, reduced-motion simulator, and 1-click preset skill bundles |
+| Read docs in one tab, hunt demos in another | **WYSIWYG**: all 56 cards include live interactive mini-stages, `0.25×` slow-mo, reduced-motion simulator, and 1-click preset skill bundles |
 
 ---
 
@@ -84,7 +84,7 @@ See **[docs/API.md](./docs/API.md)** for all 37 Vue directives, Taro composables
 ## Development & Verification
 
 ```bash
-# Compile all 52 effect cards -> dist/registry.json, demo/registry.data.js, llms.txt & self-contained Skill, then run all 137 unit + leak tests
+# Compile all 56 effect cards -> dist/registry.json, demo/registry.data.js, llms.txt & self-contained Skill, then run all 141 unit + leak tests
 npm run check
 ```
 

@@ -89,6 +89,54 @@ export function nebulaPositions(count = 1400, seed = 1337) {
   return out;
 }
 
+/**
+ * 纯函数：经纬度（度）转单位球面 3D 坐标 { x, y, z }。
+ * 用于 3D 地球节点标定与单测验证。
+ */
+export function globeCoords(latDeg, lonDeg) {
+  if (!Number.isFinite(latDeg) || !Number.isFinite(lonDeg)) return { x: 0, y: 0, z: 1 };
+  const lat = (Math.min(90, Math.max(-90, latDeg)) * Math.PI) / 180;
+  const lon = (lonDeg * Math.PI) / 180;
+  const cl = Math.cos(lat);
+  return {
+    x: Number((cl * Math.sin(lon)).toFixed(6)),
+    y: Number(Math.sin(lat).toFixed(6)),
+    z: Number((cl * Math.cos(lon)).toFixed(6)),
+  };
+}
+
+/**
+ * 纯函数：生成 3D 线框地形网格的线段顶点数组（每 2 个 vec2(u,v) 为一条线段）。
+ * 确定性输出，一次性上传 GPU STATIC_DRAW。
+ */
+export function terrainGrid(cols = 28, rows = 28) {
+  const c = Math.max(2, Math.min(80, Math.floor(Number(cols) || 0)));
+  const r = Math.max(2, Math.min(80, Math.floor(Number(rows) || 0)));
+  // 横线：r 行，每行 (c - 1) 段；纵线：c 列，每列 (r - 1) 段
+  const segs = r * (c - 1) + c * (r - 1);
+  const vertices = new Float32Array(segs * 4); // 每段 2 顶点 × (u, v)
+  let o = 0;
+  for (let j = 0; j < r; j++) {
+    const v = j / (r - 1);
+    for (let i = 0; i < c - 1; i++) {
+      vertices[o++] = i / (c - 1);
+      vertices[o++] = v;
+      vertices[o++] = (i + 1) / (c - 1);
+      vertices[o++] = v;
+    }
+  }
+  for (let i = 0; i < c; i++) {
+    const u = i / (c - 1);
+    for (let j = 0; j < r - 1; j++) {
+      vertices[o++] = u;
+      vertices[o++] = j / (r - 1);
+      vertices[o++] = u;
+      vertices[o++] = (j + 1) / (r - 1);
+    }
+  }
+  return { vertices, count: segs * 2 };
+}
+
 /* ---------------- GLSL ---------------- */
 
 const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
@@ -642,6 +690,259 @@ export function shaderParticles(host, { count = 1500, seed = 1337, reduced, dprC
     const r = host.getBoundingClientRect();
     const s = canvasSize(r.width, r.height, window.devicePixelRatio || 1, dprCap, maxPixels);
     curScale = s.scale;
+    if (canvas.width !== s.width || canvas.height !== s.height) { canvas.width = s.width; canvas.height = s.height; }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (!raf) draw();
+  };
+
+  const onMove = (e) => {
+    const r = host.getBoundingClientRect();
+    mouse.tx = (e.clientX - r.left) / (r.width || 1);
+    mouse.ty = 1 - (e.clientY - r.top) / (r.height || 1);
+  };
+  const onLeave = () => { mouse.tx = 0.5; mouse.ty = 0.5; };
+  const onVis = () => { hidden = document.visibilityState === 'hidden'; hidden ? halt() : kick(); };
+  const onLost = (e) => { e.preventDefault(); lost = true; halt(); host.classList.remove('is-ready'); host.classList.add('is-fallback'); };
+
+  if (!isReduced) {
+    host.addEventListener('pointermove', onMove, { passive: true });
+    host.addEventListener('pointerleave', onLeave);
+  }
+  document.addEventListener('visibilitychange', onVis);
+  canvas.addEventListener('webglcontextlost', onLost);
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+  ro?.observe(host);
+  const io = typeof IntersectionObserver !== 'undefined'
+    ? new IntersectionObserver(([en]) => { visible = !!en?.isIntersecting; visible ? kick() : halt(); })
+    : null;
+  io?.observe(host);
+
+  resize();
+  kick();
+
+  return {
+    ok: true,
+    redraw() { if (!raf) draw(); },
+    destroy() {
+      halt();
+      ro?.disconnect();
+      io?.disconnect();
+      host.removeEventListener('pointermove', onMove);
+      host.removeEventListener('pointerleave', onLeave);
+      document.removeEventListener('visibilitychange', onVis);
+      canvas.removeEventListener('webglcontextlost', onLost);
+      if (!lost) {
+        gl.deleteBuffer(buf);
+        gl.deleteProgram(prog);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }
+      canvas.remove();
+      host.classList.remove('is-ready');
+    },
+  };
+}
+
+/**
+ * 真 3D 解析射线求交全息地球（Ray-Sphere Analytical Intersection）：
+ * 零网格顶点、经纬线网格 + 程序化发光大陆 + 城市脉动信标 + 大气 Fresnel 辉光。
+ */
+export const GLOBE_FRAG = `
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);
+  float r = length(uv);
+  float R = 0.37;
+  // 球体外大气边缘辉光
+  if (r > R) {
+    float halo = exp(-(r - R) * 14.0) * 0.55;
+    vec3 atmo = mix(C_BLUE, C_LIME, 0.35) * halo;
+    gl_FragColor = vec4(atmo, clamp(halo * 1.15, 0.0, 1.0));
+    return;
+  }
+  float z = sqrt(max(0.0, R * R - r * r));
+  vec3 n = normalize(vec3(uv, z));
+  vec3 p = n;
+  // 跟随指针平滑旋转 + 自动自转
+  float yaw = u_time * 0.28 + (u_mouse.x - 0.5) * 3.0;
+  float pitch = -0.22 + (u_mouse.y - 0.5) * 1.4;
+  p.yz *= rot2(pitch);
+  p.xz *= rot2(yaw);
+
+  float lat = asin(clamp(p.y, -1.0, 1.0));
+  float lon = atan(p.x, p.z);
+  vec2 geo = vec2(lon / 3.1415926, lat / 1.5707963);
+
+  // 程序化大陆轮廓（3D 映射 2D FBM，无缝包裹）
+  float landN = fbm(vec2(lon * 1.45, lat * 2.1) + vec2(1.3, 0.7));
+  float land = smoothstep(0.04, 0.16, landN);
+  // 海岸发光边缘
+  float coast = smoothstep(0.02, 0.08, landN) * (1.0 - smoothstep(0.08, 0.18, landN));
+
+  // 经纬线全息网格（按纬度 cos 校正线宽防极点糊成一片）
+  float lonGrid = abs(fract(lon * 3.8197) - 0.5);
+  float latGrid = abs(fract(lat * 3.8197) - 0.5);
+  float gx = smoothstep(0.035 / max(cos(lat), 0.25), 0.0, lonGrid);
+  float gy = smoothstep(0.032, 0.0, latGrid);
+  float grid = max(gx, gy) * 0.36;
+
+  // 点阵大陆纹理
+  float dots = smoothstep(0.28, 0.05, length(fract(geo * vec2(36.0, 18.0)) - 0.5)) * land;
+
+  // 4 个发光脉动数据信标
+  float pulse = 0.5 + 0.5 * sin(u_time * 3.2);
+  vec3 b1 = normalize(vec3(0.45, 0.55, 0.70));
+  vec3 b2 = normalize(vec3(-0.72, 0.38, 0.58));
+  vec3 b3 = normalize(vec3(0.22, -0.46, -0.86));
+  vec3 b4 = normalize(vec3(-0.35, 0.62, -0.70));
+  float beacons =
+    exp(-distance(p, b1) * 18.0) * (0.6 + 0.4 * pulse) +
+    exp(-distance(p, b2) * 18.0) * (0.6 + 0.4 * (1.0 - pulse)) +
+    exp(-distance(p, b3) * 18.0) * (0.6 + 0.4 * pulse) +
+    exp(-distance(p, b4) * 18.0) * (0.6 + 0.4 * (1.0 - pulse));
+
+  vec3 ldir = normalize(vec3(0.65, 0.75, 0.95));
+  float diff = max(dot(n, ldir), 0.0);
+  float fres = pow(1.0 - max(n.z, 0.0), 2.8);
+
+  vec3 ocean = mix(vec3(0.025, 0.045, 0.095), vec3(0.05, 0.11, 0.24), diff);
+  vec3 col = ocean;
+  col += C_BLUE * grid * (0.45 + 0.55 * diff);
+  col += mix(C_BLUE, C_LIME, 0.55) * (land * 0.22 + dots * 0.52) * (0.38 + 0.62 * diff);
+  col += C_LIME * coast * 0.42;
+  col += vec3(0.88, 1.0, 0.55) * beacons * 0.95;
+  col += mix(C_BLUE, C_LIME, 0.4) * fres * 0.85;
+
+  float edgeAA = smoothstep(R, R - 0.004, r);
+  gl_FragColor = vec4(col * edgeAA, edgeAA);
+}`;
+
+/** 原生 WebGL 3D 交互全息地球（零 Three.js）。 */
+export function shaderGlobe(host, opts = {}) {
+  return shaderCanvas(host, { ...opts, frag: GLOBE_FRAG, variant: 'globe' });
+}
+
+const TERRAIN_VERT = `
+attribute vec2 a_uv;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec2 u_mouse;
+varying float v_h;
+varying float v_depth;
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+void main(){
+  float x = (a_uv.x - 0.5) * 4.4;
+  float z = (a_uv.y - 0.5) * 4.4;
+  float t = u_time * 0.9;
+  // 多频行波叠加山谷与中央通道，呈现赛博地形感
+  float ridge = smoothstep(0.15, 1.5, abs(x));
+  float h =
+    (sin(x * 2.1 + t * 0.4) * cos(z * 1.8 - t) * 0.34 +
+     sin((x * 1.4 - z * 2.3) + t * 1.2) * 0.18 +
+     cos(length(vec2(x, z * 0.7)) * 2.4 - t * 1.3) * 0.14) * (0.35 + ridge * 0.95);
+  vec3 p = vec3(x, h - 0.48, z);
+  p.xz *= rot2((u_mouse.x - 0.5) * 0.75);
+  p.yz *= rot2(0.46 + (u_mouse.y - 0.5) * 0.28);
+  float zz = p.z + 3.45;
+  float asp = u_res.x / max(u_res.y, 1.0);
+  vec2 proj = vec2(p.x / asp, p.y) * (1.85 / max(zz, 0.25));
+  gl_Position = vec4(proj, 0.0, 1.0);
+  v_h = clamp((h + 0.45) / 0.95, 0.0, 1.0);
+  v_depth = clamp(1.0 - (zz - 1.2) / 4.4, 0.08, 1.0);
+}`;
+
+const TERRAIN_FRAG = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying float v_h;
+varying float v_depth;
+void main(){
+  vec3 valley = vec3(0.24, 0.42, 0.92);
+  vec3 mid = vec3(0.545, 0.361, 0.965);
+  vec3 peak = vec3(0.722, 1.0, 0.239);
+  vec3 col = mix(valley, mid, smoothstep(0.15, 0.62, v_h));
+  col = mix(col, peak, smoothstep(0.58, 0.96, v_h));
+  float a = v_depth * (0.45 + v_h * 0.55);
+  gl_FragColor = vec4(col * a, a);
+}`;
+
+/**
+ * 原生 WebGL 3D 赛博地形波浪线框（gl.LINES，零 Three.js）。
+ * 一次性上传网格顶点 VBO，顶点着色器实时波动起伏并按海拔着色。
+ */
+export function shaderTerrain(host, { cols = 28, rows = 28, reduced, dprCap = 1.5, maxPixels = 1200000 } = {}) {
+  if (!host || typeof document === 'undefined') return NOOP;
+  host.classList.add('mk-shader', 'mk-shader--terrain');
+
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  let gl = null;
+  try {
+    gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: true, depth: false, powerPreference: 'low-power' });
+  } catch { gl = null; }
+  if (!gl) { host.classList.add('is-fallback'); return NOOP; }
+
+  let prog;
+  try {
+    const vs = compile(gl, gl.VERTEX_SHADER, TERRAIN_VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, TERRAIN_FRAG);
+    prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || 'link failed');
+  } catch {
+    host.classList.add('is-fallback');
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return NOOP;
+  }
+
+  host.appendChild(canvas);
+  gl.useProgram(prog);
+  const { vertices, count } = terrainGrid(cols, rows);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+  const aUv = gl.getAttribLocation(prog, 'a_uv');
+  gl.enableVertexAttribArray(aUv);
+  gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 0, 0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(0, 0, 0, 0);
+
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const isReduced = resolveReduced(reduced);
+  const t0 = performance.now();
+  const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  let raf = 0;
+  let visible = true;
+  let hidden = document.visibilityState === 'hidden';
+  let lost = false;
+
+  const draw = () => {
+    if (lost) return;
+    const t = isReduced ? 3.5 : (performance.now() - t0) / 1000;
+    mouse.x += (mouse.tx - mouse.x) * 0.08;
+    mouse.y += (mouse.ty - mouse.y) * 0.08;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.LINES, 0, count);
+    host.classList.add('is-ready');
+  };
+  const loop = () => { raf = 0; if (!visible || hidden || lost || isReduced) return; draw(); raf = requestAnimationFrame(loop); };
+  const kick = () => { if (!raf && visible && !hidden && !lost && !isReduced) raf = requestAnimationFrame(loop); };
+  const halt = () => { if (raf) cancelAnimationFrame(raf); raf = 0; };
+
+  const resize = () => {
+    const r = host.getBoundingClientRect();
+    const s = canvasSize(r.width, r.height, window.devicePixelRatio || 1, dprCap, maxPixels);
     if (canvas.width !== s.width || canvas.height !== s.height) { canvas.width = s.width; canvas.height = s.height; }
     gl.viewport(0, 0, canvas.width, canvas.height);
     if (!raf) draw();

@@ -1,7 +1,7 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**52** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**56** 张纯净去库化跨平台动效资产卡。
 
 ## 反馈（9）
 
@@ -17,17 +17,18 @@
 | `state-button` | 态变按钮 | both | 把提交按钮的 `idle → loading → success / error → idle` 压进同一个不跳宽的网格格子里，旧文案上移微糊退场、新文案下移弹入，且自带 400ms 最低加载时长与防连点锁。 | `./effects/state-button.md` |
 | `tap` | 按下即反馈 | touch | `pointerdown` 那一帧就按下（`scale(0.955)` + 提亮），松手/滑走撤掉 —— 把"按了"的确认从 `:active` 的 100ms 之后拉回第 0ms。 | `./effects/tap.md` |
 
-## 连续（5）
+## 连续（6）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
 | `bottom-sheet` | 底部弹层 | touch | 从屏幕底部升起的一块面板，抓手可拖；拖过 28% 高度或甩得够快就收起，否则回弹。 | `./effects/bottom-sheet.md` |
 | `pop` | 弹层 / 轻提示 | both | 纯 CSS 的进出场：入场靠 `@starting-style`，退场靠 `display` 参与过渡，一行 JS 都不用写。 | `./effects/pop.md` |
 | `seg` | 分段控件滑动 | both | 多个等宽互斥选项共用一块背景胶囊，切换时胶囊通过单个 CSS 索引变量连续滑到目标格，不重排、不量像素。 | `./effects/seg.md` |
+| `shader-terrain` | WebGL 3D 赛博地形波浪线框 | both | 一次性把 28×28 线框网格上传至 GPU 静态 VBO，每帧在顶点着色器里用多频行波实时掀起起伏山脉与中央峡谷，按海拔从深海蓝渐变到荧光绿山脊并带远景透视淡出。 | `./effects/shader-terrain.md` |
 | `shared-element` | 共享元素转场 | both | 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。 | `./effects/shared-element.md` |
 | `toast-stack` | 堆叠轻提示 | both | 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。 | `./effects/toast-stack.md` |
 
-## 方向（8）
+## 方向（9）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -36,6 +37,7 @@
 | `fan` | 扇形手牌展开 | both | 多张卡片绕底部中心点叠成一把闭合扇子，悬停或点击时只需改一个 `--spread` 角度变量，整副卡片同步对称张开成优雅扇面。 | `./effects/fan.md` |
 | `fold` | 3D 折纸面板 | both | 面板像沿顶边铰链折起来的纸页一样通过 `rotateX(-92deg → 0deg)` 展开与收起，收起态自动加 `inert` 隔离键盘焦点与误触，减弱动效下彻底归零塌回平面。 | `./effects/fold.md` |
 | `ring` | 3D 环形画廊轮播 | both | N 张卡片绕 Y 轴排成真三维圆环，自动缓慢公转；手指或鼠标可随时抓住拖拽甩动，松手后惯性滑行并无缝交还给自动旋转。 | `./effects/ring.md` |
+| `shader-globe` | WebGL 3D 交互全息地球 | both | 不用 Three.js 也不用球体贴图，直接在 GLSL 里对单位球做解析射线求交（`z = sqrt(R² - r²)`），单帧画出带经纬线网格、点阵发光大陆、城市脉动信标与大气边缘辉光的 3D 全息地球。 | `./effects/shader-globe.md` |
 | `sticky-title` | 吸顶与滚动阴影 | both | 吸顶条滚过顶部后，底部那条发丝线自动淡入（0 → 48px 行程）—— `animation-timeline: scroll()` 驱动，零 JS、零监听。 | `./effects/sticky-title.md` |
 | `swipe` | 左滑操作 | touch | 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。 | `./effects/swipe.md` |
 | `tunnel` | 无限深渊隧道 | both | 10 道光环共用同一条从远端 `-900px` 冲向镜头 `+200px` 的 CSS 关键帧，靠**负 `animation-delay`** 在第 0 帧就把整条无限深渊隧道铺满，零 JS 动画循环。 | `./effects/tunnel.md` |
@@ -53,11 +55,12 @@
 | `shader-particles` | WebGL 3D GPU 星尘粒子星云 | both | 单次 `gl.drawArrays(gl.POINTS, 0, 1500)` 在 GPU 上同时投影并渲染 1,500 颗三旋臂 3D 螺旋星云粒子，近大远小带景深光晕，随指针平滑转动整个星系视角。 | `./effects/shader-particles.md` |
 | `snap-sheet` | 多档位弹层 | touch | 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。 | `./effects/snap-sheet.md` |
 
-## 材质（12）
+## 材质（13）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
 | `blob` | 液态有机变形体 | both | 纯 CSS 用 8 值 `border-radius`（四个角的横纵半径分别错开）配合 `8s ease-in-out` 往返插值，让一块色块或头像容器像水滴一样持续有机呼吸变形，零 SVG、零 JS。 | `./effects/blob.md` |
+| `book-3d` | 3D 精装立书封面开合 | both | 用前封面、立体书脊、封底、带纸页横纹的书口侧边与内页五层 `preserve-3d` 拼出一本厚实的 3D 硬壳精装书；悬停时封面微启 `24°` 露出一角内页，点击或按键盘即可绕左侧书脊平滑翻开 `132°` 展读。 | `./effects/book-3d.md` |
 | `border-run` | 流光跑动边框 | both | 纯 CSS 用 `@property` 登记角度变量驱动 `conic-gradient` 旋转，再用双 `mask` 掏空中间，让一道柔和流光沿着卡片圆角外圈匀速流动，零 JS、不重排。 | `./effects/border-run.md` |
 | `cube` | 纯 CSS 3D 旋转魔方 | both | 纯 CSS 用六个面分别旋转并沿法线推出 `translateZ(半边长)` 拼合出真三维半透明魔方，单条 `@keyframes` 匀速空间自转，零 JS、零 WebGL。 | `./effects/cube.md` |
 | `depth` | 真 Z 轴景深悬浮卡 | web | 把卡片里的背景、标题、徽章分别推到不同的 `translateZ` 高度上，指针一晃容器倾斜，各层由浏览器三维透视自然错开，不需要 JS 手算任何视差偏移。 | `./effects/depth.md` |
@@ -70,7 +73,7 @@
 | `spotlight` | 指针光斑与描边聚光 | web | 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。 | `./effects/spotlight.md` |
 | `tilt` | 3D 倾斜与光泽 | web | 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。 | `./effects/tilt.md` |
 
-## 节奏（10）
+## 节奏（11）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -79,6 +82,7 @@
 | `bounce-text` | 逐字波浪弹跳 | both | 初始化把标题按中文单字、英文整词拆成行内块并写入序号变量，悬停或触发时各片段按 `32ms` 间隔依次轻快弹起形成一道文字波浪。 | `./effects/bounce-text.md` |
 | `count-up` | 数字滚动 / 里程表 | both | 两条路：`countUp` 用 rAF 逐帧算值（通用、可格式化）；`odometer` 给每位数 建一列 0–9，只写一次 transform、由 CSS 过渡滑到位（几十个数字同屏也不掉帧）。 | `./effects/count-up.md` |
 | `enter` | 进场 | both | 元素滚到视口内才入场：上移 16px + 淡入，一组元素按 70ms 级联，全程零滚动监听。 | `./effects/enter.md` |
+| `flip-clock` | 3D 机械翻页时钟 / 翻牌器 | both | 复刻经典机场出发屏与 Braun 机械翻页钟：每一位数由上下独立裁切静页与两片居中转轴翻页叶组成，数值变更时仅变化的那一位触发 3D 下翻接力并带真实的折角压暗阴影。 | `./effects/flip-clock.md` |
 | `glitch` | 赛博故障字 | both | 纯 CSS 用 `::before`/`::after` 克隆文字叠加青/品红双色错位与切片裁切，绝大部分时间完全静止可读，只在每 3.4 秒周期末尾用 `steps(1)` 瞬爆一下故障感。 | `./effects/glitch.md` |
 | `orbit` | 3D 轨道卫星 | both | 多个图标或徽章沿倾斜三维轨道绕核心匀速公转，通过 `rotateY(a) → translateZ(r) → rotateY(-a)` 反向抵消自转，让卫星始终正面朝向观众，全程零 JS。 | `./effects/orbit.md` |
 | `scramble` | 赛博乱序解码 | both | 标题或数字从一串跳动的随机符号里自左向右逐字解码定格成正文，每帧只写 `textContent` 不碰 DOM 结构，搭配等宽字体零宽度抖动。 | `./effects/scramble.md` |

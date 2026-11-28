@@ -220,43 +220,113 @@
   <section class="hero">
     <h1>平面之外，<br /><em>真的有个 Z 轴。</em></h1>
     <p>
-      集合 14 个零 Three.js 依赖的 3D 场景：顶部 4 个新增了原生 WebGL 3D 射线步进液态扭环、1,500 颗 GPU 星尘星云、Cover Flow 封面流与等轴立体数据柱图；
-      其余 10 个用纯 CSS 透视与单变量驱动。减弱动效下全部自动归零或定格，且每张卡支持原地复制 AI 提示词。
+      集合 18 个零 Three.js 依赖的真 3D 场景：顶部新增原生 WebGL 3D 全息地球、赛博地形波浪线框、机械翻页时钟与精装立书，
+      下方还有射线步进液态扭环、1,500 颗 GPU 星云、Cover Flow、立体数据柱图与 10 个纯 CSS 真 Z 轴交互。减弱动效下全部自动归零或定格，且每张卡支持原地复制 AI 提示词。
     </p>
     <div class="notice">
-      <b>移动鼠标</b>旋转 01 扭环 / 02 星云 / 05 景深 · <b>点击或拖拽</b> 03 封面流 / 06 环形轮播 · <b>点右上角按钮</b>切换 04 立体柱数据
+      <b>移动鼠标</b>旋转 01 地球 / 02 地形 / 05 扭环 / 06 星云 · <b>点击</b> 03 翻牌 / 04 精装书翻开内页 / 07 封面流
     </div>
   </section>
 
   <section class="scenes" id="scenes">
 
-    <!-- 01 WebGL 3D 射线步进液态扭环 -->
+    <!-- 01 WebGL 3D 交互全息地球 -->
+    <article class="sc">
+      <div class="sc__stage" style="padding:0">
+        <div class="webgl-stage" id="shader-globe"></div>
+      </div>
+      <div class="sc__meta">
+        <div class="sc__row"><span class="sc__n">01</span><h3 class="sc__t">WebGL 3D 交互全息地球</h3><span class="sc__badge">NEW · WebGL 3D</span></div>
+        <p class="sc__d">零 Three.js、零地球贴图。用球面解析求交 z = √(R²-r²) 实时渲染经纬网格、点阵发光大陆、城市脉动信标与大气 Fresnel 辉光。</p>
+        <code class="sc__tag">shaderGlobe(host) · .mk-shader--globe</code>
+        <div class="sc__asset" data-mk-assets="shader-globe"></div>
+      </div>
+    </article>
+
+    <!-- 02 WebGL 3D 赛博地形波浪线框 -->
+    <article class="sc">
+      <div class="sc__stage" style="padding:0">
+        <div class="webgl-stage" id="shader-terrain"></div>
+      </div>
+      <div class="sc__meta">
+        <div class="sc__row"><span class="sc__n">02</span><h3 class="sc__t">WebGL 3D 赛博地形波浪线框</h3><span class="sc__badge">NEW · WebGL 3D</span></div>
+        <p class="sc__d">单次 gl.LINES 绘制 28×28 线框山脉：静态 VBO 一次上传，顶点着色器多频行波实时起伏并按海拔从深蓝渐变至荧光绿山脊。</p>
+        <code class="sc__tag">shaderTerrain(host, { cols: 28, rows: 28 })</code>
+        <div class="sc__asset" data-mk-assets="shader-terrain"></div>
+      </div>
+    </article>
+
+    <!-- 03 3D 机械翻页时钟 / 翻牌器 -->
+    <article class="sc">
+      <button type="button" class="bar3d-btn" id="flapStep">↻ +1 翻页</button>
+      <div class="sc__stage">
+        <div id="flip-clock"></div>
+      </div>
+      <div class="sc__meta">
+        <div class="sc__row"><span class="sc__n">03</span><h3 class="sc__t">3D 机械翻页时钟 / 翻牌器</h3><span class="sc__badge">NEW · 3D</span></div>
+        <p class="sc__d">经典 Braun / 机场出发屏翻牌：四层结构两段 90° 接力下翻，经过中缝自动压暗折角阴影，且仅变动位触发翻折。</p>
+        <code class="sc__tag">flipClock(el, { value, pad: 3 }) · .mk-flap</code>
+        <div class="sc__asset" data-mk-assets="flip-clock"></div>
+      </div>
+    </article>
+
+    <!-- 04 3D 精装立书封面开合 -->
+    <article class="sc">
+      <div class="sc__stage">
+        <div class="mk-book-stage">
+          <div class="mk-book" id="book-3d">
+            <div class="mk-book__spine"></div>
+            <div class="mk-book__pages-edge"></div>
+            <div class="mk-book__back"></div>
+            <div class="mk-book__page">
+              <strong style="font-size:12px;color:#0f172a">Motion Physics</strong>
+              <span>物理常量、降级契约与真 Z 轴交互规范。再点一次合上封面。</span>
+            </div>
+            <div class="mk-book__cover">
+              <span style="font:600 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8ff3d;letter-spacing:0.12em">VOL. 01</span>
+              <div>
+                <b style="display:block;font-size:14px;line-height:1.2;color:#eef2f7">MOTION<br>KIT 3D</b>
+                <small style="font-size:10px;color:#8b95a5">点我翻开内页 →</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sc__meta">
+        <div class="sc__row"><span class="sc__n">04</span><h3 class="sc__t">3D 精装立书封面开合</h3><span class="sc__badge">NEW · 3D</span></div>
+        <p class="sc__d">封面、书脊、封底、纸纹书口与内页五面 preserve-3d 拼合：悬停封面微启 24° 邀请交互，点击绕左侧书脊平滑翻开 132° 展读。</p>
+        <code class="sc__tag">book3d(el) · .mk-book</code>
+        <div class="sc__asset" data-mk-assets="book-3d"></div>
+      </div>
+    </article>
+
+    <!-- 05 WebGL 3D 射线步进液态扭环 -->
     <article class="sc">
       <div class="sc__stage" style="padding:0">
         <div class="webgl-stage" id="shader-torus"></div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">01</span><h3 class="sc__t">WebGL 3D 液态扭环射线步进</h3><span class="sc__badge">NEW · WebGL 3D</span></div>
+        <div class="sc__row"><span class="sc__n">05</span><h3 class="sc__t">WebGL 3D 液态扭环射线步进</h3><span class="sc__badge">WebGL 3D</span></div>
         <p class="sc__d">零 Three.js、零网格顶点。一个全屏三角形里跑 44 步 SDF 射线步进 + 中心差分法线 + 虹彩 Fresnel，滑过鼠标平滑 3D 转向。</p>
         <code class="sc__tag">shaderTorus(host) · .mk-shader--torus</code>
         <div class="sc__asset" data-mk-assets="shader-torus"></div>
       </div>
     </article>
 
-    <!-- 02 WebGL 3D GPU 星尘粒子星云 -->
+    <!-- 06 WebGL 3D GPU 星尘粒子星云 -->
     <article class="sc">
       <div class="sc__stage" style="padding:0">
         <div class="webgl-stage" id="shader-particles"></div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">02</span><h3 class="sc__t">WebGL 3D GPU 星尘粒子星云</h3><span class="sc__badge">NEW · WebGL 3D</span></div>
+        <div class="sc__row"><span class="sc__n">06</span><h3 class="sc__t">WebGL 3D GPU 星尘粒子星云</h3><span class="sc__badge">WebGL 3D</span></div>
         <p class="sc__d">单次 gl.POINTS 渲染 1,500 颗三旋臂 3D 粒子：顶点着色器并行旋转与透视缩放，加法混合叠出星核辉光，离屏自动停帧。</p>
         <code class="sc__tag">shaderParticles(host, { count: 1500 })</code>
         <div class="sc__asset" data-mk-assets="shader-particles"></div>
       </div>
     </article>
 
-    <!-- 03 3D 封面流画廊 -->
+    <!-- 07 3D 封面流画廊 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="cf-stage">
@@ -270,14 +340,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">03</span><h3 class="sc__t">3D 封面流画廊</h3><span class="sc__badge">NEW · 3D</span></div>
+        <div class="sc__row"><span class="sc__n">07</span><h3 class="sc__t">3D 封面流画廊</h3></div>
         <p class="sc__d">经典 Apple Cover Flow：中心卡前突正对，左右侧卡对称内扣 ±42° 依次隐入纵深。支持点击侧卡、横向轻拖与左右方向键。</p>
         <code class="sc__tag">coverflow(el, { active: 2 }) · .mk-coverflow</code>
         <div class="sc__asset" data-mk-assets="coverflow"></div>
       </div>
     </article>
 
-    <!-- 04 3D 等轴立体数据柱图 -->
+    <!-- 08 3D 等轴立体数据柱图 -->
     <article class="sc">
       <button type="button" class="bar3d-btn" id="bar3dShuffle">↻ 换一组数据</button>
       <div class="sc__stage">
@@ -286,14 +356,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">04</span><h3 class="sc__t">3D 等轴立体数据柱图</h3><span class="sc__badge">NEW · 3D</span></div>
+        <div class="sc__row"><span class="sc__n">08</span><h3 class="sc__t">3D 等轴立体数据柱图</h3></div>
         <p class="sc__d">前/右/顶三面真 preserve-3d 拼合的实心立柱，三档受光阶差，改一个高度变量即整体平滑升降；数值标签反旋保持正面锐利。</p>
         <code class="sc__tag">bar3d(el, { values }) · .mk-bar3d</code>
         <div class="sc__asset" data-mk-assets="bar-3d"></div>
       </div>
     </article>
 
-    <!-- 05 景深 -->
+    <!-- 09 景深 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-3d-scene" style="width:100%">
@@ -309,14 +379,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">05</span><h3 class="sc__t">景深卡片</h3></div>
+        <div class="sc__row"><span class="sc__n">09</span><h3 class="sc__t">景深卡片</h3></div>
         <p class="sc__d">容器按指针转，里面每层 translateZ 站在不同深度。位移差是透视算的，不是我写死的偏移。</p>
         <code class="sc__tag">trackTilt() · .mk-3d-layer</code>
         <div class="sc__asset" data-mk-assets="depth"></div>
       </div>
     </article>
 
-    <!-- 06 环形轮播 -->
+    <!-- 10 环形轮播 -->
     <article class="sc">
       <button class="sc__replay" data-replay aria-label="重播">⟳</button>
       <div class="sc__stage">
@@ -325,26 +395,26 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">06</span><h3 class="sc__t">环形轮播</h3></div>
+        <div class="sc__row"><span class="sc__n">10</span><h3 class="sc__t">环形轮播</h3></div>
         <p class="sc__d">六张卡绕 Y 轴排成一圈，拖拽带惯性。拖拽角度和自动旋转写的是同一个变量，所以不会二次加速。</p>
         <code class="sc__tag">ring(el, { radius, auto })</code>
         <div class="sc__asset" data-mk-assets="ring"></div>
       </div>
     </article>
 
-    <!-- 07 立体字 -->
+    <!-- 11 立体字 -->
     <article class="sc">
       <div class="sc__stage">
         <span class="mk-3d-text extrude">MOTION</span>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">07</span><h3 class="sc__t">等距挤出的立体字</h3></div>
+        <div class="sc__row"><span class="sc__n">11</span><h3 class="sc__t">等距挤出的立体字</h3></div>
         <p class="sc__d">十一层 text-shadow 沿同一向量叠起来就是厚度。悬停时向量翻号 —— 等于换了光源方向，字自己"转"过去。</p>
         <code class="sc__tag">.mk-3d-text · --mk-3d-text-side</code>
       </div>
     </article>
 
-    <!-- 08 隧道 -->
+    <!-- 12 隧道 -->
     <article class="sc">
       <div class="sc__stage" style="padding:0">
         <div class="mk-tunnel-stage tunnel-stage">
@@ -352,14 +422,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">08</span><h3 class="sc__t">无限隧道</h3></div>
+        <div class="sc__row"><span class="sc__n">12</span><h3 class="sc__t">无限隧道</h3></div>
         <p class="sc__d">十圈同心框沿 Z 轴飞过来。错开靠负的 animation-delay，不靠各自不同的 transform —— 后者一改周期就得全重算。</p>
         <code class="sc__tag">tunnel(el) · .mk-tunnel__ring</code>
         <div class="sc__asset" data-mk-assets="tunnel"></div>
       </div>
     </article>
 
-    <!-- 09 点阵球 -->
+    <!-- 13 点阵球 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-sphere-stage">
@@ -367,14 +437,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">09</span><h3 class="sc__t">点阵球体</h3></div>
+        <div class="sc__row"><span class="sc__n">13</span><h3 class="sc__t">点阵球体</h3></div>
         <p class="sc__d">斐波那契格点铺满球面，没有极点堆积。角度算一次写进变量，之后整球匀速自转，点不再动。</p>
         <code class="sc__tag">sphere(el, { count, radius })</code>
         <div class="sc__asset" data-mk-assets="sphere"></div>
       </div>
     </article>
 
-    <!-- 10 扇形卡组 -->
+    <!-- 14 扇形卡组 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-fan fan-stage" id="fan">
@@ -386,14 +456,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">10</span><h3 class="sc__t">扇形卡组</h3></div>
+        <div class="sc__row"><span class="sc__n">14</span><h3 class="sc__t">扇形卡组</h3></div>
         <p class="sc__d">每张绕底边中点转，角度按"离中心多远"算 —— 中间那张永远是正的。张开是纯 CSS 悬停，一个系数搞定。</p>
         <code class="sc__tag">fan(el) · .mk-fan__card</code>
         <div class="sc__asset" data-mk-assets="fan"></div>
       </div>
     </article>
 
-    <!-- 11 轨道卫星 -->
+    <!-- 15 轨道卫星 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-orbit-stage">
@@ -406,14 +476,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">11</span><h3 class="sc__t">轨道卫星</h3></div>
+        <div class="sc__row"><span class="sc__n">15</span><h3 class="sc__t">轨道卫星</h3></div>
         <p class="sc__d">公转后再反向自转一次，卫星才是正的 —— 少了这一步，它们会跟着一起倒转，字全倒着。</p>
         <code class="sc__tag">.mk-orbit · .mk-orbit__sat</code>
         <div class="sc__asset" data-mk-assets="orbit"></div>
       </div>
     </article>
 
-    <!-- 12 跟手立方 -->
+    <!-- 16 跟手立方 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-3d-scene manual-cube-stage">
@@ -432,13 +502,13 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">12</span><h3 class="sc__t">跟手立方体</h3></div>
+        <div class="sc__row"><span class="sc__n">16</span><h3 class="sc__t">跟手立方体</h3></div>
         <p class="sc__d">复用六面立方体，把自动旋转换成跟手。基准俯角 -18° 必须保留 —— 从正上方俯视立方体是什么都看不见的。</p>
         <code class="sc__tag">.mk-cube--manual</code>
       </div>
     </article>
 
-    <!-- 13 折纸面板 -->
+    <!-- 17 折纸面板 -->
     <article class="sc">
       <div class="sc__stage">
         <div class="mk-fold fold-card" id="fold">
@@ -456,14 +526,14 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">13</span><h3 class="sc__t">折纸面板</h3></div>
+        <div class="sc__row"><span class="sc__n">17</span><h3 class="sc__t">折纸面板</h3></div>
         <p class="sc__d">角度交给 CSS 的 .is-open，JS 只管状态和 aria。收起后面板设 inert —— 看不见的东西不该还能聚焦。</p>
         <code class="sc__tag">fold(el) · .mk-fold</code>
         <div class="sc__asset" data-mk-assets="fold"></div>
       </div>
     </article>
 
-    <!-- 14 网格地面 -->
+    <!-- 18 网格地面 -->
     <article class="sc">
       <div class="sc__stage" style="padding:0">
         <div class="mk-grid-floor-stage floor-stage">
@@ -472,7 +542,7 @@
         </div>
       </div>
       <div class="sc__meta">
-        <div class="sc__row"><span class="sc__n">14</span><h3 class="sc__t">透视网格地面</h3></div>
+        <div class="sc__row"><span class="sc__n">18</span><h3 class="sc__t">透视网格地面</h3></div>
         <p class="sc__d">rotateX 压到地上的方格纸。动的是伪元素的 translateY 而非 background-position —— 后者每帧重绘被旋转的区域，低端机立刻掉帧。</p>
         <code class="sc__tag">.mk-grid-floor</code>
       </div>
@@ -482,14 +552,14 @@
 
   <div class="strip" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:6px 0 4px">
     <span style="font-size:12px;color:var(--muted)">平面的那些在别处：</span>
-    <a class="btn btn--ghost" href="./library.html">全部 52 张 AI 资产库 →</a>
+    <a class="btn btn--ghost" href="./library.html">全部 56 张 AI 资产库 →</a>
     <a class="btn btn--ghost" href="./fun.html">故障字 · 霓虹 · 撒花 · 光标 →</a>
     <a class="btn btn--ghost" href="./web.html">倾斜 · 光斑 · 磁吸 · 视差 →</a>
     <a class="btn btn--ghost" href="./mobile.html">按压 · 弹层 · 左滑 · 下拉 →</a>
   </div>
 
   <footer class="demo-foot">
-    <span>这 14 个在 <code>styles/3d.css</code> + <code>styles/webgl.css</code> + <code>src/core/scene3d.js</code> + <code>src/core/shader.js</code></span>
+    <span>这 18 个在 <code>styles/3d.css</code> + <code>styles/webgl.css</code> + <code>src/core/scene3d.js</code> + <code>src/core/shader.js</code></span>
     <span>prefers-reduced-motion / .mk-lite 下整层归零或定格，绝不掉帧黑屏</span>
   </footer>
 
@@ -497,44 +567,69 @@
 
 <script src="./motion-kit.global.js"></script>
 <script>
-  const { trackTilt, ring, sphere, tunnel, fold, fan, shaderTorus, shaderParticles, coverflow, bar3d } = window.MK;
+  const { trackTilt, ring, sphere, tunnel, fold, fan, shaderTorus, shaderParticles, shaderGlobe, shaderTerrain, coverflow, bar3d, flipClock, book3d } = window.MK;
 
   const off = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* 01 WebGL 3D 射线步进液态扭环 */
+  /* 01 WebGL 3D 交互全息地球 */
+  shaderGlobe(document.getElementById('shader-globe'));
+
+  /* 02 WebGL 3D 赛博地形波浪线框 */
+  shaderTerrain(document.getElementById('shader-terrain'), { cols: 28, rows: 28 });
+
+  /* 03 3D 机械翻页时钟 / 翻牌器 */
+  let flapVal = 56;
+  const flapCtrl = flipClock(document.getElementById('flip-clock'), { value: flapVal, pad: 3 });
+  document.getElementById('flapStep').addEventListener('click', () => {
+    flapVal = (flapVal + 1) % 1000;
+    flapCtrl.set(flapVal);
+  });
+  if (!off) {
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        flapVal = (flapVal + 1) % 1000;
+        flapCtrl.set(flapVal);
+      }
+    }, 2000);
+  }
+
+  /* 04 3D 精装立书封面开合 */
+  book3d(document.getElementById('book-3d'));
+
+  /* 05 WebGL 3D 射线步进液态扭环 */
   shaderTorus(document.getElementById('shader-torus'));
 
-  /* 02 WebGL 3D GPU 星尘粒子星云 */
+  /* 06 WebGL 3D GPU 星尘粒子星云 */
   shaderParticles(document.getElementById('shader-particles'), { count: 1500 });
 
-  /* 03 3D 封面流画廊 */
+  /* 07 3D 封面流画廊 */
   coverflow(document.getElementById('coverflow'), { active: 2 });
 
-  /* 04 3D 等轴立体数据柱图 */
+  /* 08 3D 等轴立体数据柱图 */
   const barCtrl = bar3d(document.getElementById('bar3d'), { values: [42, 76, 94, 62, 85], max: 100, maxPx: 112 });
   document.getElementById('bar3dShuffle').addEventListener('click', () => {
     barCtrl.update([0, 0, 0, 0, 0].map(() => 22 + Math.floor(Math.random() * 75)));
   });
 
-  /* 05 景深卡片：跟手倾斜（demo 里允许触屏也开，好让人在手机上看得出差别） */
+  /* 09 景深卡片：跟手倾斜（demo 里允许触屏也开，好让人在手机上看得出差别） */
   trackTilt(document.getElementById('depth'), { max: 13, disabled: false });
 
-  /* 06 环形轮播 */
+  /* 10 环形轮播 */
   ring(document.getElementById('ring'), { count: 6, radius: 132, auto: 10 });
 
-  /* 08 隧道 */
+  /* 12 隧道 */
   tunnel(document.getElementById('tunnel'), { count: 10 });
 
-  /* 09 点阵球 */
+  /* 13 点阵球 */
   sphere(document.getElementById('sphere'), { count: 150, radius: 88 });
 
-  /* 10 扇形卡组：写 --mk-i 的相对索引 */
+  /* 14 扇形卡组：写 --mk-i 的相对索引 */
   fan(document.getElementById('fan'));
 
-  /* 12 跟手立方：容器跟手，立方体自己读变量 */
+  /* 16 跟手立方：容器跟手，立方体自己读变量 */
   trackTilt(document.getElementById('cube-host'), { max: 26, damp: 0.16, disabled: false });
 
-  /* 13 折纸面板 */
+  /* 17 折纸面板 */
   fold(document.getElementById('fold'));
 
   /* 单卡重播：只回卷这一张卡片里的动画 */
