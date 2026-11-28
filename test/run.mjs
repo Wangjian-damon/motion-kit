@@ -7,7 +7,7 @@ import { splitTokens } from '../src/core/text-reveal.js';
 import { parallaxProgress } from '../src/core/parallax.js';
 import { shouldDismiss, shouldGoBack, snapIndexAt, snapShouldClose, offsetForSnap, sheet } from '../src/core/gesture.js';
 import { repelOffset } from '../src/core/fun.js';
-import { spherePoint, coverflowPose, bar3dHeight, splitFlapDigits, bookCoverAngle } from '../src/core/scene3d.js';
+import { spherePoint, coverflowPose, bar3dHeight, splitFlapDigits, bookCoverAngle, holoLight, deckPose } from '../src/core/scene3d.js';
 import { dockScale } from '../src/core/dock.js';
 import { segIndexAt } from '../src/core/seg.js';
 import { scrambleFrame } from '../src/core/scramble.js';
@@ -19,7 +19,7 @@ import { rubberBand, rubberClamp, RUBBER_C } from '../src/core/rubber.js';
 import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-stack.js';
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
-import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid } from '../src/core/shader.js';
+import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, smoothMin, helixPositions } from '../src/core/shader.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -1117,12 +1117,52 @@ t('bookCoverAngle：静置/悬停微启/展读三态角度明确', () => {
   assert.equal(bookCoverAngle(true, true), -132);
 });
 
+t('smoothMin：融合区间严格小于硬 min，相距超过 k 退回精确 min', () => {
+  assert.ok(smoothMin(0.5, 0.5, 0.4) < 0.5);
+  assert.equal(smoothMin(0.1, 2.0, 0.4), 0.1);
+  assert.equal(smoothMin(0.5, 0.5, 0), 0.5);
+  assert.equal(smoothMin(NaN, 1, 0.4), 0);
+});
+
+t('helixPositions：生成确定性 DNA 双螺旋与横桥粒子数组，全有限值', () => {
+  const h = helixPositions(10, 5);
+  // 10 * (6 + 5) = 110 颗粒子 = 440 float
+  assert.equal(h.count, 110);
+  assert.equal(h.vertices.length, 440);
+  for (let i = 0; i < h.vertices.length; i++) assert.ok(Number.isFinite(h.vertices[i]));
+  const types = new Set();
+  for (let i = 3; i < h.vertices.length; i += 4) types.add(h.vertices[i]);
+  assert.ok(types.has(0) && types.has(0.5) && types.has(1));
+});
+
+t('holoLight：中心归零、对称反号、越界安全钳制', () => {
+  const c = holoLight(0.5, 0.5, 16);
+  assert.equal(c.rx, 0);
+  assert.equal(c.ry, 0);
+  assert.equal(c.gx, 50);
+  assert.equal(c.gy, 50);
+  const tl = holoLight(0, 0, 16);
+  const br = holoLight(1, 1, 16);
+  assert.equal(tl.rx, -br.rx);
+  assert.equal(tl.ry, -br.ry);
+  assert.deepEqual(holoLight(-5, 9, 16), holoLight(0, 1, 16));
+});
+
+t('deckPose：顶牌置顶突前，后牌逐层后退下沉缩放且 zIndex 递减', () => {
+  const p0 = deckPose(0, 4);
+  const p1 = deckPose(1, 4);
+  const p2 = deckPose(2, 4);
+  assert.deepEqual(p0, { z: 0, y: 0, scale: 1, opacity: 1, zIndex: 4 });
+  assert.ok(p1.z < p0.z && p1.y > p0.y && p1.scale < p0.scale && p1.zIndex < p0.zIndex);
+  assert.ok(p2.z < p1.z && p2.y > p1.y && p2.scale < p1.scale && p2.zIndex < p1.zIndex);
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 56, `应至少包含 56 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 60, `应至少包含 60 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

@@ -553,3 +553,195 @@ export function book3d(el, { open = false, onChange } = {}) {
     },
   };
 }
+
+/**
+ * 纯函数：计算 3D 全息折射炫彩卡的倾斜角与虹彩光斑参数。
+ * 输入归一化指针坐标 nx, ny ∈ [0, 1]，中心 (0.5, 0.5) 归零。
+ */
+export function holoLight(nx, ny, maxTilt = 16) {
+  const x = Number.isFinite(nx) ? Math.min(1, Math.max(0, nx)) : 0.5;
+  const y = Number.isFinite(ny) ? Math.min(1, Math.max(0, ny)) : 0.5;
+  const m = Number.isFinite(maxTilt) && maxTilt > 0 ? maxTilt : 16;
+  const dx = x - 0.5;
+  const dy = y - 0.5;
+  return {
+    rx: Number((-dy * 2 * m).toFixed(2)),
+    ry: Number((dx * 2 * m).toFixed(2)),
+    gx: Number((x * 100).toFixed(1)),
+    gy: Number((y * 100).toFixed(1)),
+    bgX: Number((50 + dx * 60).toFixed(1)),
+    bgY: Number((50 + dy * 60).toFixed(1)),
+    angle: Number((115 + dx * 90 - dy * 45).toFixed(1)),
+  };
+}
+
+/**
+ * 3D 全息折射炫彩卡控制器：跟手 3D 倾斜同步驱动彩虹衍射箔层与镜面光斑。
+ */
+export function holoCard(el, { max = 16 } = {}) {
+  if (!el || typeof window === 'undefined') return { destroy() {} };
+  el.classList.add('mk-holo');
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  const paint = (nx, ny, active) => {
+    const p = holoLight(nx, ny, max);
+    el.style.setProperty('--mk-holo-rx', `${p.rx}deg`);
+    el.style.setProperty('--mk-holo-ry', `${p.ry}deg`);
+    el.style.setProperty('--mk-holo-gx', `${p.gx}%`);
+    el.style.setProperty('--mk-holo-gy', `${p.gy}%`);
+    el.style.setProperty('--mk-holo-bgx', `${p.bgX}%`);
+    el.style.setProperty('--mk-holo-bgy', `${p.bgY}%`);
+    el.style.setProperty('--mk-holo-ang', `${p.angle}deg`);
+    el.classList.toggle('is-active', active);
+  };
+
+  const onMove = (e) => {
+    if (reduced) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    paint((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, true);
+  };
+  const onLeave = () => paint(0.5, 0.5, false);
+
+  el.addEventListener('pointermove', onMove, { passive: true });
+  el.addEventListener('pointerleave', onLeave);
+  paint(0.5, 0.5, false);
+
+  return {
+    destroy() {
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerleave', onLeave);
+    },
+  };
+}
+
+/**
+ * 纯函数：计算 3D 堆叠卡组中第 index 层（0 = 顶牌）的纵深姿态。
+ */
+export function deckPose(index, total = 4) {
+  const i = Math.max(0, Math.floor(Number(index) || 0));
+  const n = Math.max(1, Math.floor(Number(total) || 1));
+  return {
+    z: i === 0 ? 0 : -i * 28,
+    y: i === 0 ? 0 : i * 10,
+    scale: Number(Math.max(0.76, 1 - i * 0.06).toFixed(3)),
+    opacity: Number(Math.max(0.25, 1 - i * 0.22).toFixed(3)),
+    zIndex: Math.max(1, n - i),
+  };
+}
+
+/**
+ * 3D 物理甩牌堆叠卡组控制器：支持顶牌跟手 3D 拖拽甩出（pointercancel 安全）或一键切牌回底。
+ */
+export function cardDeck(el, { threshold = 82, onChange } = {}) {
+  if (!el) return { next() {}, destroy() {} };
+  const cards = [...el.querySelectorAll('.mk-deck__card')];
+  if (!cards.length) return { next() {}, destroy() {} };
+  el.classList.add('mk-deck');
+
+  let order = cards.map((_, i) => i);
+  let dragging = false;
+  let pid = -1;
+  let startX = 0;
+  let startY = 0;
+  let dx = 0;
+  let dy = 0;
+
+  const paint = () => {
+    const n = order.length;
+    order.forEach((cardIdx, slot) => {
+      const c = cards[cardIdx];
+      const p = deckPose(slot, n);
+      c.style.setProperty('--mk-dk-z', `${p.z}px`);
+      c.style.setProperty('--mk-dk-y', `${p.y}px`);
+      c.style.setProperty('--mk-dk-s', String(p.scale));
+      c.style.setProperty('--mk-dk-o', String(p.opacity));
+      c.style.setProperty('--mk-dk-dx', '0px');
+      c.style.setProperty('--mk-dk-dy', '0px');
+      c.style.setProperty('--mk-dk-rz', '0deg');
+      c.style.setProperty('--mk-dk-ry', '0deg');
+      c.style.zIndex = String(p.zIndex);
+      c.classList.toggle('is-top', slot === 0);
+      c.classList.remove('is-dragging');
+    });
+  };
+
+  const cycle = () => {
+    order.push(order.shift());
+    paint();
+    onChange?.(order[0]);
+  };
+
+  const fling = (dir = 1) => {
+    const top = cards[order[0]];
+    if (!top) return;
+    top.classList.remove('is-dragging');
+    top.style.setProperty('--mk-dk-dx', `${dir * 220}px`);
+    top.style.setProperty('--mk-dk-rz', `${dir * 18}deg`);
+    top.style.setProperty('--mk-dk-ry', `${dir * -26}deg`);
+    top.style.setProperty('--mk-dk-o', '0');
+    setTimeout(cycle, 220);
+  };
+
+  const onDown = (e) => {
+    const top = cards[order[0]];
+    if (!top || !top.contains(e.target)) return;
+    dragging = true;
+    pid = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    dx = 0;
+    dy = 0;
+    top.classList.add('is-dragging');
+    try { el.setPointerCapture(pid); } catch {}
+  };
+
+  const onMove = (e) => {
+    if (!dragging || e.pointerId !== pid) return;
+    const top = cards[order[0]];
+    dx = e.clientX - startX;
+    dy = (e.clientY - startY) * 0.35;
+    top.style.setProperty('--mk-dk-dx', `${dx}px`);
+    top.style.setProperty('--mk-dk-dy', `${dy}px`);
+    top.style.setProperty('--mk-dk-rz', `${(dx * 0.08).toFixed(2)}deg`);
+    top.style.setProperty('--mk-dk-ry', `${(-dx * 0.14).toFixed(2)}deg`);
+  };
+
+  const endDrag = (cancelled) => {
+    if (!dragging) return;
+    dragging = false;
+    try { el.releasePointerCapture(pid); } catch {}
+    pid = -1;
+    if (!cancelled && Math.abs(dx) >= threshold) {
+      fling(dx > 0 ? 1 : -1);
+    } else {
+      paint();
+    }
+  };
+
+  const onUp = (e) => { if (e.pointerId === pid) endDrag(false); };
+  const onCancel = (e) => { if (e.pointerId === pid) endDrag(true); };
+  const onKey = (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); fling(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); fling(-1); }
+  };
+
+  el.setAttribute('tabindex', '0');
+  el.addEventListener('pointerdown', onDown);
+  el.addEventListener('pointermove', onMove);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onCancel);
+  el.addEventListener('keydown', onKey);
+  paint();
+
+  return {
+    next: () => fling(1),
+    destroy() {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
+      el.removeEventListener('keydown', onKey);
+    },
+  };
+}

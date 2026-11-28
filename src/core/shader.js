@@ -137,6 +137,63 @@ export function terrainGrid(cols = 28, rows = 28) {
   return { vertices, count: segs * 2 };
 }
 
+/**
+ * 纯函数：多项式平滑最小（Polynomial Smooth-Min，Inigo Quilez）。
+ * 用于 3D 融合液滴（Metaballs）SDF 表面平滑融合，C1 连续且 <= min(a, b)。
+ */
+export function smoothMin(a, b, k = 0.35) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  if (!Number.isFinite(k) || k <= 0) return Math.min(a, b);
+  const h = Math.max(k - Math.abs(a - b), 0) / k;
+  return Math.min(a, b) - h * h * k * 0.25;
+}
+
+/**
+ * 纯函数：生成 3D DNA 双螺旋与碱基横档的确定性粒子数组 (x, y, z, type)。
+ * type: 0 = 链 A，1 = 链 B，0.5 = 碱基对横档。
+ */
+export function helixPositions(pairs = 44, rungsPerPair = 11) {
+  const p = Math.max(4, Math.min(120, Math.floor(Number(pairs) || 44)));
+  const rpp = Math.max(1, Math.min(20, Math.floor(Number(rungsPerPair) || 11)));
+  // 每对含 2 颗主链节点（每链各 3 颗构成粗链） + rpp 颗横档粒子
+  const total = p * (6 + rpp);
+  const vertices = new Float32Array(total * 4);
+  let o = 0;
+  const turns = 2.6;
+  const radius = 0.62;
+  for (let i = 0; i < p; i++) {
+    const u = i / (p - 1);
+    const y = (u - 0.5) * 2.55;
+    const ang = u * Math.PI * 2 * turns;
+    const ca = Math.cos(ang);
+    const sa = Math.sin(ang);
+    // 链 A 与链 B 各 3 颗微偏粒子增强双链体量感
+    for (let k = -1; k <= 1; k++) {
+      const dr = k * 0.032;
+      const dy = k * 0.022;
+      vertices[o++] = ca * (radius + dr);
+      vertices[o++] = y + dy;
+      vertices[o++] = sa * (radius + dr);
+      vertices[o++] = 0.0;
+
+      vertices[o++] = -ca * (radius + dr);
+      vertices[o++] = y + dy;
+      vertices[o++] = -sa * (radius + dr);
+      vertices[o++] = 1.0;
+    }
+    // 碱基横档（每隔 1 对拉通横桥，保持呼吸节奏）
+    for (let j = 0; j < rpp; j++) {
+      const f = (j + 1) / (rpp + 1);
+      const s = 1 - 2 * f;
+      vertices[o++] = ca * radius * s;
+      vertices[o++] = y;
+      vertices[o++] = sa * radius * s;
+      vertices[o++] = 0.5;
+    }
+  }
+  return { vertices, count: total };
+}
+
 /* ---------------- GLSL ---------------- */
 
 const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
@@ -819,6 +876,257 @@ void main(){
 /** 原生 WebGL 3D 交互全息地球（零 Three.js）。 */
 export function shaderGlobe(host, opts = {}) {
   return shaderCanvas(host, { ...opts, frag: GLOBE_FRAG, variant: 'globe' });
+}
+
+/**
+ * 真 3D 液态水银融合球（3D Raymarched Metaballs）：
+ * 多项式 Smooth-Min 融合 5 颗 3D 公转液滴 + 1 颗指针引力液滴，42 步射线步进 + 镜面虹彩反射。
+ */
+export const METABALLS_FRAG = `
+float smin(float a, float b, float k){
+  float h = max(k - abs(a - b), 0.0) / k;
+  return min(a, b) - h * h * k * 0.25;
+}
+float mapBalls(vec3 p, float t){
+  vec3 c0 = vec3(sin(t * 0.9) * 0.55, cos(t * 0.7) * 0.36, sin(t * 0.6) * 0.42);
+  vec3 c1 = vec3(cos(t * 0.8 + 1.4) * 0.52, sin(t * 1.1) * 0.42, cos(t * 0.7) * 0.38);
+  vec3 c2 = vec3(sin(t * 1.05 + 2.8) * 0.48, cos(t * 0.85 + 1.2) * 0.44, -sin(t * 0.9) * 0.36);
+  vec3 c3 = vec3(-cos(t * 0.75) * 0.46, -sin(t * 0.95) * 0.32, cos(t * 1.0) * 0.44);
+  vec3 c4 = vec3(0.0, sin(t * 0.65) * 0.2, 0.0);
+  vec3 cm = vec3((u_mouse.x - 0.5) * 1.45, (u_mouse.y - 0.5) * 1.1, 0.28);
+
+  float d = length(p - c0) - 0.28;
+  d = smin(d, length(p - c1) - 0.26, 0.36);
+  d = smin(d, length(p - c2) - 0.24, 0.36);
+  d = smin(d, length(p - c3) - 0.23, 0.36);
+  d = smin(d, length(p - c4) - 0.30, 0.38);
+  d = smin(d, length(p - cm) - 0.25, 0.42);
+  return d;
+}
+vec3 calcBallNormal(vec3 p, float t){
+  vec2 e = vec2(0.0028, 0.0);
+  return normalize(vec3(
+    mapBalls(p + e.xyy, t) - mapBalls(p - e.xyy, t),
+    mapBalls(p + e.yxy, t) - mapBalls(p - e.yxy, t),
+    mapBalls(p + e.yyx, t) - mapBalls(p - e.yyx, t)
+  ));
+}
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y);
+  vec3 ro = vec3(0.0, 0.0, 2.45);
+  vec3 rd = normalize(vec3(uv, -1.7));
+  float t = u_time;
+  float dist = 0.0;
+  bool hit = false;
+  for (int i = 0; i < 42; i++) {
+    vec3 p = ro + rd * dist;
+    float d = mapBalls(p, t);
+    if (d < 0.002) { hit = true; break; }
+    dist += d;
+    if (dist > 5.0) break;
+  }
+  if (!hit) {
+    float glow = exp(-dot(uv, uv) * 4.2) * 0.16;
+    gl_FragColor = vec4(mix(C_VIOLET, C_BLUE, 0.5) * glow, glow * 1.3);
+    return;
+  }
+  vec3 p = ro + rd * dist;
+  vec3 n = calcBallNormal(p, t);
+  vec3 v = -rd;
+  vec3 l1 = normalize(vec3(0.7, 1.0, 1.1));
+  vec3 l2 = normalize(vec3(-0.9, -0.5, 0.6));
+  float diff1 = max(dot(n, l1), 0.0);
+  float diff2 = max(dot(n, l2), 0.0);
+  float spec = pow(max(dot(reflect(-l1, n), v), 0.0), 48.0);
+  float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+  vec3 rdir = reflect(-v, n);
+  vec3 env = mix(C_VIOLET, C_BLUE, 0.5 + 0.5 * rdir.y);
+  env = mix(env, C_LIME, smoothstep(0.05, 0.9, fres + rdir.x * 0.4));
+  vec3 col = C_BG * 0.5 + env * (0.25 + diff1 * 0.72) + C_VIOLET * diff2 * 0.28;
+  col += vec3(0.96, 1.0, 0.94) * spec * 1.05 + C_LIME * fres * 0.55;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+/** 原生 WebGL 3D 液态水银融合球（零 Three.js）。 */
+export function shaderMetaballs(host, opts = {}) {
+  return shaderCanvas(host, { ...opts, frag: METABALLS_FRAG, variant: 'metaballs' });
+}
+
+const DNA_VERT = `
+attribute vec4 a_pos;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform float u_dpr;
+varying float v_type;
+varying float v_depth;
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+void main(){
+  vec3 p = a_pos.xyz;
+  float t = u_time * 0.85;
+  // 绕主轴匀速旋转 + 整体斜倾 24°，跟随指针平滑摆动视角
+  p.xz *= rot2(t + (u_mouse.x - 0.5) * 2.2);
+  p.xy *= rot2(-0.42 + (u_mouse.y - 0.5) * 0.65);
+  float z = p.z + 2.95;
+  float asp = u_res.x / max(u_res.y, 1.0);
+  vec2 proj = vec2(p.x / asp, p.y) * (1.72 / max(z, 0.3));
+  gl_Position = vec4(proj, 0.0, 1.0);
+  float base = a_pos.w == 0.5 ? 7.5 : 12.5;
+  gl_PointSize = clamp((base * u_dpr) / max(z, 0.4), 1.6, 8.5);
+  v_type = a_pos.w;
+  v_depth = clamp(1.0 - (z - 1.6) / 2.6, 0.18, 1.0);
+}`;
+
+const DNA_FRAG = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying float v_type;
+varying float v_depth;
+void main(){
+  vec2 c = gl_PointCoord - 0.5;
+  float r = dot(c, c);
+  if (r > 0.25) discard;
+  float a = smoothstep(0.25, 0.0, r) * v_depth;
+  vec3 cA = vec3(0.722, 1.0, 0.239);
+  vec3 cB = vec3(0.376, 0.647, 0.980);
+  vec3 cRung = vec3(0.62, 0.48, 0.98);
+  vec3 col = v_type < 0.25 ? cA : (v_type > 0.75 ? cB : cRung);
+  float boost = v_type == 0.5 ? 0.68 : 1.0;
+  gl_FragColor = vec4(col * a * boost, a * 0.9);
+}`;
+
+/**
+ * 原生 WebGL 3D DNA 双螺旋粒子链（gl.POINTS，零 Three.js）。
+ * 静态 VBO 一次上传双螺旋与碱基横档，顶点着色器并行旋转与透视散景。
+ */
+export function shaderDna(host, { pairs = 44, rungsPerPair = 11, reduced, dprCap = 1.5, maxPixels = 1200000 } = {}) {
+  if (!host || typeof document === 'undefined') return NOOP;
+  host.classList.add('mk-shader', 'mk-shader--dna');
+
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  let gl = null;
+  try {
+    gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, powerPreference: 'low-power' });
+  } catch { gl = null; }
+  if (!gl) { host.classList.add('is-fallback'); return NOOP; }
+
+  let prog;
+  try {
+    const vs = compile(gl, gl.VERTEX_SHADER, DNA_VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, DNA_FRAG);
+    prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || 'link failed');
+  } catch {
+    host.classList.add('is-fallback');
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return NOOP;
+  }
+
+  host.appendChild(canvas);
+  gl.useProgram(prog);
+  const { vertices, count } = helixPositions(pairs, rungsPerPair);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 4, gl.FLOAT, false, 0, 0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.clearColor(0, 0, 0, 0);
+
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const uDpr = gl.getUniformLocation(prog, 'u_dpr');
+  const isReduced = resolveReduced(reduced);
+  const t0 = performance.now();
+  const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+  let curScale = 1;
+  let raf = 0;
+  let visible = true;
+  let hidden = document.visibilityState === 'hidden';
+  let lost = false;
+
+  const draw = () => {
+    if (lost) return;
+    const t = isReduced ? 2.4 : (performance.now() - t0) / 1000;
+    mouse.x += (mouse.tx - mouse.x) * 0.08;
+    mouse.y += (mouse.ty - mouse.y) * 0.08;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, t);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uDpr, curScale);
+    gl.drawArrays(gl.POINTS, 0, count);
+    host.classList.add('is-ready');
+  };
+  const loop = () => { raf = 0; if (!visible || hidden || lost || isReduced) return; draw(); raf = requestAnimationFrame(loop); };
+  const kick = () => { if (!raf && visible && !hidden && !lost && !isReduced) raf = requestAnimationFrame(loop); };
+  const halt = () => { if (raf) cancelAnimationFrame(raf); raf = 0; };
+
+  const resize = () => {
+    const r = host.getBoundingClientRect();
+    const s = canvasSize(r.width, r.height, window.devicePixelRatio || 1, dprCap, maxPixels);
+    curScale = s.scale;
+    if (canvas.width !== s.width || canvas.height !== s.height) { canvas.width = s.width; canvas.height = s.height; }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (!raf) draw();
+  };
+
+  const onMove = (e) => {
+    const r = host.getBoundingClientRect();
+    mouse.tx = (e.clientX - r.left) / (r.width || 1);
+    mouse.ty = 1 - (e.clientY - r.top) / (r.height || 1);
+  };
+  const onLeave = () => { mouse.tx = 0.5; mouse.ty = 0.5; };
+  const onVis = () => { hidden = document.visibilityState === 'hidden'; hidden ? halt() : kick(); };
+  const onLost = (e) => { e.preventDefault(); lost = true; halt(); host.classList.remove('is-ready'); host.classList.add('is-fallback'); };
+
+  if (!isReduced) {
+    host.addEventListener('pointermove', onMove, { passive: true });
+    host.addEventListener('pointerleave', onLeave);
+  }
+  document.addEventListener('visibilitychange', onVis);
+  canvas.addEventListener('webglcontextlost', onLost);
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+  ro?.observe(host);
+  const io = typeof IntersectionObserver !== 'undefined'
+    ? new IntersectionObserver(([en]) => { visible = !!en?.isIntersecting; visible ? kick() : halt(); })
+    : null;
+  io?.observe(host);
+
+  resize();
+  kick();
+
+  return {
+    ok: true,
+    redraw() { if (!raf) draw(); },
+    destroy() {
+      halt();
+      ro?.disconnect();
+      io?.disconnect();
+      host.removeEventListener('pointermove', onMove);
+      host.removeEventListener('pointerleave', onLeave);
+      document.removeEventListener('visibilitychange', onVis);
+      canvas.removeEventListener('webglcontextlost', onLost);
+      if (!lost) {
+        gl.deleteBuffer(buf);
+        gl.deleteProgram(prog);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }
+      canvas.remove();
+      host.classList.remove('is-ready');
+    },
+  };
 }
 
 const TERRAIN_VERT = `

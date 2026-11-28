@@ -1,7 +1,7 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**56** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**60** 张纯净去库化跨平台动效资产卡。
 
 ## 反馈（9）
 
@@ -17,13 +17,14 @@
 | `state-button` | 态变按钮 | both | 把提交按钮的 `idle → loading → success / error → idle` 压进同一个不跳宽的网格格子里，旧文案上移微糊退场、新文案下移弹入，且自带 400ms 最低加载时长与防连点锁。 | `./effects/state-button.md` |
 | `tap` | 按下即反馈 | touch | `pointerdown` 那一帧就按下（`scale(0.955)` + 提亮），松手/滑走撤掉 —— 把"按了"的确认从 `:active` 的 100ms 之后拉回第 0ms。 | `./effects/tap.md` |
 
-## 连续（6）
+## 连续（7）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
 | `bottom-sheet` | 底部弹层 | touch | 从屏幕底部升起的一块面板，抓手可拖；拖过 28% 高度或甩得够快就收起，否则回弹。 | `./effects/bottom-sheet.md` |
 | `pop` | 弹层 / 轻提示 | both | 纯 CSS 的进出场：入场靠 `@starting-style`，退场靠 `display` 参与过渡，一行 JS 都不用写。 | `./effects/pop.md` |
 | `seg` | 分段控件滑动 | both | 多个等宽互斥选项共用一块背景胶囊，切换时胶囊通过单个 CSS 索引变量连续滑到目标格，不重排、不量像素。 | `./effects/seg.md` |
+| `shader-metaballs` | WebGL 3D 液态水银融合球 | both | 零 Three.js、零网格重构，用多项式平滑最小函数 `smin(d1, d2, k)` 把 5 颗公转 3D 球体与 1 颗随鼠标游走的引力液滴在片元着色器里实时融合成一团拉丝粘连的液态水银。 | `./effects/shader-metaballs.md` |
 | `shader-terrain` | WebGL 3D 赛博地形波浪线框 | both | 一次性把 28×28 线框网格上传至 GPU 静态 VBO，每帧在顶点着色器里用多频行波实时掀起起伏山脉与中央峡谷，按海拔从深海蓝渐变到荧光绿山脊并带远景透视淡出。 | `./effects/shader-terrain.md` |
 | `shared-element` | 共享元素转场 | both | 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。 | `./effects/shared-element.md` |
 | `toast-stack` | 堆叠轻提示 | both | 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。 | `./effects/toast-stack.md` |
@@ -42,10 +43,11 @@
 | `swipe` | 左滑操作 | touch | 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。 | `./effects/swipe.md` |
 | `tunnel` | 无限深渊隧道 | both | 10 道光环共用同一条从远端 `-900px` 冲向镜头 `+200px` 的 CSS 关键帧，靠**负 `animation-delay`** 在第 0 帧就把整条无限深渊隧道铺满，零 JS 动画循环。 | `./effects/tunnel.md` |
 
-## 权重（8）
+## 权重（9）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `card-deck` | 3D 物理甩牌堆叠卡组 | both | 多张卡片沿 Z 轴层层叠放并逐级微缩露出底边；抓住顶牌左右拖拽时卡片随位移产生真实 3D 偏航与倾角，拉过阈值松手即干脆飞出并自动循环回卡堆底部，下一张无缝顶上。 | `./effects/card-deck.md` |
 | `detent` | 拖动刻度 | both | 一个离散的滑块：拖动时**每跨过一格**就立刻提交并震一下，松手吸回刻度。 | `./effects/detent.md` |
 | `dock` | 停靠栏放大 | web | 一排图标里，指针指哪个哪个最大、左右邻居依次变小——放大曲线是一条平方衰减。 | `./effects/dock.md` |
 | `magnetic` | 磁吸按钮 | web | 指针靠近按钮周围 90px 判定区时，按钮被柔和拉向指针方向（最大偏移 14px），离开判定区后沿阻尼插值自然弹回原位。 | `./effects/magnetic.md` |
@@ -55,7 +57,7 @@
 | `shader-particles` | WebGL 3D GPU 星尘粒子星云 | both | 单次 `gl.drawArrays(gl.POINTS, 0, 1500)` 在 GPU 上同时投影并渲染 1,500 颗三旋臂 3D 螺旋星云粒子，近大远小带景深光晕，随指针平滑转动整个星系视角。 | `./effects/shader-particles.md` |
 | `snap-sheet` | 多档位弹层 | touch | 同一个底部面板停在三档高度上（35% / 62% / 全开），拖动时按「位移 + 速度」一起决定落到哪一档。 | `./effects/snap-sheet.md` |
 
-## 材质（13）
+## 材质（14）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -65,6 +67,7 @@
 | `cube` | 纯 CSS 3D 旋转魔方 | both | 纯 CSS 用六个面分别旋转并沿法线推出 `translateZ(半边长)` 拼合出真三维半透明魔方，单条 `@keyframes` 匀速空间自转，零 JS、零 WebGL。 | `./effects/cube.md` |
 | `depth` | 真 Z 轴景深悬浮卡 | web | 把卡片里的背景、标题、徽章分别推到不同的 `translateZ` 高度上，指针一晃容器倾斜，各层由浏览器三维透视自然错开，不需要 JS 手算任何视差偏移。 | `./effects/depth.md` |
 | `glass-base` | 玻璃基底材质 | both | 把导航栏、操作条、浮层卡片做成有厚度的实心玻璃：低模糊高饱和底材 + 沿圆角连续的 1.5px 斜向亮棱 + 镜面高光，且不挂 JS 也能静态成立。 | `./effects/glass-base.md` |
+| `holo-card` | 3D 全息折射炫彩卡 | both | 鼠标在卡片上滑动时，3D 倾斜角、彩虹衍射光栅的倾角与位移、镜面高光光斑三者由同一套物理光照坐标同步驱动，还原真实实体全息烫金收藏卡的晃动折射质感。 | `./effects/holo-card.md` |
 | `refraction` | 边缘折射 | both | 在玻璃边缘把背景**弯折**一下：生成一张 dx/dy 位移图，交给 `feDisplacementMap`， 让 `backdrop-filter` 折出"这块东西有厚度"的那一圈。 | `./effects/refraction.md` |
 | `shader-aurora` | WebGL 流体丝绸极光 | both | 原生 WebGL 全屏三角形 + 2D Simplex Noise 域扭曲（Domain Warping FBM）渲染多色丝绸极光，指针划过产生柔和流体扰动；零 Three.js 依赖，不支持或切后台时自动停帧或退回 CSS 渐变。 | `./effects/shader-aurora.md` |
 | `shader-orb` | WebGL AI 液态能量光球 | both | 原生 WebGL 用噪声扰动的圆 SDF + Fresnel 边缘亮环 + 外辉光渲染一颗漂浮的 AI 能量光球，支持 `idle` / `listening` / `thinking` 三态指数平滑切换呼吸速度与光晕强度。 | `./effects/shader-orb.md` |
@@ -73,7 +76,7 @@
 | `spotlight` | 指针光斑与描边聚光 | web | 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。 | `./effects/spotlight.md` |
 | `tilt` | 3D 倾斜与光泽 | web | 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。 | `./effects/tilt.md` |
 
-## 节奏（11）
+## 节奏（12）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -86,5 +89,6 @@
 | `glitch` | 赛博故障字 | both | 纯 CSS 用 `::before`/`::after` 克隆文字叠加青/品红双色错位与切片裁切，绝大部分时间完全静止可读，只在每 3.4 秒周期末尾用 `steps(1)` 瞬爆一下故障感。 | `./effects/glitch.md` |
 | `orbit` | 3D 轨道卫星 | both | 多个图标或徽章沿倾斜三维轨道绕核心匀速公转，通过 `rotateY(a) → translateZ(r) → rotateY(-a)` 反向抵消自转，让卫星始终正面朝向观众，全程零 JS。 | `./effects/orbit.md` |
 | `scramble` | 赛博乱序解码 | both | 标题或数字从一串跳动的随机符号里自左向右逐字解码定格成正文，每帧只写 `textContent` 不碰 DOM 结构，搭配等宽字体零宽度抖动。 | `./effects/scramble.md` |
+| `shader-dna` | WebGL 3D DNA 双螺旋粒子链 | both | 一次性把双螺旋主链与碱基对横桥的 700+ 颗 3D 粒子上传至 GPU 静态 VBO，每帧在顶点着色器里匀速自转并随指针微倾视角，以加法混合与景深散景呈现出呼吸感十足的 3D DNA 螺旋结构。 | `./effects/shader-dna.md` |
 | `sparkline-draw` | 迷你走势线生长 | both | 纯函数把一串数字映射成轻量 SVG 迷你折线与渐变面积，进入视口时线条从左向右 520ms 平滑描绘，面积晚 120ms 淡入，末端数据点最后轻弹落位。 | `./effects/sparkline-draw.md` |
 | `split` | 逐词逐字入场 | both | 初始化时一次性把标题拆成词/字片段并写入递增索引，入场时纯靠 CSS `transition-delay` 按节奏逐个浮现，滚动与缩放零计算。 | `./effects/split.md` |

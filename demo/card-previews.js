@@ -830,6 +830,55 @@
       const ctrl = MK.book3d(wrap.querySelector('.mk-book'));
       return () => ctrl.destroy();
     },
+
+    'shader-metaballs'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderMetaballs(host);
+      return () => ctrl.destroy();
+    },
+
+    'shader-dna'(stage) {
+      stage.style.padding = '0';
+      const host = document.createElement('div');
+      host.style.cssText = 'position:relative;width:100%;height:100%';
+      stage.appendChild(host);
+      const ctrl = MK.shaderDna(host, { pairs: 32, rungsPerPair: 9 });
+      return () => ctrl.destroy();
+    },
+
+    'holo-card'(stage) {
+      const wrap = document.createElement('div');
+      wrap.className = 'mk-holo-stage';
+      wrap.innerHTML = `<div class="mk-holo" style="--mk-holo-w:168px;--mk-holo-h:98px;padding:12px">
+        <span class="mk-holo__inner" style="font:700 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8ff3d">HOLO FOIL</span>
+        <b class="mk-holo__inner" style="font-size:12.5px;color:#eef2f7">滑过看全息衍射</b>
+      </div>`;
+      stage.appendChild(wrap);
+      const ctrl = MK.holoCard(wrap.querySelector('.mk-holo'), { max: 16 });
+      return () => ctrl.destroy();
+    },
+
+    'card-deck'(stage) {
+      const dk = document.createElement('div');
+      dk.className = 'mk-deck';
+      dk.style.cssText = '--mk-dk-w:136px;--mk-dk-h:92px';
+      ['01 拖我甩牌', '02 回弹兜底', '03 真 Z 纵深'].forEach((txt) => {
+        const c = document.createElement('div');
+        c.className = 'mk-deck__card';
+        c.style.cssText = 'padding:10px 12px;font-size:11.5px;font-weight:600;color:#eef2f7';
+        c.textContent = txt;
+        dk.appendChild(c);
+      });
+      stage.appendChild(dk);
+      const ctrl = MK.cardDeck(dk, { threshold: 56 });
+      const btn = miniBtn('↻ 甩牌', 'pv-corner');
+      btn.onclick = () => ctrl.next();
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

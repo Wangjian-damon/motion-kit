@@ -843,3 +843,136 @@
   .mk-book__back { display: none; }
   .mk-book__page { transform: none; }
 }
+
+/* ============================================================
+   15 · 3D 全息折射炫彩卡（mk-holo）
+   ============================================================ */
+.mk-holo-stage {
+  perspective: 900px;
+  display: grid;
+  place-items: center;
+}
+
+.mk-holo {
+  position: relative;
+  width: var(--mk-holo-w, 210px);
+  height: var(--mk-holo-h, 132px);
+  border-radius: 16px;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--mk-holo-rx, 0deg)) rotateY(var(--mk-holo-ry, 0deg));
+  transition: transform 320ms var(--mk-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  background: linear-gradient(135deg, #121a2a, #0b101b);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.52);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mk-holo.is-active { transition-duration: 70ms; }
+
+.mk-holo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      var(--mk-holo-ang, 115deg),
+      rgba(184, 255, 61, 0.35) 0%,
+      rgba(56, 189, 248, 0.38) 18%,
+      rgba(167, 139, 250, 0.42) 36%,
+      rgba(244, 114, 182, 0.38) 54%,
+      rgba(184, 255, 61, 0.35) 72%
+    );
+  background-size: 240% 240%;
+  background-position: var(--mk-holo-bgx, 50%) var(--mk-holo-bgy, 50%);
+  mix-blend-mode: color-dodge;
+  opacity: 0.24;
+  transition: opacity 240ms ease;
+  pointer-events: none;
+}
+
+.mk-holo.is-active::before { opacity: 0.72; }
+
+.mk-holo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mk-holo-gx, 50%) var(--mk-holo-gy, 50%),
+    rgba(255, 255, 255, 0.42),
+    rgba(255, 255, 255, 0.08) 32%,
+    transparent 64%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.mk-holo.is-active::after { opacity: 1; }
+
+.mk-holo__inner {
+  position: relative;
+  z-index: 2;
+  transform: translateZ(24px);
+}
+
+/* ============================================================
+   16 · 3D 物理甩牌堆叠卡组（mk-deck）
+   ============================================================ */
+.mk-deck {
+  position: relative;
+  width: var(--mk-dk-w, 168px);
+  height: var(--mk-dk-h, 128px);
+  perspective: 820px;
+  transform-style: preserve-3d;
+  touch-action: pan-y;
+  user-select: none;
+  outline: none;
+}
+
+.mk-deck__card {
+  position: absolute;
+  inset: 0;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(155deg, #182235, #0e1420);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.48);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform:
+    translate3d(var(--mk-dk-dx, 0px), calc(var(--mk-dk-y, 0px) + var(--mk-dk-dy, 0px)), var(--mk-dk-z, 0px))
+    rotateY(var(--mk-dk-ry, 0deg))
+    rotateZ(var(--mk-dk-rz, 0deg))
+    scale(var(--mk-dk-s, 1));
+  opacity: var(--mk-dk-o, 1);
+  transition:
+    transform 360ms var(--mk-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 260ms ease;
+  cursor: grab;
+}
+
+.mk-deck__card.is-top {
+  border-color: rgba(184, 255, 61, 0.45);
+}
+
+.mk-deck__card.is-dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-holo { transform: none; transition: none; }
+  .mk-holo::before { opacity: 0.25; }
+  .mk-holo::after { display: none; }
+  .mk-deck { perspective: none; }
+  .mk-deck__card { transition: none; }
+}

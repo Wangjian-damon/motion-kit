@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "count": 56,
+  "count": 60,
   "byLayer": {
-    "3d": 11,
+    "3d": 13,
     "motion": 18,
     "fun": 7,
     "mobile": 10,
     "glass": 3,
-    "webgl": 7
+    "webgl": 9
   },
   "byNature": {
-    "节奏": 11,
-    "材质": 13,
-    "连续": 6,
+    "节奏": 12,
+    "材质": 14,
+    "连续": 7,
+    "权重": 9,
     "反馈": 9,
-    "方向": 9,
-    "权重": 8
+    "方向": 9
   },
   "effects": [
     {
@@ -177,6 +177,29 @@
         "prompt": "实现支持中英混排的逐字波浪弹跳标题（Wave Bounce Text），零动画库依赖。\n\n原理一句话：挂载时一次性将文本按「中文单字 / 英文整词」拆成带递增索引 --i 的 inline-block <span>，悬停或触发时靠 transition-delay: calc(var(--i) * 32ms) 依次向上弹起形成琴键波浪。\n\n做法：\n1. 拆字函数 bounceText(el)：\n   - 正则 match(/[\\u4e00-\\u9fa5]|[A-Za-z0-9]+|\\s+|./gu) 切分片段。\n   - 每个片段建 <span class=\"bounce-u\" style=\"--i: idx\">，若为空白写 '\\u00A0' 撑住词间宽度。\n   - 外层容器保留 aria-label=\"<原文>\"，内部 span 标 aria-hidden=\"true\"，并返回 restore() 还原纯文本。\n2. CSS：\n   - .bounce-u { display: inline-block; transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1); transition-delay: calc(var(--i, 0) * 32ms); }\n   - @media (hover: hover) { .bounce-text:hover .bounce-u { transform: translate3d(0, -7px, 0); } }\n   - 同时支持 .bounce-text.is-wave .bounce-u { transform: translate3d(0, -7px, 0); } 便于点击触发。\n3. 降级：\n   - @media (prefers-reduced-motion: reduce) { .bounce-u { transform: none !important; transition: none; } }\n\n硬要求：\n- 每个片段必须是 display: inline-block，否则 translateY 静默失效。\n- 空白字符必须保留宽度，不得导致英文单词粘连。\n- hover 规则必须包在 @media (hover: hover) 内防止触屏卡态。\n- prefers-reduced-motion: reduce 下彻底关闭弹跳。\n\n验收：\n- 鼠标移入「Hello 动效世界」时，Hello、动、效、世、界按 32ms 间隔依次向上弹起 7px 形成丝滑波浪；词间空格完整保留。\n- 屏幕阅读器正常朗读完整标题。\n- 开启减弱动效后悬停无位移。",
         "dont_do": "- 别把拆出的 `<span>` 留成 `display: inline` —— `transform` 会完全不生效。\n- 别在 `mouseenter` 里每次重新拆 DOM —— 只在初始化拆一次。\n- 别把步长设超过 `80ms` —— 会断成一卡一卡的单独跳动，失去波浪感。",
         "skill_rule": "# 逐字波浪弹跳 (bounce-text) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】挂载时一次性将文本按「中文单字 / 英文整词」拆成带递增索引 --i 的 inline-block <span>，悬停或触发时靠 transition-delay: calc(var(--i) * 32ms) 依次向上弹起形成琴键波浪。\n\n【硬要求】\n- 每个片段必须是 display: inline-block，否则 translateY 静默失效。\n- 空白字符必须保留宽度，不得导致英文单词粘连。\n- hover 规则必须包在 @media (hover: hover) 内防止触屏卡态。\n- prefers-reduced-motion: reduce 下彻底关闭弹跳。\n\n【验收标准】\n- 鼠标移入「Hello 动效世界」时，Hello、动、效、世、界按 32ms 间隔依次向上弹起 7px 形成丝滑波浪；词间空格完整保留。\n- 屏幕阅读器正常朗读完整标题。\n- 开启减弱动效后悬停无位移。\n\n【禁止做法】\n- 别把拆出的 `<span>` 留成 `display: inline` —— `transform` 会完全不生效。\n- 别在 `mouseenter` 里每次重新拆 DOM —— 只在初始化拆一次。\n- 别把步长设超过 `80ms` —— 会断成一卡一卡的单独跳动，失去波浪感。"
+      }
+    },
+    {
+      "id": "card-deck",
+      "name": "3D 物理甩牌堆叠卡组",
+      "layer": "3d",
+      "nature": "权重",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.cardDeck(el, { threshold, onChange }) + .mk-deck / .mk-deck__card",
+      "source": "实体扑克 / Tinder 3D 卡叠（纯函数算纵深层级 + 跟手 3D 偏航甩出 + pointercancel 回弹防卡死 + 自动循环回底）",
+      "file": "effects/card-deck.md",
+      "summary": "多张卡片沿 Z 轴层层叠放并逐级微缩露出底边；抓住顶牌左右拖拽时卡片随位移产生真实 3D 偏航与倾角，拉过阈值松手即干脆飞出并自动循环回卡堆底部，下一张无缝顶上。",
+      "problem": "**引导步骤、灵感卡片或推荐流用普通轮播翻页太机械，而自己手写堆叠甩牌最容易踩三个坑：拖拽中被系统手势 `pointercancel` 打断后卡片僵死在半空、甩飞后顺序错乱闪烁、以及用 `left/top` 拖拽导致移动端掉帧。** 用纯函数 `deckPose(slot, total)` 统一管理堆叠纵深、用 Pointer Capture 严密兜底 `pointercancel` 回弹、全部变换只写合成层 CSS 变量，手感立刻像真手洗牌。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 拖拽时同时耦合水平位移 `dx`、微弱竖向跟随 `dy * 0.35`、平面倾角 `dx * 0.08°` 与 3D 偏航 `-dx * 0.14°` | 只平移 X 轴像在推一张生硬纸片 |\n| 拖拽中关闭过渡（`.is-dragging { transition: none }`）实现 1:1 零延迟跟手；松手立刻恢复 `360ms` 缓动弹回或飞出 | 拖拽中还带着 CSS transition 导致卡片滞后拖尾 |\n| 显式处理 `pointercancel`：任何系统中断强制安全弹回原位，绝不误判为甩走也不卡死半空 | 漏写 `pointercancel` 导致顶牌卡在屏幕边上动不了 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 堆叠纵深步进 `deckPose` | 每深一层 `z: -28px` / `y: +10px` / `scale: -0.06` / `opacity: -0.22` | 底部露边清晰呈现“一叠厚卡片”的体量感，同时把视觉焦点稳稳锁在顶牌 |\n| 甩牌判定阈值 `threshold` | 默认 `82px`（水平位移 `|dx|`） | 轻碰微滑会弹回原位防误触，明确一拉立刻干脆飞走 |\n| 拖拽 3D 姿态耦合系数 | `rz = dx * 0.08deg` / `ry = -dx * 0.14deg` | 向右拉时卡面向左轻转带出透视纵深，幅度克制不翻背穿帮 |\n| 飞出切牌时序 | 飞出 `±220px` + `opacity: 0`，`220ms` 后队列循环 `push(shift())` 重绘 | 等顶牌飞出视野再无缝切到堆底，后排卡片同时前移补位毫无闪烁 |",
+      "implementation": "```\nsrc/core/scene3d.js:612   deckPose(index, total)           纯函数，计算卡叠各层纵深/露边/缩放/zIndex（可单测）\nsrc/core/scene3d.js:627   cardDeck(el, { threshold })      Pointer Capture 3D 拖拽甩牌 + pointercancel 保护 + 键盘切换\nstyles/3d.css:912         .mk-deck / .mk-deck__card / .is-top / .is-dragging\n```",
+      "degradation": "**走 `3d` 层专属契约：取消透视与 3D 甩飞过渡，保留清晰切牌与键盘翻阅。**\n\n`prefers-reduced-motion: reduce` 下取消舞台 `perspective` 与卡片过渡动画，点击切牌按钮或按方向键/空格可直接干净切换到下一张卡片，核心浏览能力完整保留。",
+      "pitfalls": "**① 漏接 `pointercancel`，手机边缘返回手势或系统弹窗抢走焦点后顶牌永久悬停半空。**\n`pointercancel` 必须强制重置 `dragging = false` 并执行回位重绘，绝不触发甩走。\n\n**② 给堆叠容器设 `touch-action: none` 把手机页面上下滚动锁死。**\n甩牌主要是横向手势，容器应设 `touch-action: pan-y` 保留页面纵向滚动。\n\n**③ 拖拽期间没有去掉 `transition`，手指拖得快一点卡片就在后面慢半拍追赶。**\n`pointerdown` 立即加 `.is-dragging { transition: none }`，松手或取消时再移除恢复弹性过渡。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的 3D 物理甩牌堆叠卡组（3D Draggable Card Stack）。\n\n原理一句话：用纯函数按堆叠槽位算每张卡的 Z 纵深、下露边、缩放与 zIndex 写入 CSS 变量；顶牌通过 Pointer Capture 支持 1:1 跟手 3D 偏航拖拽，超过 82px 松手即飞出并循环回卡堆底部，任何 pointercancel 强制安全弹回。\n\n做法：\n1. 纯函数 deckPose(index, total)：\n   - 顶牌 index === 0：{ z: 0, y: 0, scale: 1, opacity: 1, zIndex: total }；\n   - 第 i 层：{ z: -i * 28, y: i * 10, scale: Math.max(0.76, 1 - i * 0.06), opacity: Math.max(0.25, 1 - i * 0.22), zIndex: Math.max(1, total - i) }。\n2. CSS 3D 结构与合成层运动：\n   - 舞台容器：position: relative; perspective: 820px; transform-style: preserve-3d; touch-action: pan-y; user-select: none;\n   - 每张卡：position: absolute; inset: 0; transform: translate3d(var(--dk-dx), calc(var(--dk-y) + var(--dk-dy)), var(--dk-z)) rotateY(var(--dk-ry)) rotateZ(var(--dk-rz)) scale(var(--dk-s)); opacity: var(--dk-o);\n   - 默认 transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease；拖拽态 .is-dragging 必须 transition: none。\n3. 拖拽、甩飞与无障碍：\n   - 仅当 pointerdown 落在顶牌时启动，setPointerCapture(pointerId) 并加 .is-dragging；\n   - pointermove 写入 --dk-dx = dx、--dk-dy = dy * 0.35、--dk-rz = dx * 0.08deg、--dk-ry = -dx * 0.14deg；\n   - pointerup：若 |dx| >= threshold（默认 82px），按方向飞出 ±220px、rz ±18deg、ry ∓26deg、opacity 0，220ms 后执行 order.push(order.shift()) 重绘全堆并触发 onChange；未过阈值直接重绘平滑弹回；\n   - pointercancel：一律视为取消，不甩牌直接平滑弹回原位；\n   - 容器设 tabindex=\"0\"，支持 ArrowRight / Space 向右甩牌、ArrowLeft 向左甩牌，并暴露 .next() 方法。\n4. 降级：\n   - prefers-reduced-motion: reduce 取消 perspective 与 transition，支持无晕眩干净切牌。\n\n硬要求：\n- 必须处理 pointercancel 且取消时强制回弹，严禁留下悬空卡死状态。\n- 拖拽中必须禁用 transition 实现零延迟跟手；必须设 touch-action: pan-y 不锁页面纵滑。\n- 所有位置与姿态动画必须只走 transform 与 opacity。\n\n验收：\n- 4 张卡片呈明显 3D 纵深叠放与底部露边；拖拽顶牌时跟手倾斜并带 3D 偏航，小拖松手弹回、大拖松手干脆飞出并由下一张无缝顶上。\n- 触发系统手势打断（pointercancel）时顶牌立刻安全弹回，不会误切牌或卡死。\n- 点击切牌按钮或按空格/方向键流畅循环；开启减弱动效后干净切换无晕眩。",
+        "dont_do": "- 别漏写 `pointercancel` 处理 —— 移动端系统手势一抢事件顶牌就会永远卡在半空。\n- 别在拖拽过程中留着 CSS `transition` —— 卡片会像粘了胶水一样追在手指后面。\n- 别给容器写 `touch-action: none` —— 用户在卡组上方滑不动页面。",
+        "skill_rule": "# 3D 物理甩牌堆叠卡组 (card-deck) · 跨平台动效规范\n性质：权重 ｜ 平台：both\n\n【核心原理】用纯函数按堆叠槽位算每张卡的 Z 纵深、下露边、缩放与 zIndex 写入 CSS 变量；顶牌通过 Pointer Capture 支持 1:1 跟手 3D 偏航拖拽，超过 82px 松手即飞出并循环回卡堆底部，任何 pointercancel 强制安全弹回。\n\n【硬要求】\n- 必须处理 pointercancel 且取消时强制回弹，严禁留下悬空卡死状态。\n- 拖拽中必须禁用 transition 实现零延迟跟手；必须设 touch-action: pan-y 不锁页面纵滑。\n- 所有位置与姿态动画必须只走 transform 与 opacity。\n\n【验收标准】\n- 4 张卡片呈明显 3D 纵深叠放与底部露边；拖拽顶牌时跟手倾斜并带 3D 偏航，小拖松手弹回、大拖松手干脆飞出并由下一张无缝顶上。\n- 触发系统手势打断（pointercancel）时顶牌立刻安全弹回，不会误切牌或卡死。\n- 点击切牌按钮或按空格/方向键流畅循环；开启减弱动效后干净切换无晕眩。\n\n【禁止做法】\n- 别漏写 `pointercancel` 处理 —— 移动端系统手势一抢事件顶牌就会永远卡在半空。\n- 别在拖拽过程中留着 CSS `transition` —— 卡片会像粘了胶水一样追在手指后面。\n- 别给容器写 `touch-action: none` —— 用户在卡组上方滑不动页面。"
       }
     },
     {
@@ -571,6 +594,29 @@
       }
     },
     {
+      "id": "holo-card",
+      "name": "3D 全息折射炫彩卡",
+      "layer": "3d",
+      "nature": "材质",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.holoCard(el, { max }) + .mk-holo-stage / .mk-holo",
+      "source": "实体收藏卡 / Apple Card 金属箔（3D 倾斜同步驱动彩虹衍射渐变角度 + color-dodge 混合 + 镜面点光斑 + 内嵌浮雕层）",
+      "file": "effects/holo-card.md",
+      "summary": "鼠标在卡片上滑动时，3D 倾斜角、彩虹衍射光栅的倾角与位移、镜面高光光斑三者由同一套物理光照坐标同步驱动，还原真实实体全息烫金收藏卡的晃动折射质感。",
+      "problem": "**普通 3D Tilt 卡片只会转个角度，视觉上仍是平淡塑料片；而强行叠一层死板的彩虹静态背景图又像廉价 PPT。** 当彩虹衍射层的角度（`--holo-ang`）、偏移（`--holo-bgx / -bgy`）与高光斑点（`--holo-gx / -gy`）严格跟 3D 倾斜角绑定，且使用 `mix-blend-mode: color-dodge` 与 `overlay` 叠加在暗底材质上时，一晃鼠标就会浮现出逼真的金属衍射光泽。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 指针坐标经纯函数 `holoLight(nx, ny, maxTilt)` 一次解算出 7 个光学量，倾斜与彩虹流光严丝合缝 | 倾斜一套 JS、光斑另一套监听导致两层各走各的 |\n| 彩虹衍射层 `mix-blend-mode: color-dodge`（静置淡隐 `0.24`，激活浮现 `0.72`）+ 镜面光斑 `overlay` | 直接盖半透明不混合彩虹把文字糊到看不清 |\n| 卡片内主元素 `translateZ(24px)` 轻微浮雕凸起，在 3D 倾斜时与底板产生真实视差错位 | 所有内容死贴在同一平面 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 最大倾斜角 `maxTilt` | 默认 `16deg`（`rx = -dy*2*max`, `ry = dx*2*max`） | 足够让彩虹光栅大角度扫过整张卡，又不会倾到边角字迹变形难读 |\n| 衍射角与背景偏移 | `angle = 115 + dx*90 - dy*45` / `bgPos = 50 ± 30%` | 指针横向扫过时彩虹条纹旋转并斜向滑过，最贴近真实光栅衍射箔的物理观感 |\n| 跟踪 / 回正过渡时长 | 激活跟踪 `70ms` / 移出回正 `320ms` | 跟手时不粘滞延迟，移出后柔和回正归平不僵硬弹跳 |\n| 舞台透视 `perspective` | `900px` | 对 210×132px 卡片给出自然纵深，且浮雕内层 `translateZ(24px)` 错位恰到好处 |",
+      "implementation": "```\nsrc/core/scene3d.js:557   holoLight(nx, ny, maxTilt)   纯函数，解算倾斜角、光斑与衍射光栅参数（可单测）\nsrc/core/scene3d.js:576   holoCard(el, { max })        指针跟踪写入 CSS 变量，移出自动平滑归中\nstyles/3d.css:848         .mk-holo-stage / .mk-holo / ::before（彩虹箔）/ ::after（高光斑）/ __inner\n```",
+      "degradation": "**走 `3d` 层专属契约：取消 3D 倾斜与动态高光，保留克制的静态金属质感边框与微弱箔光。**\n\n`prefers-reduced-motion: reduce` 下 JS 跳过指针倾斜计算，CSS 关闭 `transform` 与高光斑 `::after`，仅保留 `opacity: 0.25` 的静态虹彩光泽纹理，卡片信息与质感均不丢失。",
+      "pitfalls": "**① 直接给彩虹层设高不透明度 `normal` 混合，把卡片文字盖得发灰发花。**\n彩虹衍射层必须用 `mix-blend-mode: color-dodge` 配合深色底面，并设 `pointer-events: none` 绝不拦截点击。\n\n**② `rx` 旋转方向符号写反（往上移指针反而顶部翘起迎面）。**\n按下角下沉的自然直觉是：指针在上方（`dy < 0`）时顶部向里压，绕 X 轴应为正向 `+rx`（即 `rx = -dy * 2 * max`）；指针在右侧（`dx > 0`）时右侧向里压，绕 Y 轴应为 `+ry`。\n\n**③ 移出卡片后忘记清掉 `.is-active` 和把角度复位到 `(0.5, 0.5)`。**\n必须监听 `pointerleave` 复位全部光学变量并切换回 `320ms` 缓动，让卡片优雅归平。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的 3D 全息折射炫彩卡（Holographic Foil 3D Card）。\n\n原理一句话：用纯函数把归一化指针坐标 (nx, ny) 同步映射为卡片 3D 倾斜角 (rx, ry)、彩虹光栅衍射角与背景偏移、镜面高光斑点位置 7 个光学 CSS 变量，以 color-dodge 衍射箔层 + overlay 镜面光斑 + translateZ(24px) 浮雕内容还原实体全息收藏卡质感。\n\n做法：\n1. 纯函数 holoLight(nx, ny, maxTilt = 16)：\n   - 钳制 nx, ny ∈ [0, 1]（非法回退 0.5），dx = nx - 0.5，dy = ny - 0.5；\n   - 返回 { rx: -dy*2*maxTilt, ry: dx*2*maxTilt, gx: nx*100, gy: ny*100, bgX: 50 + dx*60, bgY: 50 + dy*60, angle: 115 + dx*90 - dy*45 }。\n2. CSS 三层光学与真 3D 结构（外层 perspective: 900px）：\n   - 卡片本体：transform-style: preserve-3d; transform: rotateX(var(--holo-rx, 0deg)) rotateY(var(--holo-ry, 0deg)); 默认 transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1)，激活态 transition-duration: 70ms。\n   - ::before 彩虹衍射箔层：repeating-linear-gradient(var(--holo-ang), 青绿/天蓝/紫罗兰/粉红循环)，background-size: 240% 240%，background-position: var(--holo-bgx) var(--holo-bgy)，mix-blend-mode: color-dodge，静置 opacity: 0.24，激活 opacity: 0.72，pointer-events: none。\n   - ::after 镜面光斑层：radial-gradient(circle at var(--holo-gx) var(--holo-gy), rgba(255,255,255,0.42), transparent 64%)，mix-blend-mode: overlay，激活 opacity: 1，pointer-events: none。\n   - 内部文字/徽章容器：transform: translateZ(24px) 形成浮雕视差。\n3. 指针同步与降级：\n   - pointermove 读取归一化坐标写入全部 CSS 变量并加 .is-active；pointerleave 复位 (0.5, 0.5) 并移除 .is-active。\n   - prefers-reduced-motion: reduce 下禁用倾斜与高光斑，仅保留静态微弱箔光（opacity: 0.25）。\n\n硬要求：\n- 倾斜角、衍射光栅角/位移与镜面光斑必须由同一份指针坐标同步计算，禁止拆成互不相关的动画。\n- 两层光学伪元素必须设 pointer-events: none，且分别使用 color-dodge 与 overlay 混合保住暗底文字对比度。\n- 严禁引入 Three.js 或外部图片遮罩。\n\n验收：\n- 鼠标移入并绕卡面滑动时，卡片 3D 倾斜跟手，彩虹光栅随角度扫过表面，白色高光点紧贴指针，内部文字呈微浮雕视差。\n- 移出卡片后 320ms 平滑归平，衍射光收回到克制静置态。\n- 开启减弱动效后卡片保持平面静止与静态微光，文字锐利清晰。",
+        "dont_do": "- 别把彩虹层设成不透明普通图层盖在文字上面 —— 文字对比度会直接崩掉。\n- 别在 `pointermove` 上保留 `320ms` 慢过渡 —— 鼠标甩过去半秒后光斑才追上来，手感会极度发黏。\n- 别忘了 `pointerleave` 归位 —— 鼠标划走后卡片一直歪着非常难看。",
+        "skill_rule": "# 3D 全息折射炫彩卡 (holo-card) · 跨平台动效规范\n性质：材质 ｜ 平台：both\n\n【核心原理】用纯函数把归一化指针坐标 (nx, ny) 同步映射为卡片 3D 倾斜角 (rx, ry)、彩虹光栅衍射角与背景偏移、镜面高光斑点位置 7 个光学 CSS 变量，以 color-dodge 衍射箔层 + overlay 镜面光斑 + translateZ(24px) 浮雕内容还原实体全息收藏卡质感。\n\n【硬要求】\n- 倾斜角、衍射光栅角/位移与镜面光斑必须由同一份指针坐标同步计算，禁止拆成互不相关的动画。\n- 两层光学伪元素必须设 pointer-events: none，且分别使用 color-dodge 与 overlay 混合保住暗底文字对比度。\n- 严禁引入 Three.js 或外部图片遮罩。\n\n【验收标准】\n- 鼠标移入并绕卡面滑动时，卡片 3D 倾斜跟手，彩虹光栅随角度扫过表面，白色高光点紧贴指针，内部文字呈微浮雕视差。\n- 移出卡片后 320ms 平滑归平，衍射光收回到克制静置态。\n- 开启减弱动效后卡片保持平面静止与静态微光，文字锐利清晰。\n\n【禁止做法】\n- 别把彩虹层设成不透明普通图层盖在文字上面 —— 文字对比度会直接崩掉。\n- 别在 `pointermove` 上保留 `320ms` 慢过渡 —— 鼠标甩过去半秒后光斑才追上来，手感会极度发黏。\n- 别忘了 `pointerleave` 归位 —— 鼠标划走后卡片一直歪着非常难看。"
+      }
+    },
+    {
       "id": "long-press",
       "name": "长按",
       "layer": "mobile",
@@ -870,6 +916,29 @@
       }
     },
     {
+      "id": "shader-dna",
+      "name": "WebGL 3D DNA 双螺旋粒子链",
+      "layer": "webgl",
+      "nature": "节奏",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.shaderDna(host, { pairs, rungsPerPair }) + .mk-shader.mk-shader--dna",
+      "source": "原生 WebGL gl.POINTS 双螺旋分子链（静态 VBO 一次上传双主链与碱基横桥 + 顶点 3D 旋转与近大远小散景）",
+      "file": "effects/shader-dna.md",
+      "summary": "一次性把双螺旋主链与碱基对横桥的 700+ 颗 3D 粒子上传至 GPU 静态 VBO，每帧在顶点着色器里匀速自转并随指针微倾视角，以加法混合与景深散景呈现出呼吸感十足的 3D DNA 螺旋结构。",
+      "problem": "**生物科技、AI 大模型参数空间或生命科学数据页面常需要 3D 双螺旋主视觉，但用 SVG 2D 正弦波模拟极易穿帮（前后遮挡与近大远小全假），引 Three.js 又太重。** 把双螺旋几何一次性编码成带类型标记 `(x, y, z, type)` 的静态粒子 VBO，单次 `gl.POINTS` 绘制就能拥有真实的 3D 透视旋转与前后景深层次。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 两条主链各用 3 颗微偏粒子束增强主干体量（青绿链 A + 蔚蓝链 B），碱基横桥用紫罗兰细粒子连接 | 主链与横桥一样细导致远看糊成一根直棒 |\n| 整条螺旋自带 `-0.42 rad`（~24°）优雅斜倾角，构图比垂直立柱更有动势 | 死板垂直居中占满高度显得僵硬 |\n| 透视点径 `gl_PointSize` + 景深亮度 `v_depth` 同步变化，转到背后的粒子自然变小变暗 | 背面粒子跟正面一样大一样亮导致失去立体前后关系 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 螺旋对数与圈数 | `pairs = 44` / `turns = 2.6` / `rungsPerPair = 11` | 共 `748` 颗粒子，2.6 圈螺旋在方形或宽屏容器内节奏最舒展，横桥疏密清晰可读 |\n| 主链 / 横桥点径基准 | 主链 `12.5 * dpr / z` / 横桥 `7.5 * dpr / z` | 主副层次一目了然，一眼识别双螺旋拓扑而不是杂乱点云 |\n| 相机距离与景深 | `z = p.z + 2.95` / `v_depth ∈ [0.18, 1.0]` | 保证后侧螺旋依然隐约可见（`0.18` 下限不彻底消失），同时与前景形成鲜明对比 |\n| 混合模式 | 预乘加法 `gl.blendFunc(gl.ONE, gl.ONE)` | 螺旋交叉节点自动叠加微光，且免去透明粒子 Z 排序开销 |",
+      "implementation": "```\nsrc/core/shader.js:152   helixPositions(pairs, rungs)  确定性 DNA 双螺旋 + 横桥粒子生成器（可单测）\nsrc/core/shader.js:953   DNA_VERT / DNA_FRAG           GPU 3D 旋转斜倾 + 分类型着色柔焦圆点 GLSL\nsrc/core/shader.js:1004  shaderDna(host, opts)         gl.POINTS 渲染器（DPR 1.5 + 双停帧 + 释放 context）\nstyles/webgl.css:96      .mk-shader--dna               WebGL 不可用时的深空径向渐变兜底\n```",
+      "degradation": "**走 `webgl` 层专属契约：退回 CSS 渐变 + 减弱动效单帧冻结。**\n\n- `prefers-reduced-motion: reduce`：仅绘制 `t = 2.4s` 一帧静态 3D 双螺旋，不启动 rAF 循环，不响应指针摆动。\n- WebGL 不可用或上下文丢失时隐藏 `<canvas>`，展示容器渐变兜底。",
+      "pitfalls": "**① 没给前后粒子区分 `v_depth` 亮度与点径，导致视觉上出现“双稳态错觉”分不清哪条链在前。**\n深度线索必须同时作用在 `gl_PointSize` 与片元透明度/亮度 `v_depth` 上，前景链大而亮、后景链细而柔。\n\n**② 在 `gl.POINTS` 片元里漏写圆形裁剪 `if (dot(c, c) > 0.25) discard;`，满屏变成锯齿小方块。**\n必须基于 `gl_PointCoord - 0.5` 做径向 `smoothstep` 柔焦圆点。\n\n**③ 每帧在 JS 里循环算 `Math.sin / Math.cos` 更新 VBO。**\n螺旋是刚体旋转，静态坐标只需初始化时 `gl.STATIC_DRAW` 上传一次，旋转全交给顶点着色器的 `rot2`。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零 Three.js 依赖的原生 WebGL 3D DNA 双螺旋粒子链（gl.POINTS 3D Double-Helix）。\n\n原理一句话：初始化时用纯函数生成双螺旋主链与碱基横桥的 3D 粒子数组 (x, y, z, type) 一次性写入 GPU 静态 VBO，每帧在顶点着色器里完成匀速自转、斜倾与指针视角微调，并按近大远小透视与加法混合呈现清晰前后景深。\n\n做法：\n1. 纯函数 helixPositions(pairs = 44, rungsPerPair = 11)：\n   - 钳制 pairs ∈ [4, 120]、rungsPerPair ∈ [1, 20]，共 count = pairs * (6 + rungsPerPair) 颗粒子，返回 { vertices: Float32Array(count * 4), count }。\n   - 沿 y ∈ [-1.275, +1.275] 旋转 turns = 2.6 圈、半径 radius = 0.62：\n     每对在角度 ang 与 ang + π 各生成 3 颗微偏主链粒子（type = 0.0 / 1.0），并在两链之间等距插值 rungsPerPair 颗碱基横桥粒子（type = 0.5）。\n2. 原生 WebGL 管线与工程约束：\n   - 一次性 gl.STATIC_DRAW 上传 VBO；开启 gl.BLEND 与 gl.blendFunc(gl.ONE, gl.ONE)；单次 gl.drawArrays(gl.POINTS, 0, count)。\n   - DPR <= 1.5 且画布总像素 <= 1,200,000；接 ResizeObserver、IntersectionObserver（离屏停帧）与 visibilitychange（后台停帧）；destroy() 释放 buffer/program 并主动 loseContext。\n3. 顶点与片元着色器：\n   - 顶点着色器：先绕 XZ 旋 u_time*0.85 + (u_mouse.x - 0.5)*2.2，再绕 XY 斜倾 -0.42 + (u_mouse.y - 0.5)*0.65；\n     透视投影 z = p.z + 2.95，proj = vec2(p.x / asp, p.y) * (1.72 / max(z, 0.3))；\n     主链点径基准 12.5、横桥基准 7.5，gl_PointSize = clamp(base * u_dpr / max(z, 0.4), 1.6, 8.5)；\n     输出景深权重 v_depth = clamp(1.0 - (z - 1.6) / 2.6, 0.18, 1.0)。\n   - 片元着色器：裁剪圆形柔焦点（dot(c, c) > 0.25 丢弃），按 v_type 分别着荧光绿（链 A）、蔚蓝（链 B）与淡紫（横桥，亮度系数 0.68），同乘 v_depth 确立前后纵深。\n4. 降级：\n   - prefers-reduced-motion: reduce 仅画 t = 2.4s 一帧静态螺旋，不起 rAF；不支持或 context lost 隐藏 canvas 展示 CSS 渐变兜底。\n\n硬要求：\n- 粒子几何必须一次性 STATIC_DRAW 上传、单次 gl.POINTS 绘制，严禁 JS 每帧重算坐标。\n- 必须用点径与亮度双重深度线索区分前后螺旋链，禁止无景深平面点阵。\n- 严禁引入 Three.js，必须落齐 DPR 封顶、双停帧与 context 销毁。\n\n验收：\n- 两条异色主链与中间碱基横桥清晰可辨，以 ~24° 斜角流畅 3D 自转，前景饱满高亮、后景细腻柔和。\n- 移动鼠标按 0.08 阻尼平滑摆动螺旋视角，宽屏容器内不变形。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 WebGL context 泄漏。",
+        "dont_do": "- 别把主链和横桥设成一样大小和亮度 —— 整体会糊成一根分不清结构的噪点柱子。\n- 别忘了在片元着色器里裁掉正方形点精灵四角 —— 发光方块会毁掉分子链的柔和散景感。\n- 别在 JS 里每帧重新生成坐标并调用 `bufferData` —— 白白浪费 CPU 和显存带宽。",
+        "skill_rule": "# WebGL 3D DNA 双螺旋粒子链 (shader-dna) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】初始化时用纯函数生成双螺旋主链与碱基横桥的 3D 粒子数组 (x, y, z, type) 一次性写入 GPU 静态 VBO，每帧在顶点着色器里完成匀速自转、斜倾与指针视角微调，并按近大远小透视与加法混合呈现清晰前后景深。\n\n【硬要求】\n- 粒子几何必须一次性 STATIC_DRAW 上传、单次 gl.POINTS 绘制，严禁 JS 每帧重算坐标。\n- 必须用点径与亮度双重深度线索区分前后螺旋链，禁止无景深平面点阵。\n- 严禁引入 Three.js，必须落齐 DPR 封顶、双停帧与 context 销毁。\n\n【验收标准】\n- 两条异色主链与中间碱基横桥清晰可辨，以 ~24° 斜角流畅 3D 自转，前景饱满高亮、后景细腻柔和。\n- 移动鼠标按 0.08 阻尼平滑摆动螺旋视角，宽屏容器内不变形。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 WebGL context 泄漏。\n\n【禁止做法】\n- 别把主链和横桥设成一样大小和亮度 —— 整体会糊成一根分不清结构的噪点柱子。\n- 别忘了在片元着色器里裁掉正方形点精灵四角 —— 发光方块会毁掉分子链的柔和散景感。\n- 别在 JS 里每帧重新生成坐标并调用 `bufferData` —— 白白浪费 CPU 和显存带宽。"
+      }
+    },
+    {
       "id": "shader-globe",
       "name": "WebGL 3D 交互全息地球",
       "layer": "webgl",
@@ -890,6 +959,29 @@
         "prompt": "实现零 Three.js、零贴图依赖的原生 WebGL 3D 交互全息地球（Analytical Ray-Sphere Holographic Globe）。\n\n原理一句话：在透明全屏三角形片元着色器里用解析方程 z = sqrt(R² - r²) 直接求得球面法线与经纬度，叠加余弦校正的经纬网格、程序化 FBM 点阵大陆、脉动数据信标与大气 Fresnel 辉光，由平滑阻尼指针驱动 3D 旋转。\n\n做法：\n1. 纯函数 globeCoords(latDeg, lonDeg)：\n   - 经纬度（度）转单位球面坐标 { x: cos(lat)*sin(lon), y: sin(lat), z: cos(lat)*cos(lon) }，纬度钳制 [-90, 90]，非法值返回 { x: 0, y: 0, z: 1 }。\n2. 原生 WebGL 工程约束：\n   - 单全屏三角形 + alpha: true + powerPreference: 'low-power'；DPR 封顶 1.5 且画布总像素 <= 1,200,000。\n   - 接 ResizeObserver、IntersectionObserver（滚出视口停帧）与 visibilitychange（切后台停帧）；destroy() 删除 buffer/program 并主动 loseContext。\n3. GLSL 解析球面核心：\n   - 短边归一化坐标：uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y)；r = length(uv)；球半径 R = 0.37。\n   - 球外（r > R）：渲染指数衰减外大气辉光 halo = exp(-(r - R) * 14.0) * 0.55 后返回。\n   - 球内：z = sqrt(max(0.0, R*R - r*r))；法线 n = normalize(vec3(uv, z))；先绕 YZ 旋俯仰角 -0.22 + (u_mouse.y - 0.5)*1.4，再绕 XZ 旋偏航角 u_time*0.28 + (u_mouse.x - 0.5)*3.0 得到球面本地点 p。\n   - 球面映射：lat = asin(clamp(p.y, -1.0, 1.0))；lon = atan(p.x, p.z)。\n   - 视觉四层叠加：\n     a) 经纬网格：经线按 0.035 / max(cos(lat), 0.25) 补偿极点收敛；\n     b) 程序化大陆：FBM(lon*1.45, lat*2.1) 区分海洋、点阵大陆与海岸亮边；\n     c) 脉动节点信标：在 4 个固定单位球面坐标上用 exp(-distance(p, b) * 18.0) 叠加交替呼吸高亮；\n     d) 方向漫反射 + pow(1.0 - max(n.z, 0.0), 2.8) 大气边缘 Fresnel，边缘做 smoothstep(R, R - 0.004, r) 抗锯齿。\n4. 降级：\n   - prefers-reduced-motion: reduce 仅画一帧静态地球，不起 rAF。\n   - 不支持 WebGL 或 webglcontextlost 时隐藏 canvas 展示同色系 CSS 径向渐变球兜底。\n\n硬要求：\n- 严禁引入 Three.js 或外部地球图片纹理。\n- 必须做短边归一化与极点经线 cos(lat) 宽度校正，且球半径 <= 0.38 保证大气辉光不被方框裁切。\n- 必须落齐 DPR 封顶、离屏/后台双停帧与 context 清理。\n\n验收：\n- 地球在透明画布上呈现锐利正圆与柔和外大气辉光，自转流畅且两极经纬线清晰不糊团。\n- 鼠标移动时地球按 0.08 阻尼平滑转向，移出后柔和回正。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 context 泄漏。",
         "dont_do": "- 别为了做个展示地球把几百 KB 的 Three.js 和 4K 地球贴图塞进首屏包体。\n- 别忘记对经线做 `cos(lat)` 补偿 —— 两极一定会糊成一坨刺眼白块。\n- 别把球半径画满到 `0.48` —— 外层大气辉光撞到画布四条边会切出硬方框。",
         "skill_rule": "# WebGL 3D 交互全息地球 (shader-globe) · 跨平台动效规范\n性质：方向 ｜ 平台：both\n\n【核心原理】在透明全屏三角形片元着色器里用解析方程 z = sqrt(R² - r²) 直接求得球面法线与经纬度，叠加余弦校正的经纬网格、程序化 FBM 点阵大陆、脉动数据信标与大气 Fresnel 辉光，由平滑阻尼指针驱动 3D 旋转。\n\n【硬要求】\n- 严禁引入 Three.js 或外部地球图片纹理。\n- 必须做短边归一化与极点经线 cos(lat) 宽度校正，且球半径 <= 0.38 保证大气辉光不被方框裁切。\n- 必须落齐 DPR 封顶、离屏/后台双停帧与 context 清理。\n\n【验收标准】\n- 地球在透明画布上呈现锐利正圆与柔和外大气辉光，自转流畅且两极经纬线清晰不糊团。\n- 鼠标移动时地球按 0.08 阻尼平滑转向，移出后柔和回正。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 context 泄漏。\n\n【禁止做法】\n- 别为了做个展示地球把几百 KB 的 Three.js 和 4K 地球贴图塞进首屏包体。\n- 别忘记对经线做 `cos(lat)` 补偿 —— 两极一定会糊成一坨刺眼白块。\n- 别把球半径画满到 `0.48` —— 外层大气辉光撞到画布四条边会切出硬方框。"
+      }
+    },
+    {
+      "id": "shader-metaballs",
+      "name": "WebGL 3D 液态水银融合球",
+      "layer": "webgl",
+      "nature": "连续",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.shaderMetaballs(host) + .mk-shader.mk-shader--metaballs",
+      "source": "Inigo Quilez 多项式 Smooth-Min 3D Metaballs（5 颗公转液滴 + 1 颗指针引力液滴 + 42 步 SDF 射线步进与镜面虹彩反射）",
+      "file": "effects/shader-metaballs.md",
+      "summary": "零 Three.js、零网格重构，用多项式平滑最小函数 `smin(d1, d2, k)` 把 5 颗公转 3D 球体与 1 颗随鼠标游走的引力液滴在片元着色器里实时融合成一团拉丝粘连的液态水银。",
+      "problem": "**想做会“靠拢融合、拉开拉丝”的 3D 液态球（Metaballs），如果走传统 3D 引擎需要每帧在 CPU 上跑 Marching Cubes 重建上万个三角形网格，手机直接发烫掉帧。** 在 SDF 射线步进里，融合两颗球体只需一行多项式 `smin`，计算量几乎等于免费，且融合颈部自带无穷光滑的液态镜面过渡。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 多项式平滑最小 `smin(a, b, k)`（`k = 0.36–0.42`），C1 连续且绝不出现生硬接缝折痕 | CPU 端 Marching Cubes 网格重建与低面数多边形棱角 |\n| 6 颗液滴中的第 6 颗跟随阻尼指针游走（`k = 0.42` 略大粘连半径），手一靠近就能“粘起”拉丝 | 纯观赏背景不响应用户交互 |\n| 基于反射向量 `reflect(-v, n)` 采样紫/蓝/荧光绿三色环境反射 + 48 次方锐利高光 | 单一漫反射显得像橡皮泥而不是水银 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 平滑融合半径 `k` | 轨道球 `0.36` / 指针球 `0.42` | 略大于球半径（`0.23–0.30`），两球靠近至 0.6 倍直径时自然起粘连液桥，分开时干净拉断 |\n| 射线步进预算 | `42` 步 / `d < 0.002` / `dist > 5.0` | 球体组 SDF 梯度平缓，42 步即可稳定收敛至清晰轮廓并保持移动端 60fps |\n| 高光幂次与 Fresnel | `spec pow 48` / `fres pow 3.0` | 锐利高光点确立“液态水银”质感，边缘虹彩 Fresnel 让球体在暗底中清晰浮现 |\n| 透明背景与微光 | 未命中输出中心淡紫蓝径向光晕 | 可无框悬浮在任意卡片、登录区或 AI 助手顶栏上 |",
+      "implementation": "```\nsrc/core/shader.js:140   smoothMin(a, b, k)        多项式 Smooth-Min 纯函数（可单测）\nsrc/core/shader.js:882   METABALLS_FRAG            6 球 SDF 融合 + 42 步射线步进 + 水银反射 GLSL\nsrc/core/shader.js:949   shaderMetaballs(host)     复用 shaderCanvas（DPR 1.5 + 双停帧 + 释放 context）\nstyles/webgl.css:89      .mk-shader--metaballs     WebGL 不可用时的双球交融 CSS 径向渐变兜底\n```",
+      "degradation": "**走 `webgl` 层专属契约：退回 CSS 渐变 + 减弱动效单帧冻结。**\n\n- `prefers-reduced-motion: reduce`：仅绘制一帧静态液态水银雕塑，不启动 rAF 循环，不响应鼠标拖拽液滴。\n- WebGL 不可用或上下文丢失时隐藏 `<canvas>`，展示容器双色交融径向渐变兜底。",
+      "pitfalls": "**① 直接用 `min(d1, d2)` 拼接球体而没用 `smin`，球与球相交处出现生硬折线。**\n硬 `min` 是刚体并集，没有液态张力；必须使用二次多项式 `h = max(k - abs(a - b), 0) / k; min(a, b) - h*h*k*0.25` 才能产出饱满的液态粘连颈部。\n\n**② 指针引力球直接硬跟 `e.clientX/Y`，鼠标一划液滴像瞬移传送。**\n指针 UV 必须经过 `mouse += (target - mouse) * 0.08` 指数阻尼，才能产生“把水银拖过来又慢慢拉断”的流体重量感。\n\n**③ 没做 DPR 封顶与总像素上限，在 3× 屏跑满像素拖垮帧率。**\n射线步进对像素数极度敏感，必须将 DPR 压在 `1.5` 且总像素 `<= 1,200,000`。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零 Three.js 依赖的原生 WebGL 3D 液态水银融合球（3D Raymarched Metaballs）。\n\n原理一句话：在透明全屏三角形片元着色器里，用多项式平滑最小 smin(a, b, k) 将 5 颗 3D 轨道球与 1 颗阻尼跟随指针的引力球融合成连续液态曲面，以 42 步射线步进 + 中心差分法线 + 反射向量环境光渲染出水银镜面拉丝质感。\n\n做法：\n1. 纯函数 smoothMin(a, b, k = 0.35)：\n   - 若 k <= 0 返回 Math.min(a, b)；否则 h = Math.max(k - Math.abs(a - b), 0) / k，返回 Math.min(a, b) - h * h * k * 0.25（C1 连续且严格 <= min(a, b)）。\n2. 原生 WebGL 工程约束：\n   - 单全屏三角形 + alpha: true + powerPreference: 'low-power'；DPR <= 1.5 且画布总像素 <= 1,200,000。\n   - 接 ResizeObserver、IntersectionObserver（离屏停帧）与 visibilitychange（后台停帧）；destroy() 删除 buffer/program 并主动 loseContext。\n3. GLSL 核心：\n   - 短边归一化坐标：uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.x, u_res.y)；相机 ro = vec3(0, 0, 2.45)，射线 rd = normalize(vec3(uv, -1.7))。\n   - 场景 SDF mapBalls(p, t)：5 颗沿不同相位三角函数轨迹公转的 3D 球（半径 0.23–0.30）加第 6 颗指针球 cm = vec3((u_mouse.x - 0.5)*1.45, (u_mouse.y - 0.5)*1.1, 0.28)，依次用 smin(d, ..., 0.36..0.42) 融合。\n   - 最多 42 步射线步进，d < 0.002 判命中，dist > 5.0 退出；未命中返回中心柔和微光。\n   - 命中后用 e = 0.0028 的 6 点中心差分求法线 n，计算反射向量 rdir = reflect(-v, n) 混合紫/蓝/荧光绿环境色，叠加 48 次方镜面高光与 3.0 次方 Fresnel 轮廓亮边。\n4. 指针阻尼与降级：\n   - 指针坐标每帧 mouse += (target - mouse) * 0.08 平滑逼近，移出容器自动回中。\n   - prefers-reduced-motion: reduce 仅渲染一帧静态雕塑，不起 rAF；context lost 或不支持时隐藏 canvas 展示 CSS 径向渐变兜底。\n\n硬要求：\n- 严禁引入 Three.js 或使用 CPU Marching Cubes 网格重建。\n- 必须使用多项式 smin 实现平滑拉丝融合，禁止硬 min 刚体拼接。\n- 必须落齐 DPR 封顶、离屏/后台双停帧与 destroy 释放 context。\n\n验收：\n- 多颗液态金属球在 3D 空间自由穿梭、靠拢时自然粘连起液桥、远离时顺滑拉断，表面有清晰水银镜面高光。\n- 鼠标移入时引力液滴以阻尼黏附拉扯主球团，移出后柔和回落中央。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 WebGL context 泄漏。",
+        "dont_do": "- 别用 `min(d1, d2)` 代替 `smin` —— 球体相交只会留下一圈硬棱线，完全没有液态融合感。\n- 别在 JS 里每帧运行 Marching Cubes 生成三角形 —— 体积大且移动端必掉帧。\n- 别让指针球零阻尼硬跟鼠标 —— 失去流体惯性与拉丝重量感。",
+        "skill_rule": "# WebGL 3D 液态水银融合球 (shader-metaballs) · 跨平台动效规范\n性质：连续 ｜ 平台：both\n\n【核心原理】在透明全屏三角形片元着色器里，用多项式平滑最小 smin(a, b, k) 将 5 颗 3D 轨道球与 1 颗阻尼跟随指针的引力球融合成连续液态曲面，以 42 步射线步进 + 中心差分法线 + 反射向量环境光渲染出水银镜面拉丝质感。\n\n【硬要求】\n- 严禁引入 Three.js 或使用 CPU Marching Cubes 网格重建。\n- 必须使用多项式 smin 实现平滑拉丝融合，禁止硬 min 刚体拼接。\n- 必须落齐 DPR 封顶、离屏/后台双停帧与 destroy 释放 context。\n\n【验收标准】\n- 多颗液态金属球在 3D 空间自由穿梭、靠拢时自然粘连起液桥、远离时顺滑拉断，表面有清晰水银镜面高光。\n- 鼠标移入时引力液滴以阻尼黏附拉扯主球团，移出后柔和回落中央。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载无 WebGL context 泄漏。\n\n【禁止做法】\n- 别用 `min(d1, d2)` 代替 `smin` —— 球体相交只会留下一圈硬棱线，完全没有液态融合感。\n- 别在 JS 里每帧运行 Marching Cubes 生成三角形 —— 体积大且移动端必掉帧。\n- 别让指针球零阻尼硬跟鼠标 —— 失去流体惯性与拉丝重量感。"
       }
     },
     {
