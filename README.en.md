@@ -3,9 +3,9 @@
 # Motion Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-b8ff3d.svg)](./LICENSE)
-[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-60-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
+[![AI Effect Cards](https://img.shields.io/badge/AI%20Effect%20Cards-66-60a5fa.svg)](https://wangjian-damon.github.io/motion-kit/demo/library.html)
 [![Zero Runtime](https://img.shields.io/badge/Runtime%20Deps-0-22c55e.svg)](#use-as-zero-dependency-primitives)
-[![Tests](https://img.shields.io/badge/Tests-145%20passing-22c55e.svg)](#development--verification)
+[![Tests](https://img.shields.io/badge/Tests-151%20passing-22c55e.svg)](#development--verification)
 
 <p align="center">
   <a href="https://wangjian-damon.github.io/motion-kit/demo/">
@@ -14,9 +14,9 @@
 </p>
 
 **Framework-agnostic AI motion & interaction asset library + zero-dependency live showcase.**
-60 battle-tested UI motion specs — including 9 native WebGL 3D shaders, true Z-axis 3D scenes, Liquid Glass, physics gestures, and data displays — with exact constants, state machines, `prefers-reduced-motion` degradation contracts, real browser pitfalls, and acceptance criteria.
+66 battle-tested UI motion specs — covering product micro-interactions, AI-native streaming/voice UI, 9 native WebGL 3D shaders, true Z-axis 3D scenes, Liquid Glass, physics gestures, and data displays — with exact constants, state machines, degradation contracts, real browser pitfalls, and acceptance criteria.
 
-- **Try Live First**: [**Interactive Landing Page**](https://wangjian-damon.github.io/motion-kit/demo/) · [**AI Asset Library (60 Live Mini-Stages)**](https://wangjian-damon.github.io/motion-kit/demo/library.html) · [3D & WebGL Showcase (22 Scenes)](https://wangjian-damon.github.io/motion-kit/demo/3d.html) · [Mobile Showcase](https://wangjian-damon.github.io/motion-kit/demo/mobile.html) · [Web Showcase](https://wangjian-damon.github.io/motion-kit/demo/web.html)
+- **Try Live First**: [**Interactive Landing Page**](https://wangjian-damon.github.io/motion-kit/demo/) · [**AI Asset Library (66 Live Mini-Stages)**](https://wangjian-damon.github.io/motion-kit/demo/library.html) · [3D & WebGL Showcase (22 Scenes)](https://wangjian-damon.github.io/motion-kit/demo/3d.html) · [Mobile Showcase](https://wangjian-damon.github.io/motion-kit/demo/mobile.html) · [Web Showcase](https://wangjian-damon.github.io/motion-kit/demo/web.html)
 - **AI-Native Indexes**: [`llms.txt`](https://wangjian-damon.github.io/motion-kit/llms.txt) (drop directly into Cursor `@Docs` / Claude / Windsurf) · [`dist/registry.json`](https://wangjian-damon.github.io/motion-kit/dist/registry.json)
 
 ---
@@ -27,7 +27,7 @@
 |---|---|
 | Locked to React, Framer Motion, or GSAP runtimes | **Framework-agnostic AI specs**: reproduce cleanly in React, Vue, Tailwind, Taro, Flutter, SwiftUI, or vanilla web |
 | Ships code without explaining why constants exist | Every card documents **why each constant**, **degradation contracts**, **`pointercancel` & browser pitfalls**, and **acceptance tests** |
-| Read docs in one tab, hunt demos in another | **WYSIWYG**: all 60 cards include live interactive mini-stages, `0.25×` slow-mo, reduced-motion simulator, and 1-click preset skill bundles |
+| Read docs in one tab, hunt demos in another | **WYSIWYG**: all 66 cards include live interactive mini-stages, `0.25×` slow-mo, reduced-motion simulator, and 1-click Skill / Cursor `.mdc` export |
 
 ---
 
@@ -68,23 +68,23 @@ See **[docs/API.md](./docs/API.md)** for all 37 Vue directives, Taro composables
 
 ---
 
-## 30 Cross-Platform Effect Specs (by Nature)
+## 66 Cross-Platform Effect Specs (by Nature)
 
 | Nature | Core Question | Shipped Cards |
 |---|---|---|
-| **Feedback** (7) | Did the UI receive my input? | `tap` · `long-press` · `context-menu` · `ripple` · `glass-tap` · `state-button` · `cell-flash` |
-| **Continuity** (5) | Is this still the same element? | `bottom-sheet` · `pop` · `seg` · `shared-element` · `toast-stack` |
-| **Direction** (4) | Where did it come from / go? | `edge-back` · `swipe` · `sticky-title` · `fold` |
-| **Weight** (5) | How heavy does it feel? | `pull-refresh` · `detent` · `dock` · `snap-sheet` · `rubber-band` |
-| **Material** (4) | What is this surface made of? | `glass-base` · `refraction` · `tilt` · `spotlight` |
-| **Rhythm** (5) | How do multiple items enter? | `enter` · `count-up` · `split` · `bar-grow` · `sparkline-draw` |
+| **Feedback** (11) | Did the UI receive my input? | `tap` · `long-press` · `context-menu` · `ripple` · `glass-tap` · `state-button` · `cell-flash` · `confetti` · `shader-ripple` · `tooltip-group` · `voice-wave` |
+| **Continuity** (9) | Is this still the same element? | `bottom-sheet` · `pop` · `seg` · `shared-element` · `toast-stack` · `fluid-height` · `dynamic-pill` · `shader-terrain` · `shader-metaballs` |
+| **Direction** (10) | Where did it come from / go? | `edge-back` · `swipe` · `sticky-title` · `scroll-fade` · `fold` · `fan` · `ring` · `tunnel` · `coverflow` · `shader-globe` |
+| **Weight** (9) | How heavy does it feel? | `pull-refresh` · `detent` · `dock` · `snap-sheet` · `rubber-band` · `magnetic` · `mgrid` · `card-deck` · `shader-particles` |
+| **Material** (14) | What is this surface made of? | `glass-base` · `refraction` · `tilt` · `spotlight` · `blob` · `border-run` · `cube` · `depth` · `sphere` · `book-3d` · `holo-card` · `shader-aurora` · `shader-orb` · `shader-torus` |
+| **Rhythm** (13) | How do multiple items enter? | `enter` · `count-up` · `split` · `bar-grow` · `sparkline-draw` · `ai-stream` · `bounce-text` · `glitch` · `scramble` · `orbit` · `bar-3d` · `flip-clock` · `shader-dna` |
 
 ---
 
 ## Development & Verification
 
 ```bash
-# Compile all 60 effect cards -> dist/registry.json, demo/registry.data.js, llms.txt & self-contained Skill, then run all 145 unit + leak tests
+# Compile all 66 effect cards -> dist/registry.json, demo/registry.data.js, effects/INDEX.md, llms.txt & self-contained Skill, then run all 151 unit + leak tests
 npm run check
 ```
 

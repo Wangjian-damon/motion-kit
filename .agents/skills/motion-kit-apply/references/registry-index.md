@@ -1,9 +1,9 @@
 # MotionKit 动效资产索引（自动生成）
 
 > 由 `node scripts/build-registry.mjs` 自动编译自 `effects/*.md`。请勿手改此文件。
-> 当前收录：**60** 张纯净去库化跨平台动效资产卡。
+> 当前收录：**66** 张纯净去库化跨平台动效资产卡。
 
-## 反馈（9）
+## 反馈（11）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -16,12 +16,16 @@
 | `shader-ripple` | WebGL 光学水波纹折射 | both | 点击或触碰表面时，片元着色器从触点向外扩散一圈带高斯包络的物理水波，实时折弯底层纹理并叠加波峰高光与轻微色散；支持 6 道波纹并发叠加与自动过期复用。 | `./effects/shader-ripple.md` |
 | `state-button` | 态变按钮 | both | 把提交按钮的 `idle → loading → success / error → idle` 压进同一个不跳宽的网格格子里，旧文案上移微糊退场、新文案下移弹入，且自带 400ms 最低加载时长与防连点锁。 | `./effects/state-button.md` |
 | `tap` | 按下即反馈 | touch | `pointerdown` 那一帧就按下（`scale(0.955)` + 提亮），松手/滑走撤掉 —— 把"按了"的确认从 `:active` 的 100ms 之后拉回第 0ms。 | `./effects/tap.md` |
+| `tooltip-group` | 热身提示组 | web | 工具栏里一组图标按钮共用同一个状态机：首次悬停等 `400ms` 防止鼠标路过误闪；一旦弹出并进入 `300ms` 热身窗，滑到相邻按钮时提示以 `0ms` 瞬切跟随并自动钳制在容器边界内。 | `./effects/tooltip-group.md` |
+| `voice-wave` | AI 语音对称频谱波 | both | 一排 9 根细圆角频谱柱通过中心加权正弦包络与双谐波叠加，仅以合成层 `scaleY` 实时律动；支持 `idle / listening / speaking` 三态（或实时麦克风音量 `0..1`）平滑升档，且滚出视口或切后台自动停帧。 | `./effects/voice-wave.md` |
 
-## 连续（7）
+## 连续（9）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
 | `bottom-sheet` | 底部弹层 | touch | 从屏幕底部升起的一块面板，抓手可拖；拖过 28% 高度或甩得够快就收起，否则回弹。 | `./effects/bottom-sheet.md` |
+| `dynamic-pill` | 灵动胶囊状态条 | both | 同一个顶部状态容器在 `idle / thinking / done / error` 四种状态间连续变形：紧凑待机时是圆润药丸，进入思考或报错态时柔和舒展为圆角状态卡并点亮对应语义色与呼吸状态点。 | `./effects/dynamic-pill.md` |
+| `fluid-height` | 流体高度容器 | both | 弹窗切换步骤、手风琴展开或表单动态增减字段时，外层容器通过 `ResizeObserver` 监听内层包裹块真实高度并写入单个高度变量，让容器像呼吸一样丝滑伸缩，全浏览器一致且首帧零动画跳闪。 | `./effects/fluid-height.md` |
 | `pop` | 弹层 / 轻提示 | both | 纯 CSS 的进出场：入场靠 `@starting-style`，退场靠 `display` 参与过渡，一行 JS 都不用写。 | `./effects/pop.md` |
 | `seg` | 分段控件滑动 | both | 多个等宽互斥选项共用一块背景胶囊，切换时胶囊通过单个 CSS 索引变量连续滑到目标格，不重排、不量像素。 | `./effects/seg.md` |
 | `shader-metaballs` | WebGL 3D 液态水银融合球 | both | 零 Three.js、零网格重构，用多项式平滑最小函数 `smin(d1, d2, k)` 把 5 颗公转 3D 球体与 1 颗随鼠标游走的引力液滴在片元着色器里实时融合成一团拉丝粘连的液态水银。 | `./effects/shader-metaballs.md` |
@@ -29,7 +33,7 @@
 | `shared-element` | 共享元素转场 | both | 点列表里的一张卡，**那张卡自己长大成详情页**，不是淡入一个新页面；返回时是同一段的逆向。 | `./effects/shared-element.md` |
 | `toast-stack` | 堆叠轻提示 | both | 多条轻提示默认叠成一摞（最前完整、后两条各露 14px 边并逐级缩 5%），悬停或点击时展开成列表并暂停倒计时，横向一甩即走、剩余条目同步补位。 | `./effects/toast-stack.md` |
 
-## 方向（9）
+## 方向（10）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
@@ -38,6 +42,7 @@
 | `fan` | 扇形手牌展开 | both | 多张卡片绕底部中心点叠成一把闭合扇子，悬停或点击时只需改一个 `--spread` 角度变量，整副卡片同步对称张开成优雅扇面。 | `./effects/fan.md` |
 | `fold` | 3D 折纸面板 | both | 面板像沿顶边铰链折起来的纸页一样通过 `rotateX(-92deg → 0deg)` 展开与收起，收起态自动加 `inert` 隔离键盘焦点与误触，减弱动效下彻底归零塌回平面。 | `./effects/fold.md` |
 | `ring` | 3D 环形画廊轮播 | both | N 张卡片绕 Y 轴排成真三维圆环，自动缓慢公转；手指或鼠标可随时抓住拖拽甩动，松手后惯性滑行并无缝交还给自动旋转。 | `./effects/ring.md` |
+| `scroll-fade` | 滚动边缘羽化 | both | 横向标签栏、代码框或可滚动列表只在“还有隐藏内容未滚出”的那一侧自动显现柔和 `mask-image` 渐变羽化，滚到起点或终点时羽化宽度平滑归零，绝不遮挡首尾文字。 | `./effects/scroll-fade.md` |
 | `shader-globe` | WebGL 3D 交互全息地球 | both | 不用 Three.js 也不用球体贴图，直接在 GLSL 里对单位球做解析射线求交（`z = sqrt(R² - r²)`），单帧画出带经纬线网格、点阵发光大陆、城市脉动信标与大气边缘辉光的 3D 全息地球。 | `./effects/shader-globe.md` |
 | `sticky-title` | 吸顶与滚动阴影 | both | 吸顶条滚过顶部后，底部那条发丝线自动淡入（0 → 48px 行程）—— `animation-timeline: scroll()` 驱动，零 JS、零监听。 | `./effects/sticky-title.md` |
 | `swipe` | 左滑操作 | touch | 列表行往左拖，露出底下固定宽度的操作按钮；拖过 40% 或往左甩就停在打开位。 | `./effects/swipe.md` |
@@ -76,10 +81,11 @@
 | `spotlight` | 指针光斑与描边聚光 | web | 桌面指针移过暗色卡片时，一团柔和径向光斑（或仅照亮 1px 描边）用 lerp 丝滑跟随指针；完全不碰 `transform`，可与任意位移/缩放效果无冲突叠加。 | `./effects/spotlight.md` |
 | `tilt` | 3D 倾斜与光泽 | web | 桌面指针划过卡片时，卡片沿指针反方向 3D 微微倾斜并联动一层径向光泽；rAF 线性插值收敛到位即自动停帧，触屏端默认关闭避免残留歪斜。 | `./effects/tilt.md` |
 
-## 节奏（12）
+## 节奏（13）
 
 | id | 名称 | 平台 | 一句话 | 消费卡 |
 |---|---|---|---|---|
+| `ai-stream` | AI 流式输出柔显与智能锁底 | both | AI 流式输出的新增文本片段以 `220ms` 轻微去模糊淡入（告别硬蹦字），同时维护“智能锁底”状态：用户没动滚动条时自动跟随最新一行，用户一往上翻看历史记录立刻让出控制权，滚回距底 `36px` 内自动重新锁底。 | `./effects/ai-stream.md` |
 | `bar-3d` | 3D 等轴立体数据柱图 | both | 每根数据柱用前、右、顶三个真实 `preserve-3d` 平面在等轴视角下拼成实心立方体，首屏按 320ms 封顶级联拔地而起，数据刷新时只需改一个高度变量即可原地平滑升降。 | `./effects/bar-3d.md` |
 | `bar-grow` | 条形数据生长 | both | 表格占比条和柱状图进入视口时从起点按比例平滑生长，全程用 `scaleX`/`scaleY` 走合成器不触排，级联延迟严格封顶 320ms，数据刷新时原地伸缩不归零。 | `./effects/bar-grow.md` |
 | `bounce-text` | 逐字波浪弹跳 | both | 初始化把标题按中文单字、英文整词拆成行内块并写入序号变量，悬停或触发时各片段按 `32ms` 间隔依次轻快弹起形成一道文字波浪。 | `./effects/bounce-text.md` |

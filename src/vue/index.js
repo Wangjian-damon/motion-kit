@@ -39,6 +39,7 @@ import { toastStack, stackLayout, stackHeight, shouldSwipeToast } from '../core/
 import { stateButton, nextButtonState, loadingRemaining } from '../core/state-button.js';
 import { barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline } from '../core/data.js';
 import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, smoothMin, helixPositions, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles, shaderGlobe, shaderTerrain, shaderMetaballs, shaderDna } from '../core/shader.js';
+import { tooltipDelay, tooltipGroup, clampHeight, fluidHeight, PILL_SPECS, pillStateSpec, dynamicPill, scrollFadeStops, scrollFade, VOICE_STATES, voiceBarHeight, voiceWave, isNearBottom, aiStream } from '../core/ui-motion.js';
 import { resolveReduced, isCoarsePointer } from '../core/motion-pref.js';
 import { applyTokens } from '../tokens.js';
 
@@ -804,6 +805,7 @@ export {
   stateButton, nextButtonState, loadingRemaining,
   barRatio, barStagger, barGrow, valueDelta, flashCell, sparklineGeometry, sparkline,
   cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, smoothMin, helixPositions, shaderCanvas, shaderAurora, shaderOrb, shaderRipple, shaderTorus, shaderParticles, shaderGlobe, shaderTerrain, shaderMetaballs, shaderDna,
+  tooltipDelay, tooltipGroup, clampHeight, fluidHeight, PILL_SPECS, pillStateSpec, dynamicPill, scrollFadeStops, scrollFade, VOICE_STATES, voiceBarHeight, voiceWave, isNearBottom, aiStream,
 };
 export * from '../tokens.js';
 export * from '../spring.js';

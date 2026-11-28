@@ -1,23 +1,46 @@
 {
   "schemaVersion": 1,
-  "count": 60,
+  "count": 66,
   "byLayer": {
+    "motion": 24,
     "3d": 13,
-    "motion": 18,
     "fun": 7,
     "mobile": 10,
     "glass": 3,
     "webgl": 9
   },
   "byNature": {
-    "节奏": 12,
+    "节奏": 13,
     "材质": 14,
-    "连续": 7,
+    "连续": 9,
     "权重": 9,
-    "反馈": 9,
-    "方向": 9
+    "反馈": 11,
+    "方向": 10
   },
   "effects": [
+    {
+      "id": "ai-stream",
+      "name": "AI 流式输出柔显与智能锁底",
+      "layer": "motion",
+      "nature": "节奏",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.aiStream(el, { threshold, onLockChange }) + .mk-stream",
+      "source": "ChatGPT / Claude / Antigravity 对话流（Token 分块 220ms 柔显 + 用户上翻立即脱锁 + 回到底部自动重锁）",
+      "file": "effects/ai-stream.md",
+      "summary": "AI 流式输出的新增文本片段以 `220ms` 轻微去模糊淡入（告别硬蹦字），同时维护“智能锁底”状态：用户没动滚动条时自动跟随最新一行，用户一往上翻看历史记录立刻让出控制权，滚回距底 `36px` 内自动重新锁底。",
+      "problem": "**市面上 80% 的自建 AI 聊天界面都会踩这两个最让用户抓狂的体验坑：① 流式回复期间每次新 Token 到达都强行 `scrollTop = scrollHeight`，用户想往上翻看前文时屏幕拼命跟手指抢滚动条；② Token 一坨坨硬刷出来像老式终端闪屏。** 一个纯函数 `isNearBottom` 管住锁底状态机 + 每个追加片段自带 220ms 柔显关键帧，一次性解决阅读舒适度与滚动尊重。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 纯函数 `isNearBottom(scrollTop, scrollHeight, clientHeight, 36)` 判断是否贴底，脱锁/重锁零歧义 | 每次 `append` 不分青红皂白强拉到底部和用户抢滚轮 |\n| 新增片段包成独立行内 `<span>` 自播 `220ms` `opacity 0→1 + blur(2px → 0)`，已渲染文字纹丝不动 | 每次来 Token 重写整段 `innerHTML` 导致整篇文章重绘、选中文字丢失 |\n| 暴露 `.isLocked()` 与 `onLockChange(locked)`，方便业务侧在脱锁时浮出“↓ 回到底部”小按钮 | 用户脱锁后不知道还有新内容在下面生成 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 贴底判定阈值 `threshold` | `36px`（约 1.5 行文字高度） | 触控板惯性滚到底部常差 2–12px 未严丝合缝贴齐，36px 容差让用户自然滑到底即可轻松重锁，往上轻滑两行又能灵敏脱锁 |\n| 片段柔显时长 | `220ms cubic-bezier(0.22, 1, 0.36, 1)` + `blur(2px → 0)` | 刚好抹平 30–80ms 不均匀网络流式抖动，看起来像墨水丝滑浮现，又不拖慢快速扫读 |\n| DOM 追加策略 | `appendChild(<span class=\"chunk\">)` 只增不改旧节点 | 绝不破坏用户正在拖选复制的历史文字，且零整段重排 |\n| 监听模式 | `{ passive: true }` | 滚动事件绝不阻塞主线程与手势惯性 |",
+      "implementation": "```\nsrc/core/ui-motion.js:285   isNearBottom(top, height, view, th)   纯函数，贴底判定（可单测）\nsrc/core/ui-motion.js:292   aiStream(el, { threshold })           分块柔显 + 智能锁底状态机 + scrollToBottom()\nstyles/motion.css:1530      .mk-stream / .mk-stream__chunk        220ms 去模糊柔显与减弱动效降级\n```",
+      "degradation": "**走 `motion` 层契约：关闭分块淡入与模糊动画，完整保留智能锁底与不抢滚动条行为。**\n\n`prefers-reduced-motion: reduce` 下新到达的 Token 直接清晰呈现（`animation: none`），智能锁底与脱锁机制照常工作。",
+      "pitfalls": "**① 流式期间无条件 `el.scrollTop = el.scrollHeight`，和用户抢滚动条。**\n这是 AI 产品最致命的交互灾难；只要用户上翻离开底部超过 36px，必须立即停止自动滚底，直到用户手动滑回底部或点击“回到底部”。\n\n**② 每次收到新 Chunk 时用 `el.textContent += chunk` 覆写整块文本。**\n覆写整块文本不仅无法让最新片段单独柔显，还会瞬间清空用户的文本划词选区；必须以只增不改的方式追加轻量行内 `<span>`。\n\n**③ `threshold` 写成 `0`（严格相等 `scrollTop + clientHeight === scrollHeight`）。**\n高分屏小数像素或弹性回弹下经常差 `1px`，写 `0` 会导致用户明明滚到底了却死活重锁不上；必须留 `24–40px` 容差。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的 AI 流式输出柔显与智能锁底（AI Token Stream & Smart Auto-Scroll）。\n\n原理一句话：新增文本以独立行内 <span> 只增不改地追加并自播 220ms 去模糊淡入动画；用纯函数 isNearBottom(threshold = 36px) 维护锁底状态，用户上翻立刻脱锁绝不抢滚轮，滚回底部自动重锁。\n\n做法：\n1. 纯函数 isNearBottom(scrollTop, scrollHeight, clientHeight, threshold = 36)：\n   - 若 scrollHeight <= clientHeight 返回 true；\n   - 返回 (scrollHeight - (scrollTop + clientHeight)) <= threshold。\n2. 片段柔显 CSS：\n   - 追加的每个行内片段 span：display: inline; animation: stream-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;\n   - 关键帧：from { opacity: 0; filter: blur(2px); } to { opacity: 1; filter: none; }。\n3. 智能锁底控制器：\n   - 内部状态 locked 默认 true；监听容器 scroll（passive: true），每次更新 next = isNearBottom(...)；若状态变化同步切换脱锁类并回调 onLockChange(locked)（供业务显隐「回到底部」按钮）。\n   - append(chunk)：创建行内 span 追加到容器末尾（绝不覆写旧内容、不破坏用户划词选区）；仅当 locked === true 时执行 el.scrollTop = el.scrollHeight。\n   - 暴露 scrollToBottom()（手动回底并重锁）、clear()（清空并重锁）、isLocked() 与 destroy()。\n4. 降级：\n   - prefers-reduced-motion: reduce 关闭片段淡入动画（animation: none），完整保留智能锁底逻辑。\n\n硬要求：\n- 严禁在用户向上滚动查看历史时强制把容器拉回底部。\n- 严禁每次来新 Token 覆写整段 innerHTML/textContent，必须只增追加保持已有文本与选区稳定。\n- 贴底阈值必须留足 24–40px 容差（推荐 36px），禁止写死 0px 相等判断。\n\n验收：\n- 连续流式输出时，新字如墨水柔和浮现，容器自动平滑跟随到底部，可随时选中复制上方已输出文字不被打断。\n- 输出中途向上滚动超过 36px，界面立刻停止抢滚轮并通知脱锁状态；滑回底部或点击「回到底部」后立即无缝恢复跟随。\n- 开启减弱动效后新字直接清晰出现无模糊闪烁；卸载后正确移除滚动监听。",
+        "dont_do": "- 别在流式回调里无条件 `el.scrollTop = el.scrollHeight` —— 用户上翻看代码时被反复拽回底部会直接暴走。\n- 别用 `el.innerHTML += chunk` —— 不仅每帧重解析整段 DOM、闪瞎眼，还会让用户永远选不中文字复制。\n- 别把贴底判定写成 `scrollTop + clientHeight === scrollHeight` —— 差 0.5px 亚像素就会锁不上。",
+        "skill_rule": "# AI 流式输出柔显与智能锁底 (ai-stream) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】新增文本以独立行内 <span> 只增不改地追加并自播 220ms 去模糊淡入动画；用纯函数 isNearBottom(threshold = 36px) 维护锁底状态，用户上翻立刻脱锁绝不抢滚轮，滚回底部自动重锁。\n\n【硬要求】\n- 严禁在用户向上滚动查看历史时强制把容器拉回底部。\n- 严禁每次来新 Token 覆写整段 innerHTML/textContent，必须只增追加保持已有文本与选区稳定。\n- 贴底阈值必须留足 24–40px 容差（推荐 36px），禁止写死 0px 相等判断。\n\n【验收标准】\n- 连续流式输出时，新字如墨水柔和浮现，容器自动平滑跟随到底部，可随时选中复制上方已输出文字不被打断。\n- 输出中途向上滚动超过 36px，界面立刻停止抢滚轮并通知脱锁状态；滑回底部或点击「回到底部」后立即无缝恢复跟随。\n- 开启减弱动效后新字直接清晰出现无模糊闪烁；卸载后正确移除滚动监听。\n\n【禁止做法】\n- 别在流式回调里无条件 `el.scrollTop = el.scrollHeight` —— 用户上翻看代码时被反复拽回底部会直接暴走。\n- 别用 `el.innerHTML += chunk` —— 不仅每帧重解析整段 DOM、闪瞎眼，还会让用户永远选不中文字复制。\n- 别把贴底判定写成 `scrollTop + clientHeight === scrollHeight` —— 差 0.5px 亚像素就会锁不上。"
+      }
+    },
     {
       "id": "bar-3d",
       "name": "3D 等轴立体数据柱图",
@@ -410,6 +433,29 @@
       }
     },
     {
+      "id": "dynamic-pill",
+      "name": "灵动胶囊状态条",
+      "layer": "motion",
+      "nature": "连续",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.dynamicPill(el, { state }) + .mk-pill",
+      "source": "Apple Dynamic Island / Family App（紧凑药丸与展开状态卡片间的连续形态过渡 + 脉动状态点）",
+      "file": "effects/dynamic-pill.md",
+      "summary": "同一个顶部状态容器在 `idle / thinking / done / error` 四种状态间连续变形：紧凑待机时是圆润药丸，进入思考或报错态时柔和舒展为圆角状态卡并点亮对应语义色与呼吸状态点。",
+      "problem": "**AI Agent 执行任务、文件同步或后台处理时，用弹窗打断用户太重、用普通静态文字条又容易被忽略；若不同状态用 `v-if` 切换两套 DOM，视觉上会硬闪割裂。** 让同一个胶囊容器通过纯函数状态规格连续驱动圆角、内边距、边框语义色与状态点脉动，用户一眼看懂系统正在发生什么且全程保持同一物体的连续性。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 同一容器连续形变（`padding` / `border-radius` / `border-color` 同步 `280ms` 过渡），保持“同一个生命体”认知 | 不同状态用两个独立元素销毁重建硬切 |\n| 状态规格由纯函数 `pillStateSpec(state)` 集中映射 `{ state, expanded, accent }` | 业务代码到处散落 `if/else` 拼类名与颜色 |\n| `thinking` 态状态点 `1.1s` 柔和呼吸脉动，完成后转为稳定绿点 | 高频刺眼闪烁红灯或大面积霓虹发光 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 四态规格 `PILL_SPECS` | `idle`(紧凑中性) / `thinking`(展开强调) / `done`(紧凑成功) / `error`(展开警示) | 需要解释信息或正在执行时略微展开承载上下文，静置与完成时收拢不占屏 |\n| 形态过渡时长 | `280ms ease-out`（圆角 `999px ↔ 18px`） | 既有类似 Dynamic Island 的弹性舒展感，又在 300ms 内利落落位不拖泥带水 |\n| 呼吸灯周期 | `1.1s ease-in-out infinite`（缩放 `1 → 1.35` + 透明度 `0.35`） | 接近人类平静呼吸节奏，后台长任务盯着看也不焦虑 |\n| 未知状态兜底 | 回退 `idle` | 防止接口返回未知枚举把胶囊样式弄崩 |",
+      "implementation": "```\nsrc/core/ui-motion.js:132   PILL_SPECS / pillStateSpec(state)   纯函数，四态归一化规格映射（可单测）\nsrc/core/ui-motion.js:144   dynamicPill(el, { state })          写 data-state / data-accent / .is-expanded\nstyles/motion.css:1432      .mk-pill / .is-expanded / __dot     圆角与内边距连续形变 + 呼吸灯与降级\n```",
+      "degradation": "**走 `motion` 层契约：保留全部语义色与展开状态，关闭呼吸动画并将形变时长压至 `1ms`。**\n\n`prefers-reduced-motion: reduce` 下停止状态点脉动动画，保留边框色、状态点颜色与紧凑/展开信息层级。",
+      "pitfalls": "**① 不同状态销毁重建整个容器节点，导致 CSS 过渡完全不触发。**\n必须保持外层胶囊 DOM 节点恒定，只切换 `data-state`、展开类与内部文案，浏览器才能在两态圆角与内边距之间插值。\n\n**② `border-radius` 写 `50%` 而不是 `999px`。**\n长方形药丸设 `50%` 会变成难看的椭圆，必须写 `999px` 才能保持两端严格半圆胶囊形状。\n\n**③ 忘了给状态点设 `flex: none`。**\n在窄屏或长文案挤压下，不加 `flex: none` 会把圆形状态点压扁成竖椭圆。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的灵动胶囊状态条（Dynamic Pill / Status Island）。\n\n原理一句话：保持同一个容器 DOM 节点不变，用纯函数把 idle / thinking / done / error 映射为紧凑/展开形态与语义色，同步过渡圆角（999px <-> 18px）、内边距与呼吸状态点。\n\n做法：\n1. 纯函数 pillStateSpec(state)：\n   - 映射表：{ idle: { expanded: false, accent: 'neutral' }, thinking: { expanded: true, accent: 'accent' }, done: { expanded: false, accent: 'success' }, error: { expanded: true, accent: 'danger' } }；未知态安全回退 idle。\n2. 连续形变 CSS：\n   - 基础紧凑态：display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; transition: padding 280ms cubic-bezier(0.22,1,0.36,1), border-radius 280ms cubic-bezier(0.22,1,0.36,1), border-color 220ms ease;\n   - 展开态 .is-expanded：padding: 10px 18px; border-radius: 18px;\n   - 左侧 7px 圆形状态点（flex: none）：thinking 态 1.1s 呼吸缩放 1->1.35 且透明度 0.35；done 态常亮绿点；error 态常亮红点；容器边框按 accent 切换对应柔和语义色。\n3. 控制器与降级：\n   - 暴露 setState(next) 更新 data-state、data-accent、.is-expanded 并触发 onChange 回调。\n   - prefers-reduced-motion: reduce 停止状态点脉动，过渡时长压至 1ms，完整保留语义色与文案。\n\n硬要求：\n- 严禁在状态切换时销毁重建胶囊外层节点；胶囊圆角必须写 999px 禁止写 50%。\n- 状态点必须加 flex: none 防止被长文案压扁。\n\n验收：\n- 在 idle -> thinking -> done -> error 间切换时，胶囊原地平滑舒展与收拢，圆角和边框语义色同步过渡无闪烁。\n- thinking 态状态点平滑呼吸；开启减弱动效后脉动停止但状态色与文案一目了然。",
+        "dont_do": "- 别把药丸圆角写成 `border-radius: 50%` —— 横向胶囊会被拉成难看的橄榄椭圆。\n- 别为每个状态拆出独立的 `v-if` 外框 —— 会彻底丢失“同一物体变形”的连续感。\n- 别给状态点漏掉 `flex: none` —— 文案稍长小圆点就会被压扁。",
+        "skill_rule": "# 灵动胶囊状态条 (dynamic-pill) · 跨平台动效规范\n性质：连续 ｜ 平台：both\n\n【核心原理】保持同一个容器 DOM 节点不变，用纯函数把 idle / thinking / done / error 映射为紧凑/展开形态与语义色，同步过渡圆角（999px <-> 18px）、内边距与呼吸状态点。\n\n【硬要求】\n- 严禁在状态切换时销毁重建胶囊外层节点；胶囊圆角必须写 999px 禁止写 50%。\n- 状态点必须加 flex: none 防止被长文案压扁。\n\n【验收标准】\n- 在 idle -> thinking -> done -> error 间切换时，胶囊原地平滑舒展与收拢，圆角和边框语义色同步过渡无闪烁。\n- thinking 态状态点平滑呼吸；开启减弱动效后脉动停止但状态色与文案一目了然。\n\n【禁止做法】\n- 别把药丸圆角写成 `border-radius: 50%` —— 横向胶囊会被拉成难看的橄榄椭圆。\n- 别为每个状态拆出独立的 `v-if` 外框 —— 会彻底丢失“同一物体变形”的连续感。\n- 别给状态点漏掉 `flex: none` —— 文案稍长小圆点就会被压扁。"
+      }
+    },
+    {
       "id": "edge-back",
       "name": "边缘返回",
       "layer": "mobile",
@@ -499,6 +545,29 @@
         "prompt": "实现零依赖的 3D 机械翻页时钟 / 翻牌器（Split-Flap 3D Mechanical Flip Card）。\n\n原理一句话：每位翻牌由上静页、下静页、上翻叶、下翻叶四层构成，内部文字高度 200% 各自裁切上下半；数值变化时仅变更位触发两段 90° 3D 接力翻折（重力加速下折 + 减速着陆 + 折角压暗阴影）。\n\n做法：\n1. 纯函数 splitFlapDigits(value, pad = 2)：\n   - pad 钳制在 [1, 8]；数字取 Math.max(0, Math.floor(value))（非有限数按 0）左侧补零截断为定长数组；字符串转大写去非字母数字后补零截断。\n2. 四层 DOM 与 CSS 3D 结构（单格 perspective: 420px，居中 1.5px 铰链黑缝）：\n   - 上静页 / 上翻叶：top: 0; height: 50%; overflow: hidden; 内层文字 height: 200%; top: 0;\n   - 下静页 / 下翻叶：bottom: 0; height: 50%; overflow: hidden; 内层文字 height: 200%; bottom: 0;\n   - 两片翻叶均设 backface-visibility: hidden；上翻叶 transform-origin: 50% 100%，下翻叶 transform-origin: 50% 0% 且默认 rotateX(90deg)。\n3. 严密四层赋值与两段接力动画（仅当 next[i] !== cur[i] 时触发）：\n   - 翻转起点：上静页 = 新字，下静页 = 旧字，上翻叶 = 旧字，下翻叶 = 新字；\n   - 上翻叶 220ms cubic-bezier(0.55, 0.05, 0.9, 0.6)：rotateX(0deg) brightness(1) -> rotateX(-90deg) brightness(0.45)；\n   - 下翻叶 220ms 延迟 215ms cubic-bezier(0.16, 1, 0.3, 1)：rotateX(90deg) brightness(0.55) -> rotateX(0deg) brightness(1)；\n   - 460ms 结束后将下静页与上翻叶同步为新字并移除翻转态类。\n4. 降级与清理：\n   - prefers-reduced-motion: reduce 禁用两段翻折关键帧，直接完成数值更新。\n   - destroy() 清理全部未完成 timer 防止内存泄漏。\n\n硬要求：\n- 必须严格按四层时序更新文字，确保翻折前后与中点瞬间绝不出现新旧字穿帮。\n- 仅发生变化的位触发翻页，未变位严禁重播动画；数字必须开启 tabular-nums。\n- 翻页叶必须设置 backface-visibility: hidden 与折角压暗阴影。\n\n验收：\n- 倒计时或点击 +1 / 随机切换时，只有变动的位数发生干脆利落的机械翻折，未变动位纹丝不动。\n- 翻折经过 90° 中缝时有真实阴影变暗与无缝接力，无白闪、无镜像反字。\n- 开启减弱动效后数值干净切换无晃动；卸载后无残留定时器报错。",
         "dont_do": "- 别用单个 `div` 直接 `rotateX(-180deg)` 假装翻牌 —— 真实翻牌是上下两半在水平中缝处翻折，整卡旋转会失去机械感且字会上下颠倒。\n- 别在只变个位时把十位、百位也一起翻一遍 —— 极其吵闹且违背物理机械结构。\n- 别忘了在上下翻页交界留 `5ms` 重叠（`220ms` 与 `215ms` 延迟）—— 严丝合缝设为 `220ms` 时部分浏览器帧对齐会漏出 1 帧黑缝。",
         "skill_rule": "# 3D 机械翻页时钟 / 翻牌器 (flip-clock) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】每位翻牌由上静页、下静页、上翻叶、下翻叶四层构成，内部文字高度 200% 各自裁切上下半；数值变化时仅变更位触发两段 90° 3D 接力翻折（重力加速下折 + 减速着陆 + 折角压暗阴影）。\n\n【硬要求】\n- 必须严格按四层时序更新文字，确保翻折前后与中点瞬间绝不出现新旧字穿帮。\n- 仅发生变化的位触发翻页，未变位严禁重播动画；数字必须开启 tabular-nums。\n- 翻页叶必须设置 backface-visibility: hidden 与折角压暗阴影。\n\n【验收标准】\n- 倒计时或点击 +1 / 随机切换时，只有变动的位数发生干脆利落的机械翻折，未变动位纹丝不动。\n- 翻折经过 90° 中缝时有真实阴影变暗与无缝接力，无白闪、无镜像反字。\n- 开启减弱动效后数值干净切换无晃动；卸载后无残留定时器报错。\n\n【禁止做法】\n- 别用单个 `div` 直接 `rotateX(-180deg)` 假装翻牌 —— 真实翻牌是上下两半在水平中缝处翻折，整卡旋转会失去机械感且字会上下颠倒。\n- 别在只变个位时把十位、百位也一起翻一遍 —— 极其吵闹且违背物理机械结构。\n- 别忘了在上下翻页交界留 `5ms` 重叠（`220ms` 与 `215ms` 延迟）—— 严丝合缝设为 `220ms` 时部分浏览器帧对齐会漏出 1 帧黑缝。"
+      }
+    },
+    {
+      "id": "fluid-height",
+      "name": "流体高度容器",
+      "layer": "motion",
+      "nature": "连续",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.fluidHeight(el, { min, max }) + .mk-fluid / .mk-fluid__inner",
+      "source": "Family App 托盘与步骤弹窗（ResizeObserver 测内层真实高度写 CSS 变量 + 首帧零跳闪）",
+      "file": "effects/fluid-height.md",
+      "summary": "弹窗切换步骤、手风琴展开或表单动态增减字段时，外层容器通过 `ResizeObserver` 监听内层包裹块真实高度并写入单个高度变量，让容器像呼吸一样丝滑伸缩，全浏览器一致且首帧零动画跳闪。",
+      "problem": "**多步骤弹窗或 AI 折叠区在内容变高/变矮时如果直接硬切，整个对话框会猛地上下一跳打断视线；而传统的 `max-height: 999px` 技巧收起时有明显延迟空转，CSS 原生 `interpolate-size` 在 Safari 收起阶段又存在兼容差异。** 用 `ResizeObserver` 测量无裁切内层节点的精确高度，写入外层容器的单个 CSS 变量，就能 100% 跨浏览器丝滑过渡且永不估算错高度。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 内层不限制高度（自由撑开）、外层 `overflow: hidden` 读变量 `--fh` 过渡 `320ms ease-out` | `max-height: 1000px` 假动画（收起时前 300ms 啥也没动） |\n| 首次测量期间加 `.is-init { transition: none }`，下一帧再移除，避免首屏挂载时从 0px 傻傻撑开 | 刚进页面弹窗自己抽拉一下 |\n| 纯函数 `clampHeight(h, min, max)` 兜底 `NaN` 与极端值 | 内层异步卸载时写入非法负高度 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 高度过渡曲线 | `320ms cubic-bezier(0.22, 1, 0.36, 1)` | 迅速起步、柔和着陆；比 200ms 更有流体呼吸感，比 500ms 不拖慢用户下一步点击 |\n| 首帧静默保护 | 初始化挂 `.is-init { transition: none }`，首测后下一 rAF 摘除 | 保证 SSR / 首次打开弹窗即刻处于精确高度，只在**后续内容变更**时动画 |\n| 测量来源 | `inner.getBoundingClientRect().height`（1 位小数精度） | 比 `offsetHeight` 保留亚像素精度，防止含小数行高文本在最后 1px 被裁底边 |\n| 高度钳制上限 | 默认 `[0, 4000]` | 拦截异常 DOM 状态下的离谱数值同时满足常规弹窗/折叠面板需求 |",
+      "implementation": "```\nsrc/core/ui-motion.js:97    clampHeight(h, min, max)   纯函数，亚像素精度安全钳制高度（可单测）\nsrc/core/ui-motion.js:104   fluidHeight(el, opts)      ResizeObserver 测量内层写 --mk-fh + 首帧静默保护\nstyles/motion.css:1423      .mk-fluid / .is-init       overflow: hidden + 320ms 高度过渡与减弱动效降级\n```",
+      "degradation": "**走 `motion` 层契约：保留精确高度包裹，过渡时长压至 `1ms`。**\n\n`prefers-reduced-motion: reduce` 下容器依然准确跟随内层高度，只是去掉连续伸缩过程直接到位，绝不裁切内容。",
+      "pitfalls": "**① 直接把 `ResizeObserver` 挂在外层自身而不是内层包裹块上。**\n观察外层自身会形成“外层高变了 → 触发 RO → 写自己高度”的死循环，容器永远卡死在初始高度不动；必须分成**外层裁切壳 + 内层自由撑开块**两层结构。\n\n**② 忘了做首帧静默保护，页面刚打开时容器从 `0px` 慢悠悠展开。**\n首测必须禁用 `transition`，等第一次高度落定后的下一帧再恢复过渡。\n\n**③ 卸载组件时忘了调用 `ro.disconnect()`。**\n残留的 `ResizeObserver` 会长期持有已移除 DOM 引用造成内存泄漏。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的流体高度容器（Fluid Height Container）。\n\n原理一句话：采用「外层裁切壳 + 内层自由内容块」双层结构，用 ResizeObserver 监听内层精确亚像素高度并写入外层 CSS 变量 --fh，首帧静默落位、后续内容增减时 320ms 平滑呼吸伸缩。\n\n做法：\n1. 纯函数 clampHeight(h, min = 0, max = 4000)：\n   - 钳制到 [min, max]，保留 1 位小数，非有限数回退 min。\n2. 双层结构与 CSS：\n   - 外层容器：overflow: hidden; height: var(--fh, auto); transition: height 320ms cubic-bezier(0.22, 1, 0.36, 1);\n   - 首帧静默类 .is-init：transition: none;\n   - 内层容器：普通文档流不设固定高度，自由随内容撑开。\n3. ResizeObserver 控制器：\n   - 挂载时先给外层加 .is-init，监听内层节点（绝不监听外层自身）；\n   - 每次回调读取 inner.getBoundingClientRect().height，经 clampHeight 后写入外层 --fh: <h>px；\n   - 首帧测量完成后在下一 requestAnimationFrame 移除 .is-init，之后每次内容变化自动平滑过渡；\n   - destroy() 调用 ro.disconnect() 清理监听。\n4. 降级：\n   - prefers-reduced-motion: reduce 将过渡压至 1ms，高度依然准确无裁切。\n\n硬要求：\n- 必须区分外层裁切壳与内层被测节点，严禁把 ResizeObserver 挂在外层自身导致高度锁死。\n- 必须做首帧静默保护，首次渲染严禁出现从 0px 展开的抖动。\n- 严禁使用 max-height: 9999px 技巧替代真实高度测量。\n\n验收：\n- 容器首次渲染即刻贴合内容高度，无任何多余展开动画。\n- 切换不同长度的步骤/折叠内容时，外层高度以 320ms 平滑呼吸伸缩，不裁切文字底边、不出现收起空等延迟。\n- 开启减弱动效后瞬时贴合新高度；组件卸载后 ResizeObserver 正确断开。",
+        "dont_do": "- 别用 `max-height: 0 ↔ 1000px` 假装高度动画 —— 实际内容只有 120px 时，收起的前 80% 时间页面毫无动静。\n- 别把 `ResizeObserver` 绑在设置了 `height: var(--fh)` 的外层上 —— 自己锁死自己永远展不开。\n- 别用 `offsetHeight` 丢掉小数像素 —— 高分屏下最后一行字底部常被裁掉 1px。",
+        "skill_rule": "# 流体高度容器 (fluid-height) · 跨平台动效规范\n性质：连续 ｜ 平台：both\n\n【核心原理】采用「外层裁切壳 + 内层自由内容块」双层结构，用 ResizeObserver 监听内层精确亚像素高度并写入外层 CSS 变量 --fh，首帧静默落位、后续内容增减时 320ms 平滑呼吸伸缩。\n\n【硬要求】\n- 必须区分外层裁切壳与内层被测节点，严禁把 ResizeObserver 挂在外层自身导致高度锁死。\n- 必须做首帧静默保护，首次渲染严禁出现从 0px 展开的抖动。\n- 严禁使用 max-height: 9999px 技巧替代真实高度测量。\n\n【验收标准】\n- 容器首次渲染即刻贴合内容高度，无任何多余展开动画。\n- 切换不同长度的步骤/折叠内容时，外层高度以 320ms 平滑呼吸伸缩，不裁切文字底边、不出现收起空等延迟。\n- 开启减弱动效后瞬时贴合新高度；组件卸载后 ResizeObserver 正确断开。\n\n【禁止做法】\n- 别用 `max-height: 0 ↔ 1000px` 假装高度动画 —— 实际内容只有 120px 时，收起的前 80% 时间页面毫无动静。\n- 别把 `ResizeObserver` 绑在设置了 `height: var(--fh)` 的外层上 —— 自己锁死自己永远展不开。\n- 别用 `offsetHeight` 丢掉小数像素 —— 高分屏下最后一行字底部常被裁掉 1px。"
       }
     },
     {
@@ -867,6 +936,29 @@
         "prompt": "实现赛博终端风格的乱序解码文字动效（Scramble Text），零动画库依赖。\n\n原理一句话：纯函数按进度 p（0..1）将文本前 35% 保持全乱码、后 65% 从左到右依次定格，rAF 每帧仅改 textContent 不增删 DOM 节点，配合等宽字体零重排。\n\n做法：\n1. 纯函数 scrambleFrame(text, p, seed = 0, glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@*+=<>/\\\\|')：\n   - 按码点切分 chars = [...text]（禁止 split('') 劈开 emoji）。\n   - 每个字符的定格时刻 settle(i) = 0.35 + (i / Math.max(1, n - 1)) * 0.65。\n   - 遍历 chars：空格与换行原样保留；p >= settle(i) 输出原字符；否则按错相索引 k = (seed * 31 + i * 17 + Math.floor(p * 24) * 7) % glyphs.length 取乱码字符。\n2. 控制器 scrambleText(el, { duration = 900 })：\n   - 用 WeakMap 保存原始文本（不污染 DOM 属性）。\n   - replay()：若 prefers-reduced-motion: reduce 直接写原文返回；否则启动 rAF 计算 p = Math.min(1, (now - t0) / duration)，调用 scrambleFrame 写入 el.textContent；p >= 1 时强制写回原始文本并停帧。\n   - 提供 setText(next) 与 stop()（卸载时 cancelAnimationFrame 并还原原文）。\n\n硬要求：\n- 目标文本容器必须使用等宽字体（monospace）或固定宽度，防止字符宽度变化引起整行左右抖动。\n- 空格与换行必须原样保留，不得替换为乱码字符。\n- 末帧必须强制写回精确原文，不允许残留乱码。\n- prefers-reduced-motion: reduce 下跳过解码直接呈现原文。\n\n验收：\n- p = 0 时除空格外全为乱码且字符总长度与原文完全一致；p = 0.6 时左侧已定格、右侧仍在跳动；p = 1 时 100% 还原原文。\n- 中英混排与含 emoji 文本解码不出现半个乱码字符。\n- 动画全程无布局宽度跳动，结束后 rAF 停止。",
         "dont_do": "- 别把每个字符拆成独立 `<span>` 用 CSS 动画替换 —— DOM 节点膨胀且没必要，单节点改 `textContent` 最轻。\n- 别让所有字符用同一个随机索引 —— 整行同步跳动看起来像一块闪烁的砖头。\n- 别在比例字体段落里直接套用而不锁宽 —— 会导致整行剧烈左右晃动。",
         "skill_rule": "# 赛博乱序解码 (scramble) · 跨平台动效规范\n性质：节奏 ｜ 平台：both\n\n【核心原理】纯函数按进度 p（0..1）将文本前 35% 保持全乱码、后 65% 从左到右依次定格，rAF 每帧仅改 textContent 不增删 DOM 节点，配合等宽字体零重排。\n\n【硬要求】\n- 目标文本容器必须使用等宽字体（monospace）或固定宽度，防止字符宽度变化引起整行左右抖动。\n- 空格与换行必须原样保留，不得替换为乱码字符。\n- 末帧必须强制写回精确原文，不允许残留乱码。\n- prefers-reduced-motion: reduce 下跳过解码直接呈现原文。\n\n【验收标准】\n- p = 0 时除空格外全为乱码且字符总长度与原文完全一致；p = 0.6 时左侧已定格、右侧仍在跳动；p = 1 时 100% 还原原文。\n- 中英混排与含 emoji 文本解码不出现半个乱码字符。\n- 动画全程无布局宽度跳动，结束后 rAF 停止。\n\n【禁止做法】\n- 别把每个字符拆成独立 `<span>` 用 CSS 动画替换 —— DOM 节点膨胀且没必要，单节点改 `textContent` 最轻。\n- 别让所有字符用同一个随机索引 —— 整行同步跳动看起来像一块闪烁的砖头。\n- 别在比例字体段落里直接套用而不锁宽 —— 会导致整行剧烈左右晃动。"
+      }
+    },
+    {
+      "id": "scroll-fade",
+      "name": "滚动边缘羽化",
+      "layer": "motion",
+      "nature": "方向",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.scrollFade(el, { axis, edge }) + .mk-scroll-fade",
+      "source": "Linear / Vercel 横向标签栏与侧边栏（动态 mask-image 羽化，滚到头自动归零不挡字）",
+      "file": "effects/scroll-fade.md",
+      "summary": "横向标签栏、代码框或可滚动列表只在“还有隐藏内容未滚出”的那一侧自动显现柔和 `mask-image` 渐变羽化，滚到起点或终点时羽化宽度平滑归零，绝不遮挡首尾文字。",
+      "problem": "**可滚动的横向导航条或卡片列表如果不加视觉提示，用户根本不知道右边还能划；但如果用伪元素写死一层纯色遮罩覆盖在两边，不仅换背景色就露馅，滚到最左/最右时还会把第一个或最后一个标签糊掉半截。** 用 `mask-image: linear-gradient(...)` 配合两个按滚动余量实时计算的像素变量，背景换什么颜色都完全透底融合，且滚到头立刻清晰锐利。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| `mask-image` 真实透明通道羽化：底色不管是渐变、网格还是玻璃都能完美融合 | 用实心色伪元素盖边（底色一变立刻露出补丁方块） |\n| 羽化宽度按距离两端余量 `min(edge, pos)` / `min(edge, maxScroll - pos)` 连续渐变归零 | 到头时突然整块 `display: none` 闪掉 |\n| 无溢出（`scrollSize <= clientSize + 1`）时双端自动为 `0px`，绝不误模糊短列表 | 内容本来装得下还给两边糊掉一块 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 羽化带宽 `edge` | 默认 `28px` | 足够柔和暗示“外面还有内容”，又不会像 `64px` 那样把倒数第二个词糊得看不清 |\n| 溢出容差 | `scrollSize - clientSize <= 1` 视为无溢出 | 规避高分屏亚像素舍入导致 `scrollWidth` 比 `clientWidth` 多 `0.5px` 误触发羽化 |\n| 双轴支持 `axis` | `'x'`（横向 `to right`）/ `'y'`（纵向 `to bottom`） | 同一套纯函数覆盖横向 Tab 栏与纵向聊天/目录列表 |\n| 滚动监听 | `{ passive: true }` + `ResizeObserver` | 零阻塞滚屏，窗口缩放时自动重算溢出态 |",
+      "implementation": "```\nsrc/core/ui-motion.js:167   scrollFadeStops(pos, size, view, edge)  纯函数，计算首尾羽化像素（可单测）\nsrc/core/ui-motion.js:183   scrollFade(el, { axis, edge })          监听 scroll + ResizeObserver 写 --mk-sf-a / -b\nstyles/motion.css:1475      .mk-scroll-fade                         水平/垂直双轴 mask-image 渐变规则\n```",
+      "degradation": "**走 `motion` 层契约：本身为纯静态光学遮罩，无运动晕眩风险，减弱动效下完整保留。**\n\n`scroll-fade` 是直接跟滚动位置绑定的方向视觉线索（非自动播放动画），`prefers-reduced-motion: reduce` 下无需关闭，始终帮助用户感知可滚动方向。",
+      "pitfalls": "**① 用实心背景色伪元素叠加两边，结果放在渐变或暗色玻璃卡片上露出两条难看的色块边。**\n必须用 `mask-image` + `-webkit-mask-image` 直接削减内容自身透明度，彻底无视底层背景颜色。\n\n**② 忘了处理窗口缩放（`ResizeObserver`）。**\n宽屏时不溢出、缩窄窗口后突然溢出的列表，如果只在初始化和 `scroll` 时算一次，缩放后右边不会出现羽化提示；必须接 `ResizeObserver`。\n\n**③ 没给 `scrollSize - clientSize` 留 `1px` 亚像素容差。**\n部分浏览器缩放 125% 时明明装得下，但 `scrollWidth` 仍比 `clientWidth` 多 `0.4px`，不留容差会误加微弱虚边。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零背景耦合的滚动边缘羽化遮罩（Scroll Edge Fade Mask）。\n\n原理一句话：纯函数按滚动位置与两端余量算出首尾羽化像素写入 --sf-a / --sf-b，驱动容器的 mask-image 线性透明渐变；滚到起点或终点时羽化连续归零，底层无论是什么背景色都无缝融合。\n\n做法：\n1. 纯函数 scrollFadeStops(scrollPos, scrollSize, clientSize, edge = 28)：\n   - 若 maxScroll = scrollSize - clientSize <= 1（无溢出或亚像素误差），返回 { start: 0, end: 0 }；\n   - pos = clamp(scrollPos, 0, maxScroll)，rem = maxScroll - pos；\n   - 返回 { start: Math.min(edge, pos), end: Math.min(edge, rem) }。\n2. CSS Mask 规则（同时写 mask-image 与 -webkit-mask-image）：\n   - 横向（默认）：linear-gradient(to right, transparent 0, #000 var(--sf-a, 0px), #000 calc(100% - var(--sf-b, 0px)), transparent 100%)；\n   - 纵向（axis=\"y\"）：方向改为 to bottom；\n   - 隐藏原生滚动条（scrollbar-width: none + ::-webkit-scrollbar { display: none }）保持界面干净。\n3. 控制器：\n   - 绑定 passive scroll 监听与 ResizeObserver，实时调用 scrollFadeStops 并写入 --sf-a / --sf-b；\n   - 初始化立即计算一次，destroy() 解绑监听与断开 ResizeObserver。\n\n硬要求：\n- 必须使用 mask-image 透明遮罩，严禁用写死背景色的伪元素遮盖边缘。\n- 必须同时监听 scroll 与 ResizeObserver，且对 scrollSize - clientSize <= 1 返回双端 0。\n\n验收：\n- 处于最左侧时左缘清晰无羽化、右缘柔和淡出 28px；滚至中间时双侧均有 28px 羽化；滚到最右侧时右缘羽化连续归零不挡尾项文字。\n- 容器置于任意渐变或玻璃背景上边缘均完美透底，无色块补丁；窗口拉宽至无溢出时双侧羽化自动消失。",
+        "dont_do": "- 别用 `linear-gradient(to right, #07090d, transparent)` 盖在容器上 —— 换个浅色或渐变底色立刻穿帮。\n- 别在滚到头时用 `if (pos > 0)` 硬切 `0px ↔ 28px` —— 边缘会突然闪一下，按 `Math.min(edge, pos)` 线性过渡才丝滑。\n- 别忘记同时写 `-webkit-mask-image` —— Safari 上只写无前缀在某些版本会失效。",
+        "skill_rule": "# 滚动边缘羽化 (scroll-fade) · 跨平台动效规范\n性质：方向 ｜ 平台：both\n\n【核心原理】纯函数按滚动位置与两端余量算出首尾羽化像素写入 --sf-a / --sf-b，驱动容器的 mask-image 线性透明渐变；滚到起点或终点时羽化连续归零，底层无论是什么背景色都无缝融合。\n\n【硬要求】\n- 必须使用 mask-image 透明遮罩，严禁用写死背景色的伪元素遮盖边缘。\n- 必须同时监听 scroll 与 ResizeObserver，且对 scrollSize - clientSize <= 1 返回双端 0。\n\n【验收标准】\n- 处于最左侧时左缘清晰无羽化、右缘柔和淡出 28px；滚至中间时双侧均有 28px 羽化；滚到最右侧时右缘羽化连续归零不挡尾项文字。\n- 容器置于任意渐变或玻璃背景上边缘均完美透底，无色块补丁；窗口拉宽至无溢出时双侧羽化自动消失。\n\n【禁止做法】\n- 别用 `linear-gradient(to right, #07090d, transparent)` 盖在容器上 —— 换个浅色或渐变底色立刻穿帮。\n- 别在滚到头时用 `if (pos > 0)` 硬切 `0px ↔ 28px` —— 边缘会突然闪一下，按 `Math.min(edge, pos)` 线性过渡才丝滑。\n- 别忘记同时写 `-webkit-mask-image` —— Safari 上只写无前缀在某些版本会失效。"
       }
     },
     {
@@ -1376,6 +1468,29 @@
       }
     },
     {
+      "id": "tooltip-group",
+      "name": "热身提示组",
+      "layer": "motion",
+      "nature": "反馈",
+      "platform": "web",
+      "status": "shipped",
+      "entry": "MK.tooltipGroup(root, { openDelay, warmup }) + .mk-tip-group",
+      "source": "Radix Tooltip / Base UI / Rauno Freiberg（首次延迟 400ms 防误触 + 300ms 热身窗内相邻按钮 0ms 瞬切）",
+      "file": "effects/tooltip-group.md",
+      "summary": "工具栏里一组图标按钮共用同一个状态机：首次悬停等 `400ms` 防止鼠标路过误闪；一旦弹出并进入 `300ms` 热身窗，滑到相邻按钮时提示以 `0ms` 瞬切跟随并自动钳制在容器边界内。",
+      "problem": "**普通 Tooltip 要么不设延迟（鼠标一划过顶栏满屏黑框乱闪），要么每个按钮各自孤立等 400ms（用户想扫读一排 6 个图标说明时要干等 2.4 秒，极其磨人）。** 共享热身窗把“防误触”和“连续扫读效率”这对矛盾彻底解开：冷启动克制、热切换零等待。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 纯函数 `tooltipDelay(lastCloseAt, now)` 判定冷启动 `400ms` vs 热身期 `0ms` | 每个按钮挂独立 `setTimeout` 互不知道对方状态 |\n| 整组共用一个悬浮节点，切到相邻按钮时只移动坐标变量不销毁重建 | 每次切换删旧建新导致闪烁与重排 |\n| 同时接 `focus / blur` 与 `Escape` 立即关闭，键鼠体验完全一致 | 仅支持 `mouseenter` 导致键盘用户看不到任何提示 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 冷启动延迟 `openDelay` | `400ms` | 足够过滤掉“鼠标经过工具栏去点别处”的 150–250ms 无意停留，又不至于让真想看提示的人以为坏了 |\n| 热身窗时长 `warmup` | `300ms` | 鼠标从一个图标移到相邻图标通常耗时 80–220ms，300ms 刚好覆盖连续扫读而不至于几秒后回来还乱弹 |\n| 出入场动画 | `opacity 150ms` + `scale(0.95 → 1) + 4px 轻抬 180ms` | 轻巧克制不抢视觉中心，绝不把提示做成夸张弹跳气泡 |\n| 边界钳制 | `clamp(cx - tw/2, 4, rootWidth - tw - 4)` | 最左和最右的图标弹出长文案提示时绝不被容器裁掉半截 |",
+      "implementation": "```\nsrc/core/ui-motion.js:15   tooltipDelay(lastCloseAt, now, opts)  纯函数，计算冷/热延迟（可单测）\nsrc/core/ui-motion.js:23   tooltipGroup(root, opts)              共享浮层定位、热身窗、焦点与 Esc 清理\nstyles/motion.css:1391     .mk-tip-group / .mk-tip               单变量位移 + 轻缩放淡入与减弱动效降级\n```",
+      "degradation": "**走 `motion` 层契约：保留热身延迟与全部信息，过渡压至 `1ms`。**\n\n`prefers-reduced-motion: reduce` 下取消位移与缩放过渡（`transition-duration: 1ms`），保留 `400ms` 防误触与 `0ms` 热身切换逻辑。",
+      "pitfalls": "**① 鼠标离开按钮 A 到按钮 B 中间经过 6px 间隙，如果立刻把提示关掉且不记 `lastCloseAt`，到 B 时又要重等 400ms。**\n离开时必须记录 `lastCloseAt = performance.now()`，进入相邻按钮时只要 `now - lastCloseAt <= 300ms` 就走 `0ms` 瞬切。\n\n**② 忘了在 `pointerleave` 时 `clearTimeout(timer)`。**\n如果不清掉待触发定时器，鼠标快速扫过按钮后移开，400ms 后提示会在空无一人的地方幽灵般弹出来。\n\n**③ 提示气泡没设 `pointer-events: none`。**\n提示盖住鼠标触发点会引发 `leave → hide → enter → show` 鬼畜闪烁。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的热身提示组（Warmup Tooltip Group）。\n\n原理一句话：同组触发按钮共享一个悬浮提示气泡与上次关闭时间戳；冷启动悬停等待 400ms 防误触，300ms 热身窗内滑到同组任意相邻按钮时 0ms 瞬切定位并自动钳制在容器边界内。\n\n做法：\n1. 纯函数 tooltipDelay(lastCloseAt, now, { openDelay = 400, warmup = 300 })：\n   - 若 lastCloseAt 无效或 < 0，返回 openDelay；\n   - 计算 elapsed = now - lastCloseAt，若 0 <= elapsed <= warmup 返回 0，否则返回 openDelay。\n2. 共享气泡控制器：\n   - 在组容器内创建一个共享 role=\"tooltip\" 浮层（pointer-events: none），定位只写 --tip-x / --tip-y 两个 CSS 变量，transform: translate3d(var(--tip-x), var(--tip-y), 0)。\n   - 坐标计算：水平居中于触发按钮，同时钳制在 [4, containerWidth - tipWidth - 4] 内防左右裁切；垂直位于按钮上方 gap = 8px。\n   - 绑定 pointerenter / focus 触发 show(btn)：先 clearTimeout；若当前已打开或 tooltipDelay(...) === 0 则立刻更新文案与坐标；否则延迟 400ms 显示。\n   - 绑定 pointerleave / blur / keydown(Escape) 触发 hide()：立刻 clearTimeout；若当前打开则记录 lastCloseAt = performance.now() 并隐藏。\n3. CSS 过渡与降级：\n   - 未打开时 opacity: 0，垂直下偏 4px 且 scale(0.95)；打开态 opacity: 1、scale(1) 归位（150–180ms ease-out）。\n   - prefers-reduced-motion: reduce 将过渡压至 1ms，保留热身逻辑与完整提示内容。\n\n硬要求：\n- 离开按钮时必须立即 clearTimeout，防止鼠标划走后延迟幽灵弹出。\n- 提示浮层必须设 pointer-events: none，且必须支持键盘 focus/blur 与 Escape 关闭。\n- 严禁为每个按钮各自维护互不通信的独立延迟。\n\n验收：\n- 首次悬停任一按钮 400ms 后平滑浮现提示；快速扫过按钮不闪现任何幽灵提示。\n- 提示打开后移向同组相邻按钮，0ms 无延迟瞬切文案与位置，边缘按钮提示不被容器裁切。\n- 按 Tab 聚焦按钮可触发提示，按 Escape 立即关闭；组件卸载后清理定时器与事件监听。",
+        "dont_do": "- 别把所有提示延迟都设成 `0ms` —— 鼠标路过工具栏时满屏黑框闪现极度吵闹。\n- 别给每个按钮做孤立的 400ms 延迟 —— 连续扫读一排图标时会卡得让人崩溃。\n- 别忘了 `pointer-events: none` —— 浮层一旦挡住指针会反复触发闪烁。",
+        "skill_rule": "# 热身提示组 (tooltip-group) · 跨平台动效规范\n性质：反馈 ｜ 平台：web\n\n【核心原理】同组触发按钮共享一个悬浮提示气泡与上次关闭时间戳；冷启动悬停等待 400ms 防误触，300ms 热身窗内滑到同组任意相邻按钮时 0ms 瞬切定位并自动钳制在容器边界内。\n\n【硬要求】\n- 离开按钮时必须立即 clearTimeout，防止鼠标划走后延迟幽灵弹出。\n- 提示浮层必须设 pointer-events: none，且必须支持键盘 focus/blur 与 Escape 关闭。\n- 严禁为每个按钮各自维护互不通信的独立延迟。\n\n【验收标准】\n- 首次悬停任一按钮 400ms 后平滑浮现提示；快速扫过按钮不闪现任何幽灵提示。\n- 提示打开后移向同组相邻按钮，0ms 无延迟瞬切文案与位置，边缘按钮提示不被容器裁切。\n- 按 Tab 聚焦按钮可触发提示，按 Escape 立即关闭；组件卸载后清理定时器与事件监听。\n\n【禁止做法】\n- 别把所有提示延迟都设成 `0ms` —— 鼠标路过工具栏时满屏黑框闪现极度吵闹。\n- 别给每个按钮做孤立的 400ms 延迟 —— 连续扫读一排图标时会卡得让人崩溃。\n- 别忘了 `pointer-events: none` —— 浮层一旦挡住指针会反复触发闪烁。"
+      }
+    },
+    {
       "id": "tunnel",
       "name": "无限深渊隧道",
       "layer": "3d",
@@ -1396,6 +1511,29 @@
         "prompt": "实现纯 CSS 负延迟错相的无限 3D 深渊隧道（Infinite 3D Tunnel），零 WebGL / 零 JS 动画循环。\n\n原理一句话：N 道光环共用同一条 3.6s 从 translateZ(-900px) 冲向 translateZ(180px) 的关键帧，用负 animation-delay: calc(var(--i) * -0.36s) 在第 0 帧即均匀铺满整条隧道。\n\n做法：\n1. 结构：.tunnel-stage（perspective: 420px; overflow: hidden; display: grid; place-items: center）> .tunnel（transform-style: preserve-3d）> 10 个 .tunnel-ring（--i: 0..9）。\n2. CSS 关键帧：\n   @keyframes tunnel-fly {\n     0%   { transform: translateZ(-900px) scale(0.75); opacity: 0; }\n     18%  { opacity: 0.75; }\n     85%  { opacity: 0.85; }\n     100% { transform: translateZ(180px) scale(1.1); opacity: 0; }\n   }\n   .tunnel-ring {\n     position: absolute; width: 140px; height: 140px; border-radius: 24px;\n     border: 1.5px solid rgba(184,255,61,0.55);\n     animation: tunnel-fly 3.6s linear infinite;\n     animation-delay: calc(var(--i, 0) * -0.36s);\n   }\n3. 降级：@media (prefers-reduced-motion: reduce) { .tunnel-ring { animation: none; transform: none; opacity: 0.2; } }\n\n硬要求：\n- 必须使用负 animation-delay（-周期/环数），确保首帧即满环无冷启动空洞。\n- 0% 与 100% 两端必须淡出到 opacity: 0，防止冲过镜头时全屏闪白。\n- 严禁用 JS rAF 每帧更新环坐标。\n- prefers-reduced-motion: reduce 下停止动画并归零塌回平面。\n\n验收：\n- 页面打开第 1 帧即可看到 10 道光环等距均匀铺满隧道并匀速向前涌动，无接缝无闪白。\n- 全程零 JS 帧循环，纯合成器运行。\n- 开启减弱动效后彻底静止。",
         "dont_do": "- 别写正的 `animation-delay` —— 开局前几秒会看到隧道是空的。\n- 别给每道环写不同的 `animation-duration` —— 几秒后环距会彻底乱掉撞在一起。\n- 别让 `100%` 关键帧保持 `opacity: 1` —— 环贴到镜头上会爆闪。",
         "skill_rule": "# 无限深渊隧道 (tunnel) · 跨平台动效规范\n性质：方向 ｜ 平台：both\n\n【核心原理】N 道光环共用同一条 3.6s 从 translateZ(-900px) 冲向 translateZ(180px) 的关键帧，用负 animation-delay: calc(var(--i) * -0.36s) 在第 0 帧即均匀铺满整条隧道。\n\n【硬要求】\n- 必须使用负 animation-delay（-周期/环数），确保首帧即满环无冷启动空洞。\n- 0% 与 100% 两端必须淡出到 opacity: 0，防止冲过镜头时全屏闪白。\n- 严禁用 JS rAF 每帧更新环坐标。\n- prefers-reduced-motion: reduce 下停止动画并归零塌回平面。\n\n【验收标准】\n- 页面打开第 1 帧即可看到 10 道光环等距均匀铺满隧道并匀速向前涌动，无接缝无闪白。\n- 全程零 JS 帧循环，纯合成器运行。\n- 开启减弱动效后彻底静止。\n\n【禁止做法】\n- 别写正的 `animation-delay` —— 开局前几秒会看到隧道是空的。\n- 别给每道环写不同的 `animation-duration` —— 几秒后环距会彻底乱掉撞在一起。\n- 别让 `100%` 关键帧保持 `opacity: 1` —— 环贴到镜头上会爆闪。"
+      }
+    },
+    {
+      "id": "voice-wave",
+      "name": "AI 语音对称频谱波",
+      "layer": "motion",
+      "nature": "反馈",
+      "platform": "both",
+      "status": "shipped",
+      "entry": "MK.voiceWave(el, { bars, state }) + .mk-vw",
+      "source": "ChatGPT Voice / Siri 语音输入条（中心正弦包络加权双谐波 + 零音频依赖三态平滑能量过渡 + 仅动画 scaleY）",
+      "file": "effects/voice-wave.md",
+      "summary": "一排 9 根细圆角频谱柱通过中心加权正弦包络与双谐波叠加，仅以合成层 `scaleY` 实时律动；支持 `idle / listening / speaking` 三态（或实时麦克风音量 `0..1`）平滑升档，且滚出视口或切后台自动停帧。",
+      "problem": "**AI 语音对话、实时转写或录音按钮如果只放一个静止麦克风图标，用户根本不知道麦克风有没有在收音；而每帧改柱子 `height` 会触发布局重排，用随机数乱跳又像坏掉的杂音条。** 用确定性中心包络函数驱动 `transform: scaleY()`，中间强、两边柔和收束，既优雅有机又全程零重排。",
+      "origin": "| 取什么 | 丢什么 |\n|---|---|\n| 中心加权包络 `sin(π * (i + 0.5) / n)` + 反向传播双谐波，中央律动饱满、两侧自然收尖 | 每帧 `Math.random()` 乱抖（像白噪音而不是人声韵律） |\n| 只写单变量驱动 `transform: scaleY()`（`transform-origin: center`），全程 GPU 合成零重排 | 每帧改 `style.height` 导致 60fps 全行重排 |\n| 三态能量 `idle(0.18) / listening(0.58) / speaking(1.0)` 按 `0.1` 阻尼平滑逼近，且接受实时麦克风音量数字 | 状态切换时柱子瞬间猛跳抽风 |",
+      "params": "| 参数 | 值 | 为什么是这个值 |\n|---|---|---|\n| 柱数与柱宽 | 默认 `9` 根 / 宽 `3.5px` / 间距 `4px` | 奇数根存在严格中轴峰值，整体宽度约 `64px`，正好嵌进语音胶囊按钮或聊天输入框 |\n| 最小高度下限 | `0.16`（约 `5–6px`） | 哪怕在最安静的 `idle` 态仍保留一排整齐的小胶囊点，不会彻底消失不见 |\n| 双谐波频率 | `sin(5.2t + 0.85i)` + `sin(3.1t - 1.15i)` | 两个互质频率反向行进，永不出现呆板的齐步上下或短周期机械重复 |\n| 节能与停帧 | `IntersectionObserver` + `visibilitychange` 双停帧 | 聊天气泡滚出屏幕或切到别的标签页时 CPU 归零 |",
+      "implementation": "```\nsrc/core/ui-motion.js:211   VOICE_STATES / voiceBarHeight(...)  纯函数，对称包络双谐波高度（可单测）\nsrc/core/ui-motion.js:228   voiceWave(el, { bars, state })      rAF 驱动 --mk-vw-h + 离屏/后台双停帧\nstyles/motion.css:1508      .mk-vw / .mk-vw__bar                仅 transform: scaleY 合成层渲染\n```",
+      "degradation": "**走 `motion` 层契约：减弱动效下冻结为单帧静态对称波形，切态时单次更新高度反映状态强弱。**\n\n`prefers-reduced-motion: reduce` 下不启动 rAF 循环，渲染静态一帧对称波形；调用 `.setState()` 时仅单次重绘以清晰区分待机/聆听/播报态。",
+      "pitfalls": "**① 直接动画 `height` 而不是 `transform: scaleY()`。**\n一屏里哪怕只放 9 根柱子，每帧改 `height` 也会让父容器 60 次/秒重算布局；固定柱子 `height: 100%` 只缩放 `scaleY` 才是零成本合成层动画。\n\n**② `transform-origin` 忘设在 `center`（或只从底部长）。**\nAI 语音波形通常是居中对称双向伸缩（`transform-origin: center`），从底边单向长会更像普通柱状图。\n\n**③ 忘记在离屏和切后台时停 rAF。**\n聊天窗口滚走后如果后台语音条还在 60fps 狂跑，会持续消耗电量。\n\n---",
+      "ai_assets": {
+        "prompt": "实现零依赖的 AI 语音对称频谱波（AI Voice Waveform）。\n\n原理一句话：用中心正弦包络乘以双反向谐波的纯函数计算每根柱子 0.16..1.0 的比例高度，仅写入 CSS 变量驱动 transform: scaleY()，支持三态与实时音量平滑过渡，并自带离屏与切后台双停帧。\n\n做法：\n1. 纯函数 voiceBarHeight(index, count, time, energy = 0.5)：\n   - 中心包络 env = Math.sin(Math.PI * (index + 0.5) / count)；\n   - 双反向谐波 w = 0.5 + 0.32 * Math.sin(time * 5.2 + index * 0.85) + 0.18 * Math.sin(time * 3.1 - index * 1.15)；\n   - 返回 clamp(0.16 + env * clamp(energy, 0, 1) * clamp(w, 0, 1) * 0.84, 0.16, 1.0)。\n2. 零重排 CSS：\n   - 容器：display: inline-flex; align-items: center; gap: 4px; height: 36px;\n   - 每根柱子：width: 3.5px; height: 100%; border-radius: 999px; transform-origin: center; transform: scaleY(var(--vw-h, 0.2)); will-change: transform;\n3. 控制器与节能约束：\n   - 映射状态 { idle: 0.18, listening: 0.58, speaking: 1.0 }，也支持直接传入 0..1 实时麦克风音量；每帧 cur += (target - cur) * 0.1 平滑过渡能量值。\n   - 接 IntersectionObserver（离屏停 rAF）与 visibilitychange（切后台停 rAF）；prefers-reduced-motion: reduce 仅画单帧静态对称波形，切态时单次重绘；destroy() 取消 rAF 并解绑监听。\n\n硬要求：\n- 必须仅通过 transform: scaleY() 驱动柱高，严禁动画 height 或 margin。\n- 必须使用中心对称包络 + 双谐波，禁止 Math.random() 随机乱跳。\n- 必须包含离屏/后台双停帧与减弱动效静态单帧降级。\n\n验收：\n- 9 根圆角频谱柱以居中对称律动，中央振幅高、两端自然收束，无机械重复感。\n- 从 idle 切到 speaking 时振幅在约 0.4s 内平滑拉高，切回 idle 时轻柔落回点阵态。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载后无内存泄漏。",
+        "dont_do": "- 别每帧用 `Math.random()` 生成柱高 —— 画面像接触不良的杂音闪烁，毫无语音韵律感。\n- 别每帧修改 `el.style.height` —— 触发 60fps 持续回流重排。\n- 别让所有柱子等高齐步上下 —— 缺少中心正弦包络就失去了语音波形标志性的纺锤轮廓。",
+        "skill_rule": "# AI 语音对称频谱波 (voice-wave) · 跨平台动效规范\n性质：反馈 ｜ 平台：both\n\n【核心原理】用中心正弦包络乘以双反向谐波的纯函数计算每根柱子 0.16..1.0 的比例高度，仅写入 CSS 变量驱动 transform: scaleY()，支持三态与实时音量平滑过渡，并自带离屏与切后台双停帧。\n\n【硬要求】\n- 必须仅通过 transform: scaleY() 驱动柱高，严禁动画 height 或 margin。\n- 必须使用中心对称包络 + 双谐波，禁止 Math.random() 随机乱跳。\n- 必须包含离屏/后台双停帧与减弱动效静态单帧降级。\n\n【验收标准】\n- 9 根圆角频谱柱以居中对称律动，中央振幅高、两端自然收束，无机械重复感。\n- 从 idle 切到 speaking 时振幅在约 0.4s 内平滑拉高，切回 idle 时轻柔落回点阵态。\n- 滚出视口、切后台或开启减弱动效时 rAF 自动停止；卸载后无内存泄漏。\n\n【禁止做法】\n- 别每帧用 `Math.random()` 生成柱高 —— 画面像接触不良的杂音闪烁，毫无语音韵律感。\n- 别每帧修改 `el.style.height` —— 触发 60fps 持续回流重排。\n- 别让所有柱子等高齐步上下 —— 缺少中心正弦包络就失去了语音波形标志性的纺锤轮廓。"
       }
     }
   ]

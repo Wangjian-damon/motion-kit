@@ -879,6 +879,126 @@
       stage.appendChild(btn);
       return () => ctrl.destroy();
     },
+
+    /* ==================== 高频产品微交互 & AI 原生交互 ==================== */
+    'tooltip-group'(stage) {
+      const grp = document.createElement('div');
+      grp.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:8px;padding-bottom:18px';
+      [
+        ['⌘', '首次 400ms 防误触'],
+        ['⚡', '300ms 热身窗 0ms 瞬切'],
+        ['✦', '键盘 Tab/Esc 同样支持'],
+        ['◎', '边缘自动防裁切'],
+      ].forEach(([ico, tip]) => {
+        const b = miniBtn(ico, 'pv-tap-demo');
+        b.setAttribute('data-mk-tip', tip);
+        grp.appendChild(b);
+      });
+      stage.appendChild(grp);
+      const ctrl = MK.tooltipGroup(grp, { openDelay: 400, warmup: 300 });
+      return () => ctrl.destroy();
+    },
+
+    'fluid-height'(stage) {
+      const card = document.createElement('div');
+      card.style.cssText = 'width:88%;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#121824;padding:0';
+      const inner = document.createElement('div');
+      inner.className = 'mk-fluid__inner';
+      inner.style.cssText = 'padding:10px 12px;font-size:11.5px;color:#cfd6e2;line-height:1.5';
+      const steps = [
+        '<b>步骤 1 · 紧凑态</b><br>点右上角切换高度，观察零跳闪呼吸过渡。',
+        '<b>步骤 2 · 展开态</b><br>ResizeObserver 测量内层亚像素高度并写入 CSS 变量，<br>跨 Safari / Chrome 同样顺滑，首帧不抽拉。',
+      ];
+      let idx = 0;
+      inner.innerHTML = steps[0];
+      card.appendChild(inner);
+      stage.appendChild(card);
+      const ctrl = MK.fluidHeight(card);
+      const btn = miniBtn('切换步骤', 'pv-corner');
+      btn.onclick = () => { idx = 1 - idx; inner.innerHTML = steps[idx]; };
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
+
+    'dynamic-pill'(stage) {
+      const pill = document.createElement('div');
+      pill.innerHTML = '<i class="mk-pill__dot"></i><span class="pv-pill-txt">待机就绪</span>';
+      stage.appendChild(pill);
+      const txt = pill.querySelector('.pv-pill-txt');
+      const labels = { idle: '待机就绪', thinking: 'Agent 正在调用工具…', done: '已完成 3 项校验', error: '网络超时 · 点击重试' };
+      const order = ['idle', 'thinking', 'done', 'error'];
+      let i = 1;
+      const ctrl = MK.dynamicPill(pill, { state: 'thinking' });
+      txt.textContent = labels.thinking;
+      const btn = miniBtn('切状态', 'pv-corner');
+      btn.onclick = () => {
+        i = (i + 1) % order.length;
+        const st = order[i];
+        ctrl.setState(st);
+        txt.textContent = labels[st];
+      };
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
+
+    'scroll-fade'(stage) {
+      const row = document.createElement('div');
+      row.style.cssText = 'width:92%;display:flex;gap:8px;padding:8px 2px';
+      ['全部', 'WebGL 3D', '液态玻璃', '手势物理', 'AI 原生', '数据看板', '热身提示', '流式输出'].forEach((t) => {
+        const s = document.createElement('span');
+        s.style.cssText = 'flex:none;padding:6px 11px;border-radius:999px;font-size:11.5px;background:#141b28;border:1px solid rgba(255,255,255,0.12);color:#d7dfeb';
+        s.textContent = t;
+        row.appendChild(s);
+      });
+      stage.appendChild(row);
+      const ctrl = MK.scrollFade(row, { axis: 'x', edge: 28 });
+      return () => ctrl.destroy();
+    },
+
+    'voice-wave'(stage) {
+      const wrap = document.createElement('div');
+      stage.appendChild(wrap);
+      const ctrl = MK.voiceWave(wrap, { bars: 9, state: 'listening' });
+      const bar = document.createElement('div');
+      bar.style.cssText = 'position:absolute;right:8px;top:8px;z-index:4;display:flex;gap:4px';
+      ['idle', 'listening', 'speaking'].forEach((st) => {
+        const b = miniBtn(st);
+        if (st === 'listening') b.style.borderColor = 'rgba(184,255,61,0.65)';
+        b.onclick = () => {
+          ctrl.setState(st);
+          [...bar.children].forEach((c) => { c.style.borderColor = ''; });
+          b.style.borderColor = 'rgba(184,255,61,0.65)';
+        };
+        bar.appendChild(b);
+      });
+      stage.appendChild(bar);
+      return () => ctrl.destroy();
+    },
+
+    'ai-stream'(stage) {
+      const box = document.createElement('div');
+      box.style.cssText = 'width:92%;height:88px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:#0c111b;font-size:11.5px;color:#d6deea';
+      stage.appendChild(box);
+      const badge = document.createElement('span');
+      badge.style.cssText = 'position:absolute;left:10px;top:8px;font-size:10px;color:#b8ff3d';
+      badge.textContent = '🔒 锁底跟随';
+      stage.appendChild(badge);
+      const ctrl = MK.aiStream(box, {
+        threshold: 24,
+        onLockChange(locked) { badge.textContent = locked ? '🔒 锁底跟随' : '🔓 已脱锁（不抢滚轮）'; },
+      });
+      const chunks = ['正在检索 MotionKit 规范… ', '已匹配物理常量与降级契约，', '新增片段以 220ms 柔显，', '你随时可以往上翻历史记录，', '系统绝不会跟手指抢滚动条。\n'];
+      let idx = 0;
+      const push = () => {
+        ctrl.append(chunks[idx % chunks.length]);
+        idx++;
+      };
+      push(); push();
+      const btn = miniBtn('+ 吐一段', 'pv-corner');
+      btn.onclick = push;
+      stage.appendChild(btn);
+      return () => ctrl.destroy();
+    },
   };
 
   window.mountCardPreview = function mountCardPreview(id, stageEl) {

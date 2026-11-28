@@ -421,6 +421,7 @@
     <div class="actions" style="margin-bottom:22px;">
       <button class="act act--primary" id="drawerCopyPrompt">复制 AI 提示词（第 8 栏）</button>
       <button class="act" id="drawerCopyRule">复制 Skill 约束规则</button>
+      <button class="act" id="drawerCopyMdc">复制 Cursor .mdc</button>
     </div>
     <div id="drawerBody"></div>
   </div>
@@ -444,6 +445,7 @@
   const drawerClose = document.getElementById('drawerClose');
   const drawerCopyPrompt = document.getElementById('drawerCopyPrompt');
   const drawerCopyRule = document.getElementById('drawerCopyRule');
+  const drawerCopyMdc = document.getElementById('drawerCopyMdc');
 
   if (!reg || !Array.isArray(reg.effects)) {
     grid.innerHTML = '<div class="empty">未加载到 registry.data.js，请先运行 <code>node scripts/build-registry.mjs</code>。</div>';
@@ -512,6 +514,8 @@
     'card-deck': './3d.html',
   };
   const PRESETS = [
+    { name: 'AI 原生对话交互套件 (5)', ids: ['ai-stream', 'voice-wave', 'dynamic-pill', 'shader-orb', 'fluid-height'] },
+    { name: '高频产品微交互套件 (6)', ids: ['tooltip-group', 'fluid-height', 'dynamic-pill', 'scroll-fade', 'state-button', 'toast-stack'] },
     { name: '原生 WebGL Shader 套件 (9)', ids: ['shader-aurora', 'shader-orb', 'shader-ripple', 'shader-torus', 'shader-particles', 'shader-globe', 'shader-terrain', 'shader-metaballs', 'shader-dna'] },
     { name: '3D 空间与立体互动套件 (12)', ids: ['shader-metaballs', 'shader-dna', 'shader-globe', 'shader-terrain', 'shader-torus', 'shader-particles', 'holo-card', 'card-deck', 'flip-clock', 'book-3d', 'coverflow', 'bar-3d'] },
     { name: '好玩的纯 CSS 彩蛋 (5)', ids: ['glitch', 'blob', 'bounce-text', 'cube', 'orbit'] },
@@ -726,6 +730,55 @@
 
   drawerCopyPrompt.onclick = () => activeCard && copyText(fullPrompt(activeCard), drawerCopyPrompt, '已复制 Prompt');
   drawerCopyRule.onclick = () => activeCard && copyText(activeCard.ai_assets.skill_rule, drawerCopyRule, '已复制 Skill Rule');
+  drawerCopyMdc.onclick = () => {
+    if (!activeCard) return;
+    const mdc = [
+      '---',
+      `description: MotionKit ${activeCard.name} (${activeCard.id}) — ${activeCard.nature} / ${activeCard.platform}`,
+      'globs:',
+      'alwaysApply: false',
+      '---',
+      '',
+      activeCard.ai_assets.skill_rule,
+      '',
+    ].join('\n');
+    copyText(mdc, drawerCopyMdc, '已复制 .mdc');
+  };
+
+  // WebGL 卡片按视口懒挂载/离屏自动释放 Context，彻底避开浏览器 8-16 个 WebGL Context 上限
+  let lazyObserver = null;
+  function mountLazyWebgl(card, stageEl) {
+    let stop = null;
+    if (typeof IntersectionObserver === 'undefined') {
+      stop = window.mountCardPreview(card.id, stageEl);
+      return () => { try { stop?.(); } catch {} };
+    }
+    if (!lazyObserver) {
+      lazyObserver = new IntersectionObserver((entries) => {
+        for (const en of entries) {
+          const fn = en.target._mkLazyToggle;
+          if (fn) fn(en.isIntersecting);
+        }
+      }, { rootMargin: '220px 0px' });
+    }
+    stageEl.classList.add('mk-shader', `mk-shader--${card.id.replace(/^shader-/, '')}`);
+    stageEl._mkLazyToggle = (inView) => {
+      if (inView && !stop) {
+        stageEl.innerHTML = '';
+        stop = window.mountCardPreview(card.id, stageEl);
+      } else if (!inView && stop) {
+        try { stop(); } catch {}
+        stop = null;
+        stageEl.innerHTML = '';
+      }
+    };
+    lazyObserver.observe(stageEl);
+    return () => {
+      lazyObserver?.unobserve(stageEl);
+      delete stageEl._mkLazyToggle;
+      if (stop) { try { stop(); } catch {} stop = null; }
+    };
+  }
 
   function renderGrid() {
     const q = qInput.value.trim().toLowerCase();
@@ -776,7 +829,12 @@
       el.querySelector('[data-act="detail"]').onclick = () => openDrawer(card);
       grid.appendChild(el);
       if (typeof window.mountCardPreview === 'function') {
-        activeTeardowns.push(window.mountCardPreview(card.id, el.querySelector('.asset-stage')));
+        const stageEl = el.querySelector('.asset-stage');
+        activeTeardowns.push(
+          card.layer === 'webgl'
+            ? mountLazyWebgl(card, stageEl)
+            : window.mountCardPreview(card.id, stageEl),
+        );
       }
     }
   }

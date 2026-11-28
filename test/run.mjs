@@ -20,6 +20,7 @@ import { stackLayout, stackHeight, shouldSwipeToast } from '../src/core/toast-st
 import { nextButtonState, loadingRemaining } from '../src/core/state-button.js';
 import { barRatio, barStagger, valueDelta, sparklineGeometry } from '../src/core/data.js';
 import { cappedDpr, canvasSize, orbEnergy, rippleEnvelope, rippleSlot, nebulaPositions, globeCoords, terrainGrid, smoothMin, helixPositions } from '../src/core/shader.js';
+import { tooltipDelay, clampHeight, pillStateSpec, scrollFadeStops, voiceBarHeight, isNearBottom } from '../src/core/ui-motion.js';
 import { parseCard, validateCard, buildRegistry, renderConsumerCardMarkdown, PRIVATE_ID_RE } from '../scripts/build-registry.mjs';
 
 let pass = 0;
@@ -1157,12 +1158,60 @@ t('deckPose：顶牌置顶突前，后牌逐层后退下沉缩放且 zIndex 递�
   assert.ok(p2.z < p1.z && p2.y > p1.y && p2.scale < p1.scale && p2.zIndex < p1.zIndex);
 });
 
+console.log('\n高频产品微交互与 AI 原生交互');
+
+t('tooltipDelay：冷启动 400ms、热身窗 300ms 内 0ms 瞬切、超时回冷启动', () => {
+  assert.equal(tooltipDelay(-1, 1000), 400);
+  assert.equal(tooltipDelay(1000, 1150), 0);
+  assert.equal(tooltipDelay(1000, 1300), 0);
+  assert.equal(tooltipDelay(1000, 1301), 400);
+  assert.equal(tooltipDelay(1000, 900), 400); // 时钟回拨不误判热身
+});
+
+t('clampHeight：安全钳制并保留 1 位小数，非法值回退 min', () => {
+  assert.equal(clampHeight(123.456), 123.5);
+  assert.equal(clampHeight(-10, 20, 500), 20);
+  assert.equal(clampHeight(9999, 0, 500), 500);
+  assert.equal(clampHeight(NaN, 12, 500), 12);
+});
+
+t('pillStateSpec：四态映射准确，未知状态安全回退 idle', () => {
+  assert.equal(pillStateSpec('idle').expanded, false);
+  assert.equal(pillStateSpec('thinking').expanded, true);
+  assert.equal(pillStateSpec('done').accent, 'success');
+  assert.equal(pillStateSpec('error').accent, 'danger');
+  assert.equal(pillStateSpec('unknown').state, 'idle');
+});
+
+t('scrollFadeStops：起点左 0 右满、中间双满、终点左满右 0、无溢出双 0', () => {
+  assert.deepEqual(scrollFadeStops(0, 200, 200, 28), { start: 0, end: 0 });
+  assert.deepEqual(scrollFadeStops(0, 500, 200, 28), { start: 0, end: 28 });
+  assert.deepEqual(scrollFadeStops(100, 500, 200, 28), { start: 28, end: 28 });
+  assert.deepEqual(scrollFadeStops(300, 500, 200, 28), { start: 28, end: 0 });
+  assert.deepEqual(scrollFadeStops(10, 500, 200, 28), { start: 10, end: 28 });
+});
+
+t('voiceBarHeight：中心对称包络、钳制在 0.16..1.0、低能量接近下限', () => {
+  const mid = voiceBarHeight(4, 9, 1.0, 1.0);
+  const edge = voiceBarHeight(0, 9, 1.0, 1.0);
+  assert.ok(mid >= 0.16 && mid <= 1.0 && edge >= 0.16 && edge <= 1.0);
+  assert.ok(mid > edge, '中央柱应比边缘柱更高');
+  assert.equal(voiceBarHeight(4, 9, 1.0, 0), 0.16);
+});
+
+t('isNearBottom：贴底 36px 内为真、上翻脱锁为假、内容未溢出恒为真', () => {
+  assert.equal(isNearBottom(0, 180, 200), true);
+  assert.equal(isNearBottom(300, 500, 200, 36), true);
+  assert.equal(isNearBottom(270, 500, 200, 36), true);  // 距底 30px <= 36
+  assert.equal(isNearBottom(250, 500, 200, 36), false); // 距底 50px > 36
+});
+
 console.log('\n资产注册表与知识卡校验');
 
 t('buildRegistry：全部效果卡通过八栏与无私有类名校验（含 Skill Rule 与消费卡）', () => {
   const { registry, errors } = buildRegistry();
   assert.equal(errors.length, 0, JSON.stringify(errors));
-  assert.ok(registry.count >= 60, `应至少包含 60 张卡，实际 ${registry.count}`);
+  assert.ok(registry.count >= 66, `应至少包含 66 张卡，实际 ${registry.count}`);
   for (const card of registry.effects) {
     assert.ok(card.ai_assets.prompt.length > 40, `${card.id} prompt 过短`);
     assert.ok(card.ai_assets.dont_do.length > 10, `${card.id} dont_do 未抽到`);

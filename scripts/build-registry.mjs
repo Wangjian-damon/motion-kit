@@ -397,6 +397,46 @@ export function renderLlmsTxt(registry) {
   return lines.join('\n');
 }
 
+/**
+ * 生成人类可读的 effects/INDEX.md（按性质 + 按层自动同步，永不与卡片漂移）
+ */
+export function renderEffectsIndexMarkdown(registry) {
+  const lines = [
+    '# 动效知识库 · 索引（自动同步）',
+    '',
+    `> 共收录 **${registry.count}** 张跨平台八栏效果卡片。由 \`node scripts/build-registry.mjs\` 编译自 \`effects/*.md\` 自动更新，请勿手改。`,
+    '> 准入标准与缺口队列见 [`sources.md`](../sources.md)，新卡片模板见 [`_TEMPLATE.md`](./_TEMPLATE.md)。',
+    '',
+    '## 按六大性质索引',
+    '',
+  ];
+
+  const natureOrder = ['反馈', '连续', '方向', '权重', '材质', '节奏'];
+  for (const nature of natureOrder) {
+    const items = registry.effects.filter((e) => e.nature === nature);
+    if (!items.length) continue;
+    lines.push(`### ${nature}（${items.length}）`);
+    lines.push('');
+    lines.push('| 效果 | id | 层 | 平台 | 一句话 |');
+    lines.push('|---|---|---|---|---|');
+    for (const e of items) {
+      const one = e.summary.replace(/\r?\n+/g, ' ').replace(/\|/g, '\\|');
+      lines.push(`| [${e.name}](./${e.id}.md) | \`${e.id}\` | \`${e.layer}\` | ${e.platform} | ${one} |`);
+    }
+    lines.push('');
+  }
+
+  lines.push('## 按代码层统计', '', '| 层 | 数量 | 包含资产 |', '|---|---|---|');
+  const layerOrder = ['motion', 'mobile', 'glass', '3d', 'fun', 'webgl'];
+  for (const layer of layerOrder) {
+    const items = registry.effects.filter((e) => e.layer === layer);
+    if (!items.length) continue;
+    lines.push(`| \`${layer}\` | ${items.length} | ${items.map((e) => `[\`${e.id}\`](./${e.id}.md)`).join(' · ')} |`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
 function main() {
   const { registry, errors } = buildRegistry(ROOT);
   if (errors.length > 0) {
@@ -448,7 +488,10 @@ function main() {
   // 4. 生成根目录 llms.txt（供 Cursor @Docs / Claude / Windsurf 直接抓全库）
   fs.writeFileSync(path.join(ROOT, 'llms.txt'), renderLlmsTxt(registry), 'utf8');
 
-  console.log(`✓ 已编译 ${registry.count} 张动效资产卡 → dist/registry.json & demo/registry.data.js & llms.txt & 纯净去库化 Skill 包`);
+  // 5. 自动同步 effects/INDEX.md，消灭索引漂移
+  fs.writeFileSync(path.join(ROOT, 'effects', 'INDEX.md'), renderEffectsIndexMarkdown(registry), 'utf8');
+
+  console.log(`✓ 已编译 ${registry.count} 张动效资产卡 → dist/registry.json & demo/registry.data.js & effects/INDEX.md & llms.txt & 纯净去库化 Skill 包`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
