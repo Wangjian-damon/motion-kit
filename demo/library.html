@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Motion Kit · AI 动效资产库</title>
+<title>Motion Kit · AI Motion Inspiration & Spec Gallery</title>
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Motion Kit · 30 张可交互跨平台 AI 动效资产库" />
-<meta property="og:description" content="每张卡自带原地可交互微缩演示台、0.25x 慢放与一键复制去库化 Prompt / Skill。" />
+<meta property="og:title" content="Motion Kit · 66 Live Framework-Agnostic AI Motion Specs" />
+<meta property="og:description" content="Explore 66 live interactive UI motion & native WebGL 3D specs with 0.25x slow-mo, reduced-motion simulator, and 1-click Prompt / Skill / Cursor .mdc export." />
 <meta property="og:image" content="https://wangjian-damon.github.io/motion-kit/demo/og-cover.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://wangjian-damon.github.io/motion-kit/demo/og-cover.png" />
@@ -69,6 +69,38 @@
     background: rgba(184, 255, 61, 0.1);
     color: var(--accent);
   }
+  .lang-btn {
+    appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+    color: var(--muted); font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 6px 10px; border-radius: 999px; cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .lang-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.28); }
+  .scenario-bar {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sc-tab {
+    appearance: none; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03); color: #cfd6e2;
+    font: 540 12.5px/1 inherit; padding: 8px 13px; border-radius: 10px; cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .sc-tab:hover { border-color: rgba(184,255,61,0.4); color: #fff; }
+  .sc-tab.is-on {
+    background: rgba(184,255,61,0.14); border-color: rgba(184,255,61,0.58);
+    color: var(--accent); font-weight: 600;
+  }
+  .card-tools { display: inline-flex; gap: 5px; flex: none; }
+  .icon-btn {
+    appearance: none; width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+    color: var(--muted); font-size: 13px; line-height: 1; cursor: pointer;
+    display: grid; place-items: center; transition: all 140ms ease;
+  }
+  .icon-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.25); }
+  .icon-btn.is-saved { color: #facc15; border-color: rgba(250,204,21,0.45); background: rgba(250,204,21,0.1); }
+  .icon-btn.is-copied { color: #041309; background: #22c55e; border-color: #22c55e; }
 
   .wrap { width: min(1140px, calc(100% - 40px)); margin: 0 auto; padding: 48px 0 96px; }
 
@@ -132,13 +164,13 @@
     .asset-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
   }
 
-  /* 卡片顶部：原地实时演示舞台 */
+  /* 卡片顶部：原地实时演示舞台（灵感画廊比例） */
   .asset-stage {
     position: relative;
-    height: 132px;
+    height: 168px;
     margin-bottom: 14px;
     border-radius: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     background:
       radial-gradient(240px 100px at 50% 0%, rgba(184, 255, 61, 0.06), transparent 70%),
       #090d14;
@@ -229,12 +261,14 @@
   }
   .badge--nature { color: var(--accent); border-color: rgba(184, 255, 61, 0.28); background: rgba(184, 255, 61, 0.08); }
   .asset-summary {
-    margin: 0 0 14px; color: #cfd6e2; font-size: 13.5px; line-height: 1.58;
+    margin: 0 0 12px; color: #cfd6e2; font-size: 13px; line-height: 1.56;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     flex: 1;
   }
   .asset-source {
-    font-size: 12px; color: var(--muted); margin: 0 0 16px;
-    padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11.5px; color: var(--muted); margin: 0 0 14px;
+    padding-top: 9px; border-top: 1px solid rgba(255,255,255,0.06);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -362,34 +396,36 @@
 
 <header class="top">
   <div class="top-in">
-    <a class="brand" href="./index.html"><span class="brand-dot"></span>Motion Kit · AI 资产库</a>
+    <a class="brand" href="./index.html" id="navBrand"><span class="brand-dot"></span>Motion Kit · AI 动效灵感库</a>
     <nav class="nav">
-      <a href="./library.html" class="is-cur">资产库</a>
-      <a href="./web.html">Web 端</a>
-      <a href="./mobile.html">移动端</a>
-      <a href="./fun.html">好玩的</a>
+      <a href="./library.html" class="is-cur" data-i18n="nav_lib">灵感库</a>
+      <a href="./web.html" data-i18n="nav_web">Web 端</a>
+      <a href="./mobile.html" data-i18n="nav_mob">移动端</a>
+      <a href="./fun.html" data-i18n="nav_fun">好玩的</a>
       <a href="./3d.html">3D</a>
-      <a class="gh-star" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 上为 MotionKit 点 Star"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>★ Star</a>
+      <button type="button" id="langToggle" class="lang-btn" title="Switch Chinese / English">EN</button>
+      <a class="gh-star" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer" aria-label="Star MotionKit on GitHub"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>★ Star</a>
     </nav>
   </div>
 </header>
 
 <main class="wrap">
   <section class="hero">
-    <span class="eyebrow">AI-Readable Motion Registry</span>
-    <h1>把动效抽成 <em>Prompt 与 Skill</em>，<br />在任意技术栈零幻觉复现。</h1>
-    <p>
-      所有资产均编译自仓库 <code>effects/*.md</code> 唯一真源。在 Web / 移动端真实演示页也可直接点选任意效果原地取用；
-      或者执行一次全局安装，让你的 AI Agent 在所有项目里自动识别、自动取用。
+    <span class="eyebrow">AI Motion Inspiration Gallery &amp; Registry</span>
+    <h1 id="heroTitle">把动效抽成 <em>Prompt 与 Skill</em>，<br />在任意技术栈零幻觉复现。</h1>
+    <p id="heroDesc">
+      按真实使用场景逛动效灵感，每张卡自带零依赖可交互预览台；点一下即可复制去库化 Prompt、Skill 或 Cursor <code>.mdc</code>，
+      或一行安装到你的 AI Agent 全机自动复用。
     </p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;border:1px solid rgba(184,255,61,0.28);background:rgba(184,255,61,0.06);margin-bottom:24px;">
-      <span style="font-size:12.5px;color:#d9ff8f;font-weight:560;">✦ 开源一行安装（无需克隆，全机 Agent 自动取用）：</span>
+      <span id="installLabel" style="font-size:12.5px;color:#d9ff8f;font-weight:560;">✦ 开源一行安装（无需克隆，全机 Agent 自动取用）：</span>
       <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#eef2f7;background:rgba(0,0,0,0.35);padding:5px 10px;border-radius:8px;">npx github:wangjian-damon/motion-kit install</code>
       <button id="copyInstallCmd" class="act act--primary" style="margin-left:auto;">复制安装命令</button>
     </div>
   </section>
 
   <section class="controls" aria-label="筛选与检索">
+    <div class="scenario-bar" id="scenarioTabs"></div>
     <div class="controls-row">
       <input id="q" class="search" type="search" placeholder="搜索效果名、id、来源、物理参数或踩坑关键词..." />
       <span id="countMeta" class="count-meta"></span>
@@ -514,42 +550,178 @@
     'card-deck': './3d.html',
   };
   const PRESETS = [
-    { name: 'AI 原生对话交互套件 (5)', ids: ['ai-stream', 'voice-wave', 'dynamic-pill', 'shader-orb', 'fluid-height'] },
-    { name: '高频产品微交互套件 (6)', ids: ['tooltip-group', 'fluid-height', 'dynamic-pill', 'scroll-fade', 'state-button', 'toast-stack'] },
-    { name: '原生 WebGL Shader 套件 (9)', ids: ['shader-aurora', 'shader-orb', 'shader-ripple', 'shader-torus', 'shader-particles', 'shader-globe', 'shader-terrain', 'shader-metaballs', 'shader-dna'] },
-    { name: '3D 空间与立体互动套件 (12)', ids: ['shader-metaballs', 'shader-dna', 'shader-globe', 'shader-terrain', 'shader-torus', 'shader-particles', 'holo-card', 'card-deck', 'flip-clock', 'book-3d', 'coverflow', 'bar-3d'] },
-    { name: '好玩的纯 CSS 彩蛋 (5)', ids: ['glitch', 'blob', 'bounce-text', 'cube', 'orbit'] },
-    { name: 'SaaS 数据看板套件 (5)', ids: ['bar-grow', 'cell-flash', 'sparkline-draw', 'state-button', 'toast-stack'] },
-    { name: 'iOS 移动端手势套件 (5)', ids: ['tap', 'bottom-sheet', 'swipe', 'pull-refresh', 'rubber-band'] },
-    { name: 'Apple 液态玻璃套件 (3)', ids: ['glass-base', 'refraction', 'glass-tap'] },
-    { name: 'Web 材质与微交互 (5)', ids: ['tilt', 'spotlight', 'magnetic', 'dock', 'fold'] },
+    { name: 'AI 原生对话交互套件 (5)', en: 'AI Chat & Voice Pack (5)', ids: ['ai-stream', 'voice-wave', 'dynamic-pill', 'shader-orb', 'fluid-height'] },
+    { name: '高频产品微交互套件 (6)', en: 'Product Micro-Interactions (6)', ids: ['tooltip-group', 'fluid-height', 'dynamic-pill', 'scroll-fade', 'state-button', 'toast-stack'] },
+    { name: '原生 WebGL Shader 套件 (9)', en: 'Native WebGL 3D Shaders (9)', ids: ['shader-aurora', 'shader-orb', 'shader-ripple', 'shader-torus', 'shader-particles', 'shader-globe', 'shader-terrain', 'shader-metaballs', 'shader-dna'] },
+    { name: '3D 空间与立体互动套件 (12)', en: '3D & Spatial Showcase (12)', ids: ['shader-metaballs', 'shader-dna', 'shader-globe', 'shader-terrain', 'shader-torus', 'shader-particles', 'holo-card', 'card-deck', 'flip-clock', 'book-3d', 'coverflow', 'bar-3d'] },
+    { name: '好玩的纯 CSS 彩蛋 (5)', en: 'Pure CSS Playful Pack (5)', ids: ['glitch', 'blob', 'bounce-text', 'cube', 'orbit'] },
+    { name: 'SaaS 数据看板套件 (5)', en: 'SaaS Data Dashboard (5)', ids: ['bar-grow', 'cell-flash', 'sparkline-draw', 'state-button', 'toast-stack'] },
+    { name: 'iOS 移动端手势套件 (5)', en: 'iOS Touch Gestures (5)', ids: ['tap', 'bottom-sheet', 'swipe', 'pull-refresh', 'rubber-band'] },
+    { name: 'Apple 液态玻璃套件 (3)', en: 'Apple Liquid Glass (3)', ids: ['glass-base', 'refraction', 'glass-tap'] },
+    { name: 'Web 材质与微交互 (5)', en: 'Web Material & Hover (5)', ids: ['tilt', 'spotlight', 'magnetic', 'dock', 'fold'] },
   ];
   let activeNature = '全部';
   let activeLayer = '全部';
+  let activeScenario = 'all';
   let activeCard = null;
   let activeTeardowns = [];
+
+  /* -------- 中 / EN 双语 + 场景灵感分类 + 本地收藏 -------- */
+  const urlParams = new URLSearchParams(location.search);
+  const detectLang = () => {
+    const qLang = urlParams.get('lang');
+    if (qLang === 'en' || qLang === 'zh') return qLang;
+    try {
+      const saved = localStorage.getItem('mk_lang');
+      if (saved === 'en' || saved === 'zh') return saved;
+    } catch {}
+    return (navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  };
+  let lang = detectLang();
+
+  const NATURE_EN = { '全部': 'All', '反馈': 'Feedback', '连续': 'Continuity', '方向': 'Direction', '权重': 'Weight', '材质': 'Material', '节奏': 'Rhythm' };
+  const SCENARIOS = [
+    { key: 'all', zh: '✦ 全部灵感', en: '✦ All Specs', ids: null },
+    { key: 'featured', zh: '🔥 编辑精选', en: '🔥 Featured', ids: ['shader-metaballs', 'shader-globe', 'shader-torus', 'shader-dna', 'shader-orb', 'refraction', 'holo-card', 'card-deck', 'flip-clock', 'book-3d', 'ai-stream', 'dynamic-pill'] },
+    { key: 'hero', zh: '✨ Hero 主视觉', en: '✨ Hero & Shaders', ids: ['shader-aurora', 'shader-torus', 'shader-particles', 'shader-globe', 'shader-terrain', 'shader-metaballs', 'shader-dna', 'shader-ripple', 'border-run', 'tunnel', 'sphere', 'split'] },
+    { key: 'ai', zh: '🤖 AI 产品交互', en: '🤖 AI Interfaces', ids: ['ai-stream', 'voice-wave', 'dynamic-pill', 'shader-orb', 'fluid-height', 'state-button', 'tooltip-group', 'scramble', 'toast-stack'] },
+    { key: '3d', zh: '🧊 3D 与空间', en: '🧊 3D & Spatial', ids: ['shader-metaballs', 'shader-dna', 'shader-globe', 'shader-terrain', 'shader-torus', 'shader-particles', 'holo-card', 'card-deck', 'flip-clock', 'book-3d', 'coverflow', 'bar-3d', 'ring', 'depth', 'sphere', 'cube', 'fan', 'orbit', 'fold', 'tunnel'] },
+    { key: 'cards', zh: '💎 卡片与材质', en: '💎 Cards & Glass', ids: ['glass-base', 'refraction', 'glass-tap', 'holo-card', 'tilt', 'spotlight', 'depth', 'border-run', 'blob', 'book-3d', 'card-deck'] },
+    { key: 'mobile', zh: '📱 移动端手势', en: '📱 Mobile Gestures', ids: ['tap', 'long-press', 'context-menu', 'bottom-sheet', 'snap-sheet', 'swipe', 'pull-refresh', 'edge-back', 'rubber-band', 'detent', 'sticky-title', 'scroll-fade', 'shared-element', 'glass-tap'] },
+    { key: 'data', zh: '📊 数据与看板', en: '📊 Data & SaaS', ids: ['bar-grow', 'bar-3d', 'cell-flash', 'sparkline-draw', 'count-up', 'flip-clock', 'state-button', 'toast-stack', 'tooltip-group', 'fluid-height', 'scroll-fade', 'seg'] },
+    { key: 'saved', zh: '⭐ 我的收藏', en: '⭐ Saved', ids: 'saved' },
+  ];
+
+  let savedIds = new Set();
+  try {
+    const raw = JSON.parse(localStorage.getItem('mk_saved_ids') || '[]');
+    if (Array.isArray(raw)) savedIds = new Set(raw);
+  } catch {}
+  const persistSaved = () => { try { localStorage.setItem('mk_saved_ids', JSON.stringify([...savedIds])); } catch {} };
+
+  const I18N = {
+    zh: {
+      brand: 'Motion Kit · AI 动效灵感库',
+      nav_lib: '灵感库', nav_web: 'Web 端', nav_mob: '移动端', nav_fun: '好玩的',
+      heroTitle: '把动效抽成 <em>Prompt 与 Skill</em>，<br />在任意技术栈零幻觉复现。',
+      heroDesc: '按真实使用场景逛动效灵感，每张卡自带零依赖可交互预览台；点一下即可复制去库化 Prompt、Skill 或 Cursor <code>.mdc</code>，或一行安装到你的 AI Agent 全机自动复用。',
+      installLabel: '✦ 开源一行安装（无需克隆，全机 Agent 自动取用）：',
+      copyInstall: '复制安装命令',
+      searchPh: '搜索效果名、id、来源、物理参数或踩坑关键词...',
+      presetLabel: '✦ 场景套件一键复制 Skill：',
+      slow: '0.25× 慢放', reduce: '模拟减弱动效',
+      allLayers: '全部层',
+      countFmt: (a, b) => `显示 ${a} / ${b} 张跨平台资产卡`,
+      empty: '没有匹配的动效资产卡，换个场景或关键词试试。',
+      emptySaved: '还没有收藏任何动效，点卡片右上角 ☆ 即可收藏。',
+      detail: '查看详情', demo: '完整演示 →', source: '来源：',
+      dPrompt: '复制 AI 提示词（第 8 栏）', dRule: '复制 Skill 约束规则', dMdc: '复制 Cursor .mdc',
+      langBtn: 'EN',
+    },
+    en: {
+      brand: 'Motion Kit · AI Motion Gallery',
+      nav_lib: 'Gallery', nav_web: 'Web', nav_mob: 'Mobile', nav_fun: 'Fun',
+      heroTitle: 'Turn UI motion into <em>Prompts &amp; Skills</em><br />for any stack, zero runtime lock-in.',
+      heroDesc: 'Browse 66 live, zero-dependency motion &amp; native WebGL 3D inspirations by use-case. Copy clean Prompt, Skill, or Cursor <code>.mdc</code> in 1 click — or install once for all your AI coding agents.',
+      installLabel: '✦ 1-Command Agent Skill Install (Cursor / Claude Code / Antigravity):',
+      copyInstall: 'Copy Install Cmd',
+      searchPh: 'Search effect name, id, source, physics constants, or pitfalls...',
+      presetLabel: '✦ Copy Curated Skill Bundles:',
+      slow: '0.25× Slow-Mo', reduce: 'Simulate Reduced Motion',
+      allLayers: 'All layers',
+      countFmt: (a, b) => `Showing ${a} / ${b} framework-agnostic specs`,
+      empty: 'No matching motion specs. Try another scenario or keyword.',
+      emptySaved: 'No saved effects yet — click ☆ on any card to bookmark it.',
+      detail: 'Inspect', demo: 'Live Demo →', source: 'Origin: ',
+      dPrompt: 'Copy AI Prompt', dRule: 'Copy Skill Rule', dMdc: 'Copy Cursor .mdc',
+      langBtn: '中文',
+    },
+  };
+  const T = () => I18N[lang];
+
+  const scenarioBox = document.getElementById('scenarioTabs');
+  const langToggleBtn = document.getElementById('langToggle');
+
+  function applyLangChrome() {
+    const t = T();
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    document.getElementById('navBrand').innerHTML = `<span class="brand-dot"></span>${t.brand}`;
+    document.querySelector('[data-i18n="nav_lib"]').textContent = t.nav_lib;
+    document.querySelector('[data-i18n="nav_web"]').textContent = t.nav_web;
+    document.querySelector('[data-i18n="nav_mob"]').textContent = t.nav_mob;
+    document.querySelector('[data-i18n="nav_fun"]').textContent = t.nav_fun;
+    document.getElementById('heroTitle').innerHTML = t.heroTitle;
+    document.getElementById('heroDesc').innerHTML = t.heroDesc;
+    document.getElementById('installLabel').textContent = t.installLabel;
+    document.getElementById('copyInstallCmd').textContent = t.copyInstall;
+    qInput.placeholder = t.searchPh;
+    document.querySelector('.preset-label').textContent = t.presetLabel;
+    document.getElementById('toggleSlow').textContent = t.slow;
+    document.getElementById('toggleReduce').textContent = t.reduce;
+    drawerCopyPrompt.textContent = t.dPrompt;
+    drawerCopyRule.textContent = t.dRule;
+    drawerCopyMdc.textContent = t.dMdc;
+    langToggleBtn.textContent = t.langBtn;
+  }
+
+  langToggleBtn.onclick = () => {
+    lang = lang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem('mk_lang', lang); } catch {}
+    applyLangChrome();
+    renderScenarios();
+    renderPresets();
+    renderChips();
+    renderGrid();
+  };
+
+  function renderScenarios() {
+    if (!scenarioBox) return;
+    scenarioBox.innerHTML = '';
+    for (const sc of SCENARIOS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sc-tab' + (activeScenario === sc.key ? ' is-on' : '');
+      const label = lang === 'en' ? sc.en : sc.zh;
+      const cnt = sc.ids === null ? reg.count : (sc.ids === 'saved' ? savedIds.size : sc.ids.length);
+      b.textContent = `${label} (${cnt})`;
+      b.onclick = () => {
+        activeScenario = sc.key;
+        if (sc.key !== 'all') { activeNature = '全部'; activeLayer = '全部'; }
+        renderScenarios();
+        renderChips();
+        renderGrid();
+      };
+      scenarioBox.appendChild(b);
+    }
+  }
 
   // 场景套件一键打包复制合并 Skill Rules
   const presetBox = document.getElementById('presetBtns');
   const cardById = new Map(reg.effects.map((e) => [e.id, e]));
-  if (presetBox) {
+  function renderPresets() {
+    if (!presetBox) return;
+    presetBox.innerHTML = '';
     for (const p of PRESETS) {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'preset-btn';
-      b.textContent = p.name;
+      const title = lang === 'en' ? (p.en || p.name) : p.name;
+      b.textContent = title;
       b.onclick = () => {
         const bundle = [
-          `# MotionKit · ${p.name}`,
-          '> 可直接粘贴进项目的 .cursorrules / AGENTS.md，按当前项目技术栈自动复现。',
+          `# MotionKit · ${title}`,
+          lang === 'en'
+            ? '> Paste directly into .cursorrules / AGENTS.md / CLAUDE.md to reproduce cleanly in any stack.'
+            : '> 可直接粘贴进项目的 .cursorrules / AGENTS.md，按当前项目技术栈自动复现。',
           '',
           ...p.ids.map((id) => cardById.get(id)?.ai_assets.skill_rule).filter(Boolean),
         ].join('\n\n---\n\n');
-        copyText(bundle, b, '✓ 已复制整套 Skill');
+        copyText(bundle, b, lang === 'en' ? '✓ Copied Bundle' : '✓ 已复制整套 Skill');
       };
       presetBox.appendChild(b);
     }
   }
+  renderPresets();
 
   // 0.25x 慢放 & 模拟减弱动效开关
   const slowBtn = document.getElementById('toggleSlow');
@@ -606,17 +778,22 @@
   function fullPrompt(card) {
     const p = card.ai_assets.prompt || '';
     const d = card.ai_assets.dont_do ? `\n\n别让它做的：\n${card.ai_assets.dont_do}` : '';
-    return p + d;
+    const prefix = lang === 'en'
+      ? `Implement the following MotionKit framework-agnostic UI motion spec (${card.id}) cleanly in my current tech stack, strictly preserving all physics constants, degradation rules, and anti-pitfall constraints:\n\n`
+      : '';
+    return prefix + p + d;
   }
 
   function renderChips() {
+    const t = T();
     natureBox.innerHTML = '';
     for (const n of NATURES) {
       const b = document.createElement('button');
       b.className = 'chip' + (activeNature === n ? ' is-on' : '');
       const cnt = n === '全部' ? reg.count : (reg.byNature[n] || 0);
-      b.textContent = `${n} (${cnt})`;
-      b.onclick = () => { activeNature = n; renderChips(); renderGrid(); };
+      const label = lang === 'en' ? (NATURE_EN[n] || n) : n;
+      b.textContent = `${label} (${cnt})`;
+      b.onclick = () => { activeNature = n; activeScenario = 'all'; renderScenarios(); renderChips(); renderGrid(); };
       natureBox.appendChild(b);
     }
 
@@ -625,8 +802,8 @@
       const b = document.createElement('button');
       b.className = 'chip chip--sub' + (activeLayer === l ? ' is-on' : '');
       const cnt = l === '全部' ? reg.count : (reg.byLayer[l] || 0);
-      b.textContent = l === '全部' ? `全部层 (${cnt})` : `${l} (${cnt})`;
-      b.onclick = () => { activeLayer = l; renderChips(); renderGrid(); };
+      b.textContent = l === '全部' ? `${t.allLayers} (${cnt})` : `${l} (${cnt})`;
+      b.onclick = () => { activeLayer = l; activeScenario = 'all'; renderScenarios(); renderChips(); renderGrid(); };
       layerBox.appendChild(b);
     }
   }
@@ -681,6 +858,11 @@
 
   function openDrawer(card) {
     activeCard = card;
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set('card', card.id);
+      history.replaceState(null, '', u);
+    } catch {}
     drawerTitle.textContent = `${card.name} · ${card.id}`;
     drawerMeta.innerHTML = `
       <span class="badge badge--nature">${esc(card.nature)}</span>
@@ -722,6 +904,11 @@
     mask.classList.remove('is-open');
     document.body.style.overflow = '';
     activeCard = null;
+    try {
+      const u = new URL(location.href);
+      u.searchParams.delete('card');
+      history.replaceState(null, '', u);
+    } catch {}
   }
 
   drawerClose.onclick = closeDrawer;
@@ -761,15 +948,18 @@
         }
       }, { rootMargin: '220px 0px' });
     }
-    stageEl.classList.add('mk-shader', `mk-shader--${card.id.replace(/^shader-/, '')}`);
+    const fallbackCls = `mk-shader--${card.id.replace(/^shader-/, '')}`;
+    stageEl.classList.add('mk-shader', fallbackCls);
     stageEl._mkLazyToggle = (inView) => {
       if (inView && !stop) {
+        stageEl.classList.remove('mk-shader', fallbackCls);
         stageEl.innerHTML = '';
         stop = window.mountCardPreview(card.id, stageEl);
       } else if (!inView && stop) {
         try { stop(); } catch {}
         stop = null;
         stageEl.innerHTML = '';
+        stageEl.classList.add('mk-shader', fallbackCls);
       }
     };
     lazyObserver.observe(stageEl);
@@ -781,22 +971,32 @@
   }
 
   function renderGrid() {
+    const t = T();
     const q = qInput.value.trim().toLowerCase();
+    const scObj = SCENARIOS.find((s) => s.key === activeScenario);
+    const scSet = scObj && Array.isArray(scObj.ids) ? new Set(scObj.ids) : null;
     const list = reg.effects.filter((e) => {
+      if (activeScenario === 'saved' && !savedIds.has(e.id)) return false;
+      if (scSet && !scSet.has(e.id)) return false;
       if (activeNature !== '全部' && e.nature !== activeNature) return false;
       if (activeLayer !== '全部' && e.layer !== activeLayer) return false;
       if (!q) return true;
       const hay = [e.id, e.name, e.nature, e.layer, e.platform, e.summary, e.source, e.ai_assets.prompt, e.pitfalls].join(' ').toLowerCase();
       return hay.includes(q);
     });
+    // 若在场景精选里，按场景策划顺序排（让最炸裂的效果排在最前面）
+    if (scObj && Array.isArray(scObj.ids)) {
+      const pos = new Map(scObj.ids.map((id, i) => [id, i]));
+      list.sort((a, b) => (pos.get(a.id) ?? 999) - (pos.get(b.id) ?? 999));
+    }
 
-    countMeta.textContent = `显示 ${list.length} / ${reg.count} 张跨平台资产卡`;
+    countMeta.textContent = t.countFmt(list.length, reg.count);
     activeTeardowns.forEach((fn) => { try { fn(); } catch {} });
     activeTeardowns = [];
     grid.innerHTML = '';
 
     if (list.length === 0) {
-      grid.innerHTML = '<div class="empty">没有匹配的动效资产卡，换个关键词或筛选条件试试。</div>';
+      grid.innerHTML = `<div class="empty">${activeScenario === 'saved' ? t.emptySaved : t.empty}</div>`;
       return;
     }
 
@@ -804,28 +1004,52 @@
       const el = document.createElement('article');
       el.className = 'asset-card';
       const demoHref = DEMO_LINKS[card.id];
+      const isSaved = savedIds.has(card.id);
+      const natLabel = lang === 'en' ? (NATURE_EN[card.nature] || card.nature) : card.nature;
       el.innerHTML = `
         <div class="asset-stage" data-stage="${esc(card.id)}"></div>
         <div class="asset-head">
-          <h2 class="asset-title">${esc(card.name)}</h2>
-          <span class="asset-id">${esc(card.id)}</span>
+          <div>
+            <h2 class="asset-title">${esc(card.name)}</h2>
+            <span class="asset-id">${esc(card.id)}</span>
+          </div>
+          <div class="card-tools">
+            <button type="button" class="icon-btn ${isSaved ? 'is-saved' : ''}" data-act="save" title="${lang === 'en' ? 'Bookmark' : '收藏'}">${isSaved ? '★' : '☆'}</button>
+            <button type="button" class="icon-btn" data-act="share" title="${lang === 'en' ? 'Copy direct link' : '复制直达分享链接'}">🔗</button>
+          </div>
         </div>
         <div class="badges">
-          <span class="badge badge--nature">${esc(card.nature)}</span>
+          <span class="badge badge--nature">${esc(natLabel)}</span>
           <span class="badge">${esc(card.layer)}</span>
           <span class="badge">${esc(card.platform)}</span>
         </div>
         <p class="asset-summary">${inlineMd(card.summary)}</p>
-        <p class="asset-source">来源：${inlineMd(card.source)}</p>
+        <p class="asset-source">${t.source}${inlineMd(card.source)}</p>
         <div class="actions">
           <button class="act act--primary" data-act="prompt">Copy Prompt</button>
           <button class="act" data-act="rule">Copy Skill</button>
-          <button class="act" data-act="detail">查看详情</button>
-          ${demoHref ? `<a class="act" href="${demoHref}" style="text-decoration:none;">完整演示 →</a>` : ''}
+          <button class="act" data-act="detail">${t.detail}</button>
+          ${demoHref ? `<a class="act" href="${demoHref}" style="text-decoration:none;">${t.demo}</a>` : ''}
         </div>
       `;
-      el.querySelector('[data-act="prompt"]').onclick = (ev) => copyText(fullPrompt(card), ev.currentTarget, '已复制 Prompt');
-      el.querySelector('[data-act="rule"]').onclick = (ev) => copyText(card.ai_assets.skill_rule, ev.currentTarget, '已复制 Skill');
+      el.querySelector('[data-act="save"]').onclick = (ev) => {
+        const b = ev.currentTarget;
+        if (savedIds.has(card.id)) savedIds.delete(card.id);
+        else savedIds.add(card.id);
+        persistSaved();
+        const nowSaved = savedIds.has(card.id);
+        b.classList.toggle('is-saved', nowSaved);
+        b.textContent = nowSaved ? '★' : '☆';
+        renderScenarios();
+        if (activeScenario === 'saved') renderGrid();
+      };
+      el.querySelector('[data-act="share"]').onclick = (ev) => {
+        const u = new URL(location.href);
+        u.searchParams.set('card', card.id);
+        copyText(u.toString(), ev.currentTarget, '✓');
+      };
+      el.querySelector('[data-act="prompt"]').onclick = (ev) => copyText(fullPrompt(card), ev.currentTarget, lang === 'en' ? 'Copied!' : '已复制 Prompt');
+      el.querySelector('[data-act="rule"]').onclick = (ev) => copyText(card.ai_assets.skill_rule, ev.currentTarget, lang === 'en' ? 'Copied!' : '已复制 Skill');
       el.querySelector('[data-act="detail"]').onclick = () => openDrawer(card);
       grid.appendChild(el);
       if (typeof window.mountCardPreview === 'function') {
@@ -840,8 +1064,13 @@
   }
 
   qInput.addEventListener('input', renderGrid);
+  applyLangChrome();
+  renderScenarios();
   renderChips();
   renderGrid();
+
+  const initCard = urlParams.get('card') || urlParams.get('id');
+  if (initCard && cardById.has(initCard)) openDrawer(cardById.get(initCard));
 })();
 </script>
 </body>

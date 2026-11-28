@@ -239,6 +239,12 @@
   }
   .site-foot a { color: var(--fg); text-decoration: none; }
   .site-foot a:hover { color: var(--accent); }
+  .lang-btn {
+    appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,0.03);
+    color: var(--muted); font: 600 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  }
+  .lang-btn:hover { color: var(--fg); border-color: rgba(255,255,255,0.28); }
 </style>
 </head>
 <body>
@@ -248,11 +254,12 @@
   <div class="top-in">
     <a class="brand" href="./index.html"><span class="brand-dot"></span>Motion Kit</a>
     <nav class="nav">
-      <a href="./library.html" style="color:var(--accent);font-weight:560;">AI 资产库 (66)</a>
-      <a href="./mobile.html">移动端</a>
-      <a href="./web.html">Web 端</a>
+      <a href="./library.html" id="navLib" style="color:var(--accent);font-weight:560;">AI 灵感库 (66)</a>
+      <a href="./mobile.html" id="navMob">移动端</a>
+      <a href="./web.html" id="navWeb">Web 端</a>
       <a href="./3d.html">3D</a>
       <a href="../llms.txt">llms.txt</a>
+      <button type="button" id="langToggle" class="lang-btn" title="Switch Chinese / English">EN</button>
       <a class="gh-star" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>★ Star</a>
     </nav>
   </div>
@@ -260,9 +267,9 @@
 
 <main class="wrap">
   <section class="hero">
-    <span class="pill-meta">✦ Open Source MIT · 66 张去库化动效规范（产品微交互 + AI 原生 + 9 款 WebGL 3D）· 0 依赖 · 151 项单测</span>
-    <h1>给 AI 装上有<em>物理直觉</em>的动效资产。</h1>
-    <p class="hero-sub">
+    <span class="pill-meta" id="heroPill">✦ Open Source MIT · 66 张去库化动效规范（产品微交互 + AI 原生 + 9 款 WebGL 3D）· 0 依赖 · 151 项单测</span>
+    <h1 id="heroH1">给 AI 装上有<em>物理直觉</em>的动效资产。</h1>
+    <p class="hero-sub" id="heroSub">
       框架会迭代，代码会腐烂，但物理规律、状态机、降级契约与踩坑边界不会过期。
       一次安装，让你的 AI Agent 在 React / Vue / Tailwind / Taro / Flutter / SwiftUI 里直接写出原生级手感。
     </p>
@@ -271,15 +278,15 @@
       <button type="button" class="cmd-copy" id="copyNpx">复制</button>
     </div>
     <div class="hero-ctas">
-      <a class="btn btn--accent mk-press" href="./library.html">浏览全部 66 个可交互资产 →</a>
+      <a class="btn btn--accent mk-press" id="ctaBrowse" href="./library.html">浏览全部 66 个可交互灵感 →</a>
       <a class="btn btn--ghost mk-press" href="https://github.com/Wangjian-damon/motion-kit" target="_blank" rel="noopener noreferrer">★ Star on GitHub</a>
     </div>
   </section>
 
   <!-- 首屏即玩 6 合 1 精选互动台 -->
   <div class="sec-title">
-    <h2>先别看文档，直接动手试六个代表作</h2>
-    <a href="./library.html">查看全部 66 张卡（含 0.25× 慢放、Cursor .mdc 与场景打包） →</a>
+    <h2 id="playHeading">先别看文档，直接动手试六个代表作</h2>
+    <a id="playAll" href="./library.html">查看全部 66 张卡（含场景灵感、0.25× 慢放与 Cursor .mdc） →</a>
   </div>
   <section class="play-grid" id="playGrid"></section>
 
@@ -369,30 +376,96 @@
   const byId = new Map((reg?.effects || []).map((e) => [e.id, e]));
   const grid = document.getElementById('playGrid');
   const FEATURED = [
-    { id: 'shader-aurora', sub: '原生 WebGL 域扭曲 FBM · 零 Three.js · 离屏停帧' },
-    { id: 'shader-orb', sub: 'SDF + Fresnel AI 光球 · idle / listening / thinking' },
-    { id: 'shader-ripple', sub: '点击任意处荡开 6 槽并发光学水波与轻微色散' },
-    { id: 'refraction', sub: 'SDF 法线位移图 · 真实折弯背景光带' },
-    { id: 'state-button', sub: '四态同格零宽跳 · 400ms 防闪 · 失败重试' },
-    { id: 'toast-stack', sub: 'Sonner 三层微缩露边 · 悬停展开 · 横甩消除' },
+    { id: 'shader-metaballs', zh: '原生 WebGL 3D 液态水银融合球 · 鼠标靠近吸附拉丝', en: 'Native WebGL 3D Raymarched Metaballs · Zero Three.js' },
+    { id: 'shader-globe', zh: '解析球面求交 3D 全息地球 · 零贴图 · 脉动信标', en: 'Analytical Ray-Sphere 3D Holographic Globe · 0 Textures' },
+    { id: 'refraction', zh: 'SDF 内法线位移图 · 真实折弯背景光带的液态玻璃', en: 'SDF Inward-Normal Liquid Glass Edge Refraction' },
+    { id: 'holo-card', zh: '3D 倾斜同步驱动彩虹光栅衍射箔与浮雕视差', en: '3D Holographic Diffraction Foil Card · Parallax Emboss' },
+    { id: 'ai-stream', zh: 'AI 流式柔显 + 智能锁底 · 上翻立即脱锁绝不抢滚轮', en: 'AI Token Stream Soft Reveal + Smart Auto-Scroll Lock' },
+    { id: 'voice-wave', zh: 'AI 语音对称频谱波 · 三态平滑能量 · 仅 scaleY 零重排', en: 'Symmetric AI Voice Waveform · 3-State Smooth Energy' },
   ];
 
-  for (const item of FEATURED) {
-    const card = byId.get(item.id);
-    if (!card) continue;
-    const box = document.createElement('article');
-    box.className = 'play-card';
-    box.innerHTML = `
-      <div class="asset-stage"></div>
-      <div class="play-foot">
-        <div><b>${card.name}</b><small>${item.sub}</small></div>
-        <button type="button" class="mini-copy">Copy Prompt</button>
-      </div>`;
-    const prompt = card.ai_assets.prompt + (card.ai_assets.dont_do ? `\n\n别让它做的：\n${card.ai_assets.dont_do}` : '');
-    box.querySelector('.mini-copy').onclick = (e) => copy(prompt, e.currentTarget, '✓ 已复制');
-    grid.appendChild(box);
-    window.mountCardPreview?.(item.id, box.querySelector('.asset-stage'));
+  const detectLang = () => {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'zh') return q;
+    try { const s = localStorage.getItem('mk_lang'); if (s === 'en' || s === 'zh') return s; } catch {}
+    return (navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  };
+  let lang = detectLang();
+  const langBtn = document.getElementById('langToggle');
+
+  const COPY = {
+    zh: {
+      navLib: 'AI 灵感库 (66)', navMob: '移动端', navWeb: 'Web 端',
+      heroPill: '✦ Open Source MIT · 66 张去库化动效规范（产品微交互 + AI 原生 + 9 款 WebGL 3D）· 0 依赖 · 151 项单测',
+      heroH1: '给 AI 装上有<em>物理直觉</em>的动效资产。',
+      heroSub: '框架会迭代，代码会腐烂，但物理规律、状态机、降级契约与踩坑边界不会过期。一次安装，让你的 AI Agent 在 React / Vue / Tailwind / Taro / Flutter / SwiftUI 里直接写出原生级手感。',
+      copyNpx: '复制',
+      ctaBrowse: '浏览全部 66 个可交互灵感 →',
+      playHeading: '先别看文档，直接动手试六个代表作',
+      playAll: '查看全部 66 张卡（含场景灵感、0.25× 慢放与 Cursor .mdc） →',
+      langBtn: 'EN',
+    },
+    en: {
+      navLib: 'Gallery (66)', navMob: 'Mobile', navWeb: 'Web',
+      heroPill: '✦ MIT Open Source · 66 Framework-Agnostic Motion Specs (AI UI + 9 WebGL 3D) · 0 Deps · 151 Tests',
+      heroH1: 'Give your AI agent <em>physical intuition</em> for UI motion.',
+      heroSub: 'Frameworks churn and snippets rot, but physics constants, state machines, degradation contracts, and browser pitfalls endure. Install once for Cursor, Claude Code, Antigravity &amp; Codex.',
+      copyNpx: 'Copy',
+      ctaBrowse: 'Explore All 66 Live Inspirations →',
+      playHeading: 'Skip the docs — interact with 6 live highlights right here',
+      playAll: 'Browse all 66 specs (scenarios, 0.25× slow-mo &amp; Cursor .mdc) →',
+      langBtn: '中文',
+    },
+  };
+
+  let teardowns = [];
+  function renderFeatured() {
+    teardowns.forEach((f) => { try { f(); } catch {} });
+    teardowns = [];
+    grid.innerHTML = '';
+    for (const item of FEATURED) {
+      const card = byId.get(item.id);
+      if (!card) continue;
+      const box = document.createElement('article');
+      box.className = 'play-card';
+      box.innerHTML = `
+        <div class="asset-stage"></div>
+        <div class="play-foot">
+          <div><b>${card.name}</b><small>${lang === 'en' ? item.en : item.zh}</small></div>
+          <button type="button" class="mini-copy">Copy Prompt</button>
+        </div>`;
+      const prompt = (lang === 'en' ? `Implement this framework-agnostic MotionKit spec (${card.id}) cleanly in my stack:\n\n` : '')
+        + card.ai_assets.prompt + (card.ai_assets.dont_do ? `\n\n别让它做的：\n${card.ai_assets.dont_do}` : '');
+      box.querySelector('.mini-copy').onclick = (e) => copy(prompt, e.currentTarget, lang === 'en' ? '✓ Copied' : '✓ 已复制');
+      grid.appendChild(box);
+      const stop = window.mountCardPreview?.(item.id, box.querySelector('.asset-stage'));
+      if (stop) teardowns.push(stop);
+    }
   }
+
+  function applyLang() {
+    const c = COPY[lang];
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    document.getElementById('navLib').textContent = c.navLib;
+    document.getElementById('navMob').textContent = c.navMob;
+    document.getElementById('navWeb').textContent = c.navWeb;
+    document.getElementById('heroPill').textContent = c.heroPill;
+    document.getElementById('heroH1').innerHTML = c.heroH1;
+    document.getElementById('heroSub').innerHTML = c.heroSub;
+    document.getElementById('copyNpx').textContent = c.copyNpx;
+    document.getElementById('ctaBrowse').textContent = c.ctaBrowse;
+    document.getElementById('playHeading').textContent = c.playHeading;
+    document.getElementById('playAll').innerHTML = c.playAll;
+    langBtn.textContent = c.langBtn;
+    renderFeatured();
+  }
+
+  langBtn.onclick = () => {
+    lang = lang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem('mk_lang', lang); } catch {}
+    applyLang();
+  };
+  applyLang();
 })();
 </script>
 </body>
